@@ -1,4 +1,14 @@
 import { useEffect, useState } from "react";
+import {
+  Gamepad2,
+  Crown,
+  User,
+  ShoppingBag,
+  BarChart3,
+  LogOut,
+  Check,
+  Monitor
+} from "lucide-react";
 import api from "../services/api";
 import MachineCard from "../components/MachineCard";
 import StartSessionModal from "../components/StartSessionModal";
@@ -6,6 +16,7 @@ import PaymentModal from "../components/PaymentModal";
 import StatsCard from "../components/StatsCard";
 import Toast from "../components/Toast";
 import ProductsModal from "../components/ProductsModal";
+import ThemeToggle from "../components/ThemeToggle";
 
 function Dashboard({ user, onLogout }) {
   const [machines, setMachines] = useState([]);
@@ -23,19 +34,12 @@ function Dashboard({ user, onLogout }) {
     setToast({ message, type, duration });
   };
 
-  // Force dark background globally
+  // Set default theme on mount
   useEffect(() => {
-    const styleSheet = document.createElement("style");
-    styleSheet.textContent = `
-      body, html {
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow-x: hidden;
-        background: #0a0c14 !important;
-      }
-    `;
-    document.head.appendChild(styleSheet);
-    return () => document.head.removeChild(styleSheet);
+    if (!localStorage.getItem("theme")) {
+      document.documentElement.setAttribute("data-theme", "dark");
+      localStorage.setItem("theme", "dark");
+    }
   }, []);
 
   // ================= LOAD DATA =================
@@ -194,7 +198,7 @@ function Dashboard({ user, onLogout }) {
 
     const receiptContent = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         🎮 ZSTATION 🎮
+         ZSTATION
      Gaming Station Management
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -218,7 +222,7 @@ Donné: ${receipt.amount_given}
 Monnaie: ${receipt.change}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   Merci et à bientôt ! 🎮
+   Merci et à bientôt !
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `;
 
@@ -293,21 +297,22 @@ Monnaie: ${receipt.change}
         <div style={header}>
           <div>
             <h1 style={headerTitle}>
-              <span>🎮</span>
+              <Gamepad2 size={32} />
               Point de Vente ZSTATION
             </h1>
             <p style={headerSubtitle}>
-              {user.role === "agent" ? "👤 Agent" : "👑 Admin"} - {user.name}
+              {user.role === "agent" ? <User size={16} /> : <Crown size={16} />} {user.role === "agent" ? "Agent" : "Admin"} - {user.name}
             </p>
           </div>
-          <div style={{ display: "flex", gap: "12px" }}>
+          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+            <ThemeToggle />
             <button
               onClick={() => setShowProducts(true)}
               style={buttonSuccess}
               onMouseOver={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
               onMouseOut={(e) => e.currentTarget.style.transform = "translateY(0)"}
             >
-              <span>🍿</span>
+              <ShoppingBag size={18} />
               Produits
             </button>
             <button
@@ -316,7 +321,7 @@ Monnaie: ${receipt.change}
               onMouseOver={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
               onMouseOut={(e) => e.currentTarget.style.transform = "translateY(0)"}
             >
-              <span>{showStats ? "🎮" : "📊"}</span>
+              {showStats ? <Gamepad2 size={18} /> : <BarChart3 size={18} />}
               {showStats ? "Machines" : "Statistiques"}
             </button>
             <button
@@ -325,7 +330,7 @@ Monnaie: ${receipt.change}
               onMouseOver={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
               onMouseOut={(e) => e.currentTarget.style.transform = "translateY(0)"}
             >
-              <span>🚪</span>
+              <LogOut size={18} />
               Déconnexion
             </button>
           </div>
@@ -336,7 +341,7 @@ Monnaie: ${receipt.change}
           <div style={statsGrid}>
             <div style={{...statCard, ...statCardGreen}}>
               <div style={statIcon}>
-                <span>✅</span>
+                <Check size={32} color="#10b981" />
               </div>
               <div style={statLabel}>Machines disponibles</div>
               <div style={statValue}>{availableMachines}</div>
@@ -344,7 +349,7 @@ Monnaie: ${receipt.change}
 
             <div style={{...statCard, ...statCardOrange}}>
               <div style={statIcon}>
-                <span>🎮</span>
+                <Gamepad2 size={32} color="#f59e0b" />
               </div>
               <div style={statLabel}>Sessions actives</div>
               <div style={statValue}>{activeSessions}</div>
@@ -352,7 +357,7 @@ Monnaie: ${receipt.change}
 
             <div style={{...statCard, ...statCardBlue}}>
               <div style={statIcon}>
-                <span>🖥️</span>
+                <Monitor size={32} color="#3b82f6" />
               </div>
               <div style={statLabel}>Total machines</div>
               <div style={statValue}>{machines.length}</div>
@@ -364,7 +369,7 @@ Monnaie: ${receipt.change}
         {showStats ? (
           <div style={card}>
             <h2 style={cardTitle}>
-              <span>📊</span>
+              <BarChart3 size={28} />
               Statistiques de vente
             </h2>
             <StatsCard />
@@ -443,7 +448,7 @@ const container = {
   minHeight: "100vh",
   height: "100%",
   width: "100vw",
-  background: "#0a0c14",
+  background: "var(--bg-primary)",
   padding: "0",
   margin: "0",
   position: "fixed",
@@ -518,7 +523,7 @@ const headerTitle = {
   margin: "0",
   fontSize: "28px",
   fontWeight: "700",
-  color: "#ffffff",
+  color: "var(--text-primary)",
   display: "flex",
   alignItems: "center",
   gap: "12px",
@@ -527,7 +532,10 @@ const headerTitle = {
 const headerSubtitle = {
   margin: "8px 0 0 0",
   fontSize: "14px",
-  color: "rgba(255, 255, 255, 0.6)",
+  color: "var(--text-secondary)",
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
 };
 
 const buttonPrimary = {
@@ -622,23 +630,23 @@ const statLabel = {
 const statValue = {
   fontSize: "32px",
   fontWeight: "700",
-  color: "#ffffff",
+  color: "var(--text-primary)",
 };
 
 const card = {
-  background: "rgba(255, 255, 255, 0.03)",
+  background: "var(--bg-elevated)",
   backdropFilter: "blur(20px)",
   borderRadius: "16px",
   padding: "32px",
-  border: "1px solid rgba(255, 255, 255, 0.05)",
-  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+  border: "1px solid var(--border-primary)",
+  boxShadow: "var(--shadow-lg)",
 };
 
 const cardTitle = {
   margin: "0 0 24px 0",
   fontSize: "24px",
   fontWeight: "700",
-  color: "#ffffff",
+  color: "var(--text-primary)",
   display: "flex",
   alignItems: "center",
   gap: "12px",
@@ -647,7 +655,7 @@ const cardTitle = {
 const emptyState = {
   textAlign: "center",
   padding: "48px 24px",
-  color: "rgba(255, 255, 255, 0.6)",
+  color: "var(--text-secondary)",
   fontSize: "16px",
 };
 

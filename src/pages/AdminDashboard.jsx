@@ -1,8 +1,27 @@
 import { useEffect, useState } from "react";
+import {
+  Crown,
+  Package,
+  LogOut,
+  Calendar,
+  BarChart3,
+  TrendingUp,
+  CalendarDays,
+  RefreshCw,
+  DollarSign,
+  ShoppingBag,
+  Activity,
+  ShoppingCart,
+  Zap,
+  Monitor,
+  Gamepad2,
+  Clock
+} from "lucide-react";
 import api from "../services/api";
 import Toast from "../components/Toast";
 import StockManagement from "./StockManagement";
 import ProductSalesHistory from "./ProductSalesHistory";
+import ThemeToggle from "../components/ThemeToggle";
 
 function AdminDashboard({ user, onLogout }) {
   const [stats, setStats] = useState(null);
@@ -94,7 +113,7 @@ function AdminDashboard({ user, onLogout }) {
       <header style={styles.header} className="slide-down">
         <div style={styles.headerLeft}>
           <div style={styles.logoContainer}>
-            <div style={styles.logoIcon}>👑</div>
+            <div style={styles.logoIcon}><Crown size={24} /></div>
           </div>
           <div>
             <h1 style={styles.headerTitle}>Admin Dashboard</h1>
@@ -105,12 +124,13 @@ function AdminDashboard({ user, onLogout }) {
           </div>
         </div>
         <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
+          <ThemeToggle />
           <button onClick={() => setShowStockManagement(true)} style={styles.stockBtn}>
-            <span>📦</span>
+            <Package size={18} />
             <span>Gestion des Stocks</span>
           </button>
           <button onClick={onLogout} style={styles.logoutBtn}>
-            <span>🚪</span>
+            <LogOut size={18} />
             <span>Déconnexion</span>
           </button>
         </div>
@@ -120,9 +140,9 @@ function AdminDashboard({ user, onLogout }) {
       <div style={styles.filterBar} className="fade-in">
         <div style={styles.filterGroup}>
           {[
-            { id: "today", icon: "📅", label: "Aujourd'hui" },
-            { id: "week", icon: "📊", label: "7 Jours" },
-            { id: "month", icon: "📈", label: "30 Jours" }
+            { id: "today", icon: <Calendar size={16} />, label: "Aujourd'hui" },
+            { id: "week", icon: <BarChart3 size={16} />, label: "7 Jours" },
+            { id: "month", icon: <TrendingUp size={16} />, label: "30 Jours" }
           ].map((filterItem) => (
             <button
               key={filterItem.id}
@@ -132,7 +152,7 @@ function AdminDashboard({ user, onLogout }) {
                 ...(filter === filterItem.id ? styles.filterBtnActive : {})
               }}
             >
-              <span>{filterItem.icon}</span>
+              {filterItem.icon}
               <span>{filterItem.label}</span>
             </button>
           ))}
@@ -143,12 +163,12 @@ function AdminDashboard({ user, onLogout }) {
               ...(filter === "custom" ? styles.filterBtnActive : {})
             }}
           >
-            <span>🗓️</span>
+            <CalendarDays size={16} />
             <span>Personnalisé</span>
           </button>
         </div>
         <button onClick={loadData} style={styles.refreshBtn} disabled={loading}>
-          <span style={loading ? styles.spinIcon : {}}>🔄</span>
+          <RefreshCw size={16} style={loading ? styles.spinIcon : {}} />
           <span>Actualiser</span>
         </button>
       </div>
@@ -157,7 +177,7 @@ function AdminDashboard({ user, onLogout }) {
       {showCustomDate && (
         <div style={styles.customDatePicker} className="fade-in">
           <div style={styles.datePickerContent}>
-            <h4 style={styles.datePickerTitle}>📅 Sélectionner une période</h4>
+            <h4 style={styles.datePickerTitle}><Calendar size={20} /> Sélectionner une période</h4>
             <div style={styles.dateInputs}>
               <div style={styles.dateInputGroup}>
                 <label style={styles.dateLabel}>Date de début</label>
@@ -193,42 +213,42 @@ function AdminDashboard({ user, onLogout }) {
       {/* Stats Grid */}
       <div style={styles.statsGrid}>
         <StatCard
-          icon="💰"
+          icon={<DollarSign size={24} />}
           label="Recettes Sessions"
           value={(stats?.stats?.total_revenue || 0).toFixed(2) + " DH"}
           gradient="linear-gradient(135deg, #10b981 0%, #059669 100%)"
           delay="0.1s"
         />
         <StatCard
-          icon="🍿"
+          icon={<ShoppingBag size={24} />}
           label="Recettes Produits"
           value={(stats?.stats?.product_revenue || 0).toFixed(2) + " DH"}
           gradient="linear-gradient(135deg, #f59e0b 0%, #f97316 100%)"
           delay="0.2s"
         />
         <StatCard
-          icon="📊"
+          icon={<Activity size={24} />}
           label="Sessions"
           value={stats?.stats?.total_sessions || 0}
           gradient="linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)"
           delay="0.3s"
         />
         <StatCard
-          icon="🛒"
+          icon={<ShoppingCart size={24} />}
           label="Ventes Produits"
           value={stats?.stats?.total_product_sales || 0}
           gradient="linear-gradient(135deg, #ec4899 0%, #db2777 100%)"
           delay="0.4s"
         />
         <StatCard
-          icon="⚡"
+          icon={<Zap size={24} />}
           label="Sessions Actives"
           value={stats?.stats?.active_sessions || 0}
           gradient="linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)"
           delay="0.5s"
         />
         <StatCard
-          icon="🖥️"
+          icon={<Monitor size={24} />}
           label="Machines"
           value={`${stats?.stats?.available_machines || 0}/${stats?.stats?.total_machines || 0}`}
           gradient="linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)"
@@ -242,7 +262,7 @@ function AdminDashboard({ user, onLogout }) {
         <div style={styles.card} className="fade-in">
           <div style={styles.cardHeader}>
             <h3 style={styles.cardTitle}>
-              <span style={styles.cardIcon}>🎮</span>
+              <span style={styles.cardIcon}><Gamepad2 size={20} /></span>
               Top Jeux
             </h3>
           </div>
@@ -261,7 +281,7 @@ function AdminDashboard({ user, onLogout }) {
             ))}
             {(!stats?.top_games || stats.top_games.length === 0) && (
               <div style={styles.emptyState}>
-                <div style={styles.emptyIcon}>🎮</div>
+                <div style={styles.emptyIcon}><Gamepad2 size={48} color="#666" /></div>
                 <div>Aucune donnée disponible</div>
               </div>
             )}
@@ -272,7 +292,7 @@ function AdminDashboard({ user, onLogout }) {
         <div style={styles.card} className="fade-in">
           <div style={styles.cardHeader}>
             <h3 style={styles.cardTitle}>
-              <span style={styles.cardIcon}>🍿</span>
+              <span style={styles.cardIcon}><ShoppingBag size={20} /></span>
               Top Produits
             </h3>
           </div>
@@ -291,7 +311,7 @@ function AdminDashboard({ user, onLogout }) {
             ))}
             {(!stats?.top_products || stats.top_products.length === 0) && (
               <div style={styles.emptyState}>
-                <div style={styles.emptyIcon}>🍿</div>
+                <div style={styles.emptyIcon}><ShoppingBag size={48} color="#666" /></div>
                 <div>Aucune donnée disponible</div>
               </div>
             )}
@@ -338,7 +358,7 @@ function AdminDashboard({ user, onLogout }) {
         <div style={styles.card} className="fade-in">
           <div style={styles.cardHeader}>
             <h3 style={styles.cardTitle}>
-              <span style={styles.cardIcon}>🛒</span>
+              <span style={styles.cardIcon}><ShoppingCart size={20} /></span>
               Paiements Produits
             </h3>
           </div>
@@ -365,7 +385,7 @@ function AdminDashboard({ user, onLogout }) {
             ))}
             {(!stats?.product_revenue_by_method || stats.product_revenue_by_method.length === 0) && (
               <div style={styles.emptyState}>
-                <div style={styles.emptyIcon}>🛒</div>
+                <div style={styles.emptyIcon}><ShoppingCart size={48} color="#666" /></div>
                 <div>Aucune donnée disponible</div>
               </div>
             )}
@@ -377,7 +397,7 @@ function AdminDashboard({ user, onLogout }) {
       <div style={styles.card} className="fade-in">
         <div style={styles.cardHeader}>
           <h3 style={styles.cardTitle}>
-            <span style={styles.cardIcon}>💰</span>
+            <span style={styles.cardIcon}><DollarSign size={20} /></span>
             Derniers Paiements
           </h3>
           <div style={styles.badge}>{payments.length} total</div>
@@ -389,7 +409,7 @@ function AdminDashboard({ user, onLogout }) {
                 <div style={styles.tableCell}>
                   <div style={styles.tableCellTitle}>{payment.machine_name || "N/A"}</div>
                   <div style={styles.tableCellSubtitle}>
-                    🎮 {payment.game_name || "N/A"}
+                    <Gamepad2 size={14} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> {payment.game_name || "N/A"}
                   </div>
                 </div>
                 <div style={styles.tableCell}>
@@ -420,7 +440,7 @@ function AdminDashboard({ user, onLogout }) {
             ))}
             {payments.length === 0 && (
               <div style={styles.emptyState}>
-                <div style={styles.emptyIcon}>💰</div>
+                <div style={styles.emptyIcon}><DollarSign size={48} color="#666" /></div>
                 <div>Aucun paiement enregistré</div>
               </div>
             )}
@@ -432,7 +452,7 @@ function AdminDashboard({ user, onLogout }) {
       <div style={styles.card} className="fade-in">
         <div style={styles.cardHeader}>
           <h3 style={styles.cardTitle}>
-            <span style={styles.cardIcon}>🎮</span>
+            <span style={styles.cardIcon}><Clock size={20} /></span>
             Dernières Sessions
           </h3>
           <div style={styles.badge}>{sessions.length} total</div>
@@ -444,7 +464,7 @@ function AdminDashboard({ user, onLogout }) {
                 <div style={styles.tableCell}>
                   <div style={styles.tableCellTitle}>{session.machine_name || "N/A"}</div>
                   <div style={styles.tableCellSubtitle}>
-                    🎮 {session.game_name || "N/A"} • {session.customer_name || "Invité"}
+                    <Gamepad2 size={14} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> {session.game_name || "N/A"} • {session.customer_name || "Invité"}
                   </div>
                 </div>
                 <div style={styles.tableCell}>
@@ -474,7 +494,7 @@ function AdminDashboard({ user, onLogout }) {
             ))}
             {sessions.length === 0 && (
               <div style={styles.emptyState}>
-                <div style={styles.emptyIcon}>🎮</div>
+                <div style={styles.emptyIcon}><Gamepad2 size={48} color="#666" /></div>
                 <div>Aucune session enregistrée</div>
               </div>
             )}
@@ -514,7 +534,7 @@ const styles = {
     minHeight: "100vh",
     height: "100%",
     width: "100vw",
-    background: "#0a0c14",
+    background: "var(--bg-primary)",
     padding: "0",
     margin: "0",
     position: "fixed",
@@ -575,7 +595,7 @@ const styles = {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    background: "#0a0c14",
+    background: "var(--bg-primary)",
   },
 
   spinner: {
@@ -595,13 +615,13 @@ const styles = {
   },
 
   header: {
-    background: "linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)",
+    background: "var(--bg-elevated)",
     backdropFilter: "blur(20px)",
-    border: "1px solid rgba(255,255,255,0.05)",
+    border: "1px solid var(--border-primary)",
     borderRadius: "20px",
     padding: "24px 32px",
     marginBottom: "24px",
-    boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+    boxShadow: "var(--shadow-xl)",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
@@ -633,17 +653,14 @@ const styles = {
     margin: 0,
     fontSize: "28px",
     fontWeight: "900",
-    background: "linear-gradient(135deg, #ffffff 0%, #7b5cff 100%)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-    backgroundClip: "text",
+    color: "var(--text-primary)",
     letterSpacing: "-0.5px",
   },
 
   headerSubtitle: {
     margin: "6px 0 0 0",
     fontSize: "14px",
-    color: "#98a6b3",
+    color: "var(--text-secondary)",
     fontWeight: "500",
     display: "flex",
     alignItems: "center",
@@ -690,9 +707,9 @@ const styles = {
   },
 
   filterBar: {
-    background: "linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)",
+    background: "var(--bg-elevated)",
     backdropFilter: "blur(20px)",
-    border: "1px solid rgba(255,255,255,0.05)",
+    border: "1px solid var(--border-primary)",
     borderRadius: "20px",
     padding: "20px",
     marginBottom: "24px",
@@ -712,10 +729,10 @@ const styles = {
 
   filterBtn: {
     padding: "10px 20px",
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid rgba(255,255,255,0.05)",
+    background: "var(--bg-secondary)",
+    border: "1px solid var(--border-primary)",
     borderRadius: "10px",
-    color: "#98a6b3",
+    color: "var(--text-secondary)",
     fontWeight: "700",
     fontSize: "14px",
     cursor: "pointer",
@@ -761,9 +778,9 @@ const styles = {
 
   statCard: {
     position: "relative",
-    background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)",
+    background: "var(--bg-elevated)",
     backdropFilter: "blur(20px)",
-    border: "1px solid rgba(255,255,255,0.08)",
+    border: "1px solid var(--border-primary)",
     borderRadius: "20px",
     padding: "28px",
     overflow: "hidden",
@@ -791,18 +808,18 @@ const styles = {
     width: "64px",
     height: "64px",
     borderRadius: "16px",
-    background: "linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)",
+    background: "var(--bg-secondary)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     fontSize: "32px",
     marginBottom: "16px",
-    boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+    boxShadow: "var(--shadow-md)",
   },
 
   statCardLabel: {
     fontSize: "13px",
-    color: "#98a6b3",
+    color: "var(--text-secondary)",
     fontWeight: "600",
     textTransform: "uppercase",
     letterSpacing: "0.5px",
@@ -812,7 +829,7 @@ const styles = {
   statCardValue: {
     fontSize: "36px",
     fontWeight: "900",
-    color: "#ffffff",
+    color: "var(--text-primary)",
     lineHeight: 1,
     letterSpacing: "-1px",
   },
@@ -826,9 +843,9 @@ const styles = {
   },
 
   card: {
-    background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)",
+    background: "var(--bg-elevated)",
     backdropFilter: "blur(20px)",
-    border: "1px solid rgba(255,255,255,0.08)",
+    border: "1px solid var(--border-primary)",
     borderRadius: "20px",
     padding: "0",
     overflow: "hidden",
@@ -837,7 +854,7 @@ const styles = {
 
   cardHeader: {
     padding: "24px 28px",
-    borderBottom: "1px solid rgba(255,255,255,0.05)",
+    borderBottom: "1px solid var(--border-primary)",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
@@ -847,7 +864,7 @@ const styles = {
     margin: 0,
     fontSize: "18px",
     fontWeight: "800",
-    color: "#ffffff",
+    color: "var(--text-primary)",
     display: "flex",
     alignItems: "center",
     gap: "10px",
@@ -876,7 +893,7 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
     padding: "20px 28px",
-    borderBottom: "1px solid rgba(255,255,255,0.03)",
+    borderBottom: "1px solid var(--border-primary)",
     transition: "all 0.2s ease",
   },
 
@@ -902,13 +919,13 @@ const styles = {
   listItemTitle: {
     fontSize: "15px",
     fontWeight: "700",
-    color: "#ffffff",
+    color: "var(--text-primary)",
     marginBottom: "4px",
   },
 
   listItemSubtitle: {
     fontSize: "13px",
-    color: "#98a6b3",
+    color: "var(--text-secondary)",
   },
 
   listItemAmount: {
@@ -937,7 +954,7 @@ const styles = {
     gap: "16px",
     alignItems: "center",
     padding: "20px 28px",
-    borderBottom: "1px solid rgba(255,255,255,0.03)",
+    borderBottom: "1px solid var(--border-primary)",
     transition: "all 0.2s ease",
   },
 
@@ -949,13 +966,13 @@ const styles = {
   tableCellTitle: {
     fontSize: "15px",
     fontWeight: "700",
-    color: "#ffffff",
+    color: "var(--text-primary)",
     marginBottom: "4px",
   },
 
   tableCellSubtitle: {
     fontSize: "13px",
-    color: "#98a6b3",
+    color: "var(--text-secondary)",
   },
 
   tableCellAmount: {
@@ -967,7 +984,7 @@ const styles = {
 
   tableCellDate: {
     fontSize: "13px",
-    color: "#98a6b3",
+    color: "var(--text-secondary)",
   },
 
   paymentMethod: {
@@ -996,7 +1013,7 @@ const styles = {
   emptyState: {
     textAlign: "center",
     padding: "60px 20px",
-    color: "#98a6b3",
+    color: "var(--text-secondary)",
   },
 
   emptyIcon: {
@@ -1006,9 +1023,9 @@ const styles = {
   },
 
   customDatePicker: {
-    background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)",
+    background: "var(--bg-elevated)",
     backdropFilter: "blur(20px)",
-    border: "1px solid rgba(255,255,255,0.08)",
+    border: "1px solid var(--border-primary)",
     borderRadius: "20px",
     padding: "24px",
     marginBottom: "24px",
@@ -1022,7 +1039,7 @@ const styles = {
     margin: "0 0 20px 0",
     fontSize: "18px",
     fontWeight: "800",
-    color: "#ffffff",
+    color: "var(--text-primary)",
   },
 
   dateInputs: {
@@ -1041,17 +1058,17 @@ const styles = {
   dateLabel: {
     fontSize: "13px",
     fontWeight: "600",
-    color: "#98a6b3",
+    color: "var(--text-secondary)",
     textTransform: "uppercase",
     letterSpacing: "0.5px",
   },
 
   dateInput: {
     padding: "12px 16px",
-    background: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(255,255,255,0.1)",
+    background: "var(--bg-secondary)",
+    border: "1px solid var(--border-primary)",
     borderRadius: "10px",
-    color: "#ffffff",
+    color: "var(--text-primary)",
     fontSize: "14px",
     fontWeight: "600",
     transition: "all 0.2s ease",
@@ -1083,10 +1100,10 @@ const styles = {
   cancelBtn: {
     flex: 1,
     padding: "12px 20px",
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid rgba(255,255,255,0.1)",
+    background: "var(--bg-secondary)",
+    border: "1px solid var(--border-primary)",
     borderRadius: "10px",
-    color: "#98a6b3",
+    color: "var(--text-secondary)",
     fontWeight: "700",
     fontSize: "14px",
     cursor: "pointer",
@@ -1105,7 +1122,7 @@ styleSheet.textContent = `
     margin: 0 !important;
     padding: 0 !important;
     overflow-x: hidden;
-    background: #0a0c14 !important;
+    background: var(--bg-primary) !important;
   }
 
   #root {
@@ -1170,11 +1187,11 @@ styleSheet.textContent = `
   }
 
   .list-item:hover {
-    background: rgba(255,255,255,0.02);
+    background: var(--bg-secondary);
   }
 
   .table-row:hover {
-    background: rgba(255,255,255,0.02);
+    background: var(--bg-secondary);
   }
 
   button:hover:not([disabled]) {

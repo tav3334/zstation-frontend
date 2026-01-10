@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Gamepad2, Check, Clock, Timer } from "lucide-react";
 
 function MachineCard({ machine, onStart, onStop, onExtend, games }) {
   const [elapsed, setElapsed] = useState(0);
@@ -123,7 +124,7 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
             ? "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)"
             : "linear-gradient(135deg, #10b981 0%, #059669 100%)"
         }}>
-          <span>{isInSession ? "🎮" : "✅"}</span>
+          {isInSession ? <Gamepad2 size={16} /> : <Check size={16} />}
           {isInSession ? "EN SESSION" : "DISPONIBLE"}
         </div>
       </div>
@@ -153,7 +154,7 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
               fontWeight: "600",
               color: isExpired ? "#ef4444" : "#6b7280"
             }}>
-              {isExpired ? "⏰ TEMPS ÉCOULÉ !" : `⏳ Reste: ${formatTime(remainingSeconds)}`}
+              {isExpired ? <><Clock size={16} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> TEMPS ÉCOULÉ !</> : <><Timer size={16} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> Reste: {formatTime(remainingSeconds)}</>}
             </div>
           </div>
 
@@ -167,7 +168,7 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
             borderRadius: "8px",
             marginBottom: "16px"
           }}>
-            <span style={{ fontSize: "24px" }}>🎮</span>
+            <Gamepad2 size={24} color="#6366f1" />
             <div style={{ flex: 1 }}>
               <div style={{
                 fontSize: "14px",
