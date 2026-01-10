@@ -117,16 +117,6 @@ function Login({ onLogin }) {
     }
   };
 
-  const quickLogin = (role) => {
-    if (role === "admin") {
-      setEmail("admin@zstation.ma");
-      setPassword("admin123");
-    } else {
-      setEmail("agent@zstation.ma");
-      setPassword("agent123");
-    }
-  };
-
   return (
     <div className="ui-fs-root" role="application" aria-label="ZSTATION login">
       <canvas ref={canvasRef} className="ui-bg-canvas" />
@@ -221,15 +211,7 @@ function Login({ onLogin }) {
                 </button>
               </form>
 
-              <div className="ui-quick">
-                <div className="ui-quick-title">ACCÈS RAPIDE</div>
-                <div className="ui-chips">
-                  <button onClick={() => quickLogin("agent")} className="ui-chip">Agent</button>
-                  <button onClick={() => quickLogin("admin")} className="ui-chip alt">Admin</button>
-                </div>
-              </div>
-
-              <div className="ui-card-foot">© 2026 ZSTATION — support@zstation.ma</div>
+              <div className="ui-card-foot" style={{marginTop: '20px'}}>© 2026 ZSTATION — support@zstation.ma</div>
             </div>
           </aside>
         </section>
