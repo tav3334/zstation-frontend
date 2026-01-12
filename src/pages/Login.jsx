@@ -116,12 +116,12 @@ function Login({ onLogin }) {
       onLogin(res.data.user);
     } catch (err) {
       console.error("Erreur de connexion:", err);
+
       const errorMessage = err.response?.data?.message || err.response?.data?.error || "Identifiants incorrects. Veuillez réessayer.";
       setError(errorMessage);
-      setLoading(false);
-
-      // Vider le mot de passe en cas d'erreur
       setPassword("");
+    } finally {
+      setLoading(false);
     }
   };
 

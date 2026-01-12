@@ -26,10 +26,16 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expiré ou invalide
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      window.location.href = "/";
+      // Ne rediriger que si on a un token (session expirée)
+      // Ne pas rediriger lors d'une tentative de login échouée
+      const token = localStorage.getItem("token");
+      if (token) {
+        // Token expiré ou invalide - déconnexion
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/";
+      }
+      // Si pas de token, c'est juste un login échoué - laisser passer l'erreur
     }
     return Promise.reject(error);
   }
