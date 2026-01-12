@@ -74,7 +74,7 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
   };
 
   return (
-    <div style={{
+    <div className="machine-card" style={{
       background: "white",
       borderRadius: "16px",
       padding: "24px",
@@ -291,7 +291,7 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
 
       {/* Modal Prolongation */}
       {showExtendModal && (
-        <div style={{
+        <div className="modal-overlay" style={{
           position: "fixed",
           top: 0,
           left: 0,
@@ -302,14 +302,15 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
           alignItems: "center",
           justifyContent: "center",
           zIndex: 1000,
-          animation: "fadeIn 0.3s ease"
+          animation: "fadeIn 0.3s ease",
+          padding: "20px"
         }}>
-          <div style={{
+          <div className="modal-content" style={{
             backgroundColor: "white",
             borderRadius: "16px",
             padding: "32px",
             width: "400px",
-            maxWidth: "90%",
+            maxWidth: "100%",
             boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)"
           }}>
             <h3 style={{
@@ -410,6 +411,81 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
       )}
     </div>
   );
+}
+
+// Add responsive styles for MachineCard
+const machineCardStyles = document.createElement("style");
+machineCardStyles.textContent = `
+  @media (max-width: 768px) {
+    /* Machine card responsive */
+    .machine-card {
+      padding: 20px !important;
+    }
+
+    /* Machine card header */
+    .machine-card h3 {
+      font-size: 18px !important;
+    }
+
+    /* Timer display */
+    .machine-card > div > div[style*="fontSize: 48px"] {
+      font-size: 36px !important;
+    }
+
+    /* Action buttons in cards */
+    .machine-card button {
+      font-size: 14px !important;
+      padding: 12px 14px !important;
+    }
+
+    /* Modal content */
+    .modal-content {
+      padding: 24px !important;
+      margin: 20px !important;
+    }
+
+    .modal-content h3 {
+      font-size: 20px !important;
+    }
+
+    .modal-content select {
+      font-size: 14px !important;
+    }
+
+    .modal-content button {
+      font-size: 14px !important;
+      padding: 12px 16px !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    /* Small mobile */
+    .machine-card {
+      padding: 16px !important;
+    }
+
+    .machine-card h3 {
+      font-size: 16px !important;
+    }
+
+    .machine-card > div > div[style*="fontSize: 48px"] {
+      font-size: 32px !important;
+    }
+
+    .modal-content {
+      padding: 20px !important;
+    }
+
+    .modal-content h3 {
+      font-size: 18px !important;
+    }
+  }
+`;
+
+// Only append once
+if (!document.getElementById('machine-card-responsive-styles')) {
+  machineCardStyles.id = 'machine-card-responsive-styles';
+  document.head.appendChild(machineCardStyles);
 }
 
 export default MachineCard;

@@ -383,11 +383,7 @@ Monnaie: ${receipt.change}
                 </div>
               </div>
             ) : (
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
-                gap: "20px"
-              }}>
+              <div className="dashboard-machines-grid">
                 {machines.map((machine) => (
                   <MachineCard
                     key={machine.id}
@@ -658,5 +654,148 @@ const emptyState = {
   color: "var(--text-secondary)",
   fontSize: "16px",
 };
+
+// Add responsive styles
+const styleSheet = document.createElement("style");
+styleSheet.textContent = `
+  /* Responsive Design for Dashboard */
+  @media (max-width: 1024px) {
+    /* Tablets */
+    .dashboard-machines-grid {
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    /* Mobile Phones */
+
+    /* Header responsive */
+    header[style*="display: flex"] {
+      flex-direction: column !important;
+      gap: 16px !important;
+      padding: 20px 16px !important;
+    }
+
+    header[style*="display: flex"] > div:first-child {
+      width: 100%;
+      text-align: center;
+    }
+
+    header[style*="display: flex"] > div:last-child {
+      width: 100%;
+      flex-direction: column !important;
+      gap: 10px !important;
+    }
+
+    /* Header title */
+    h1[style*="fontSize"] {
+      font-size: 22px !important;
+    }
+
+    /* Header subtitle */
+    p[style*="fontSize: 14px"] {
+      font-size: 12px !important;
+      justify-content: center !important;
+    }
+
+    /* Buttons in header */
+    header button {
+      width: 100% !important;
+      justify-content: center !important;
+      padding: 12px 16px !important;
+      font-size: 14px !important;
+    }
+
+    /* Stats grid */
+    div[style*="gridTemplateColumns: repeat(auto-fit, minmax(250px, 1fr))"] {
+      grid-template-columns: 1fr !important;
+      gap: 16px !important;
+    }
+
+    /* Stat cards */
+    div[style*="gridTemplateColumns: repeat(auto-fit, minmax(250px, 1fr))"] > div {
+      padding: 20px !important;
+    }
+
+    /* Stat values */
+    div[style*="fontSize: 32px"][style*="fontWeight: 700"] {
+      font-size: 28px !important;
+    }
+
+    /* Machines grid */
+    .dashboard-machines-grid,
+    div[style*="gridTemplateColumns: repeat(auto-fill, minmax(350px, 1fr))"] {
+      grid-template-columns: 1fr !important;
+      gap: 16px !important;
+    }
+
+    /* Content wrapper */
+    div[style*="padding: 24px"] {
+      padding: 16px !important;
+    }
+
+    /* Cards padding */
+    div[style*="padding: 32px"][style*="borderRadius: 16px"] {
+      padding: 20px !important;
+    }
+
+    /* Card titles */
+    h2[style*="fontSize: 24px"] {
+      font-size: 20px !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    /* Small Mobile Phones */
+
+    /* Even smaller text */
+    h1[style*="fontSize"] {
+      font-size: 18px !important;
+    }
+
+    /* Smaller buttons */
+    button {
+      font-size: 13px !important;
+      padding: 10px 14px !important;
+    }
+
+    /* Smaller stat cards */
+    div[style*="gridTemplateColumns: repeat(auto-fit, minmax(250px, 1fr))"] > div {
+      padding: 16px !important;
+    }
+
+    div[style*="fontSize: 32px"][style*="fontWeight: 700"] {
+      font-size: 24px !important;
+    }
+
+    /* Reduce content padding */
+    div[style*="padding: 24px"] {
+      padding: 12px !important;
+    }
+
+    div[style*="padding: 32px"][style*="borderRadius: 16px"] {
+      padding: 16px !important;
+    }
+  }
+
+  /* Utility class for machines grid */
+  .dashboard-machines-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+  }
+
+  @media (max-width: 768px) {
+    .dashboard-machines-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+`;
+
+// Only append once
+if (!document.getElementById('dashboard-responsive-styles')) {
+  styleSheet.id = 'dashboard-responsive-styles';
+  document.head.appendChild(styleSheet);
+}
 
 export default Dashboard;

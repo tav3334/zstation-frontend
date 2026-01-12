@@ -45,8 +45,8 @@ function PaymentModal({ session, onConfirm, onClose }) {
   };
 
   return (
-    <div style={overlay}>
-      <div style={modal}>
+    <div className="payment-modal-overlay" style={overlay}>
+      <div className="payment-modal-content" style={modal}>
         <h2 style={modalTitle}>💰 Paiement</h2>
 
         <div style={infoBox}>
@@ -279,5 +279,69 @@ const button = {
   fontWeight: "600",
   transition: "all 0.2s ease"
 };
+
+// Add responsive styles
+const paymentModalStyles = document.createElement("style");
+paymentModalStyles.textContent = `
+  @media (max-width: 768px) {
+    .payment-modal-content {
+      padding: 20px !important;
+      width: 100% !important;
+    }
+
+    .payment-modal-content h2 {
+      font-size: 20px !important;
+    }
+
+    .payment-modal-content input {
+      font-size: 18px !important;
+      padding: 10px !important;
+    }
+
+    .payment-modal-content button {
+      font-size: 14px !important;
+      padding: 12px 16px !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .payment-modal-overlay {
+      padding: 12px !important;
+    }
+
+    .payment-modal-content {
+      padding: 16px !important;
+    }
+
+    .payment-modal-content h2 {
+      font-size: 18px !important;
+    }
+
+    .payment-modal-content input {
+      font-size: 16px !important;
+    }
+
+    .payment-modal-content button {
+      font-size: 13px !important;
+      padding: 10px 14px !important;
+    }
+
+    /* Quick amounts grid for small screens */
+    div[style*="gridTemplateColumns: repeat(auto-fit, minmax(80px, 1fr))"] {
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 6px !important;
+    }
+
+    div[style*="gridTemplateColumns: repeat(auto-fit, minmax(80px, 1fr))"] button {
+      padding: 8px 12px !important;
+      font-size: 12px !important;
+    }
+  }
+`;
+
+if (!document.getElementById('payment-modal-responsive-styles')) {
+  paymentModalStyles.id = 'payment-modal-responsive-styles';
+  document.head.appendChild(paymentModalStyles);
+}
 
 export default PaymentModal;

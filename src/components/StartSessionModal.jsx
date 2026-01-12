@@ -32,8 +32,8 @@ function StartSessionModal({
   console.log("💰 Available pricings:", availablePricings);
 
   return (
-    <div style={overlay}>
-      <div style={modal}>
+    <div className="session-modal-overlay" style={overlay}>
+      <div className="session-modal-content" style={modal}>
         <h3 style={{ margin: "0 0 20px 0", fontSize: "24px", fontWeight: "700", color: "#111827" }}>
           Démarrer Session - {machine.name}
         </h3>
@@ -174,5 +174,58 @@ const modal = {
   boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
   color: "#000",
 };
+
+// Add responsive styles
+const sessionModalStyles = document.createElement("style");
+sessionModalStyles.textContent = `
+  .session-modal-overlay {
+    padding: 20px !important;
+  }
+
+  @media (max-width: 768px) {
+    .session-modal-content {
+      padding: 24px !important;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    .session-modal-content h3 {
+      font-size: 20px !important;
+    }
+
+    .session-modal-content select {
+      font-size: 14px !important;
+      padding: 10px 12px !important;
+    }
+
+    .session-modal-content button {
+      font-size: 14px !important;
+      padding: 12px 16px !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .session-modal-overlay {
+      padding: 16px !important;
+    }
+
+    .session-modal-content {
+      padding: 20px !important;
+    }
+
+    .session-modal-content h3 {
+      font-size: 18px !important;
+    }
+
+    .session-modal-content select {
+      font-size: 13px !important;
+    }
+  }
+`;
+
+if (!document.getElementById('session-modal-responsive-styles')) {
+  sessionModalStyles.id = 'session-modal-responsive-styles';
+  document.head.appendChild(sessionModalStyles);
+}
 
 export default StartSessionModal;
