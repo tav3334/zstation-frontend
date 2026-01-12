@@ -25,7 +25,7 @@ import StockManagement from "./StockManagement";
 import ProductSalesHistory from "./ProductSalesHistory";
 import ThemeToggle from "../components/ThemeToggle";
 import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
 function AdminDashboard({ user, onLogout }) {
