@@ -103,17 +103,25 @@ function Login({ onLogin }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
+
     setError("");
     setLoading(true);
+
     try {
       const res = await api.post("/login", { email, password });
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
       api.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
       onLogin(res.data.user);
-    } catch (e) {
-      setError(e.response?.data?.message || "Erreur de connexion");
+    } catch (err) {
+      console.error("Erreur de connexion:", err);
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || "Identifiants incorrects. Veuillez réessayer.";
+      setError(errorMessage);
       setLoading(false);
+
+      // Vider le mot de passe en cas d'erreur
+      setPassword("");
     }
   };
 
