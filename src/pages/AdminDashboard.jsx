@@ -15,13 +15,18 @@ import {
   Zap,
   Monitor,
   Gamepad2,
-  Clock
+  Clock,
+  FileSpreadsheet,
+  FileText
 } from "lucide-react";
 import api from "../services/api";
 import Toast from "../components/Toast";
 import StockManagement from "./StockManagement";
 import ProductSalesHistory from "./ProductSalesHistory";
 import ThemeToggle from "../components/ThemeToggle";
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 function AdminDashboard({ user, onLogout }) {
   const [stats, setStats] = useState(null);
@@ -86,6 +91,293 @@ function AdminDashboard({ user, onLogout }) {
     setShowCustomDate(false);
     showToast("Filtre personnalisé appliqué", "success");
     loadData();
+  };
+
+  const exportToExcel = () => {
+    try {
+      // Créer un nouveau workbook
+      const wb = XLSX.utils.book_new();
+
+      // Feuille 1: Statistiques générales
+      const statsData = [
+        ['Statistiques Générales', ''],
+        ['Période', filter === 'today' ? 'Aujourd\'hui' : filter === 'week' ? '7 Jours' : filter === 'month' ? '30 Jours' : 'Personnalisé'],
+        ['Date d\'export', new Date().toLocaleString('fr-FR')],
+        ['', ''],
+        ['Métriques', 'Valeurs'],
+        ['Recettes Sessions', `${(stats?.stats?.total_revenue || 0).toFixed(2)} DH`],
+        ['Recettes Produits', `${(stats?.stats?.product_revenue || 0).toFixed(2)} DH`],
+        ['Total Sessions', stats?.stats?.total_sessions || 0],
+        ['Total Ventes Produits', stats?.stats?.total_product_sales || 0],
+        ['Sessions Actives', stats?.stats?.active_sessions || 0],
+        ['Machines Disponibles', `${stats?.stats?.available_machines || 0}/${stats?.stats?.total_machines || 0}`],
+      ];
+      const ws1 = XLSX.utils.aoa_to_sheet(statsData);
+      XLSX.utils.book_append_sheet(wb, ws1, 'Statistiques');
+
+      // Feuille 2: Top Jeux
+      const gamesData = [
+        ['Top Jeux'],
+        ['Rang', 'Nom du Jeu', 'Nombre de Sessions', 'Recettes (DH)'],
+        ...(stats?.top_games || []).map((game, idx) => [
+          idx + 1,
+          game.game_name,
+          game.sessions_count,
+          game.total_revenue.toFixed(2)
+        ])
+      ];
+      const ws2 = XLSX.utils.aoa_to_sheet(gamesData);
+      XLSX.utils.book_append_sheet(wb, ws2, 'Top Jeux');
+
+      // Feuille 3: Top Produits
+      const productsData = [
+        ['Top Produits'],
+        ['Rang', 'Nom du Produit', 'Quantité Vendue', 'Recettes (DH)'],
+        ...(stats?.top_products || []).map((product, idx) => [
+          idx + 1,
+          product.product_name,
+          product.total_quantity,
+          product.total_revenue.toFixed(2)
+        ])
+      ];
+      const ws3 = XLSX.utils.aoa_to_sheet(productsData);
+      XLSX.utils.book_append_sheet(wb, ws3, 'Top Produits');
+
+      // Feuille 4: Paiements Sessions
+      const paymentsSessionData = [
+        ['Paiements Sessions'],
+        ['Méthode', 'Total (DH)'],
+        ...(stats?.revenue_by_method || []).map(item => [
+          item.method === 'cash' ? 'Espèces' : item.method === 'card' ? 'Carte' : 'Mobile',
+          item.total.toFixed(2)
+        ])
+      ];
+      const ws4 = XLSX.utils.aoa_to_sheet(paymentsSessionData);
+      XLSX.utils.book_append_sheet(wb, ws4, 'Paiements Sessions');
+
+      // Feuille 5: Paiements Produits
+      const paymentsProductData = [
+        ['Paiements Produits'],
+        ['Méthode', 'Total (DH)'],
+        ...(stats?.product_revenue_by_method || []).map(item => [
+          item.method === 'cash' ? 'Espèces' : item.method === 'card' ? 'Carte' : 'Mobile',
+          item.total.toFixed(2)
+        ])
+      ];
+      const ws5 = XLSX.utils.aoa_to_sheet(paymentsProductData);
+      XLSX.utils.book_append_sheet(wb, ws5, 'Paiements Produits');
+
+      // Feuille 6: Derniers Paiements
+      const recentPaymentsData = [
+        ['Derniers Paiements'],
+        ['Machine', 'Jeu', 'Méthode', 'Montant (DH)', 'Date'],
+        ...payments.slice(0, 20).map(payment => [
+          payment.machine_name || 'N/A',
+          payment.game_name || 'N/A',
+          payment.payment_method === 'cash' ? 'Espèces' : 'Carte',
+          payment.amount,
+          new Date(payment.payment_date).toLocaleString('fr-FR')
+        ])
+      ];
+      const ws6 = XLSX.utils.aoa_to_sheet(recentPaymentsData);
+      XLSX.utils.book_append_sheet(wb, ws6, 'Derniers Paiements');
+
+      // Feuille 7: Dernières Sessions
+      const recentSessionsData = [
+        ['Dernières Sessions'],
+        ['Machine', 'Jeu', 'Client', 'Statut', 'Date de début', 'Durée (min)'],
+        ...sessions.slice(0, 20).map(session => [
+          session.machine_name || 'N/A',
+          session.game_name || 'N/A',
+          session.customer_name || 'Invité',
+          session.is_active ? 'En cours' : 'Terminée',
+          new Date(session.start_time).toLocaleString('fr-FR'),
+          session.duration_minutes || '-'
+        ])
+      ];
+      const ws7 = XLSX.utils.aoa_to_sheet(recentSessionsData);
+      XLSX.utils.book_append_sheet(wb, ws7, 'Dernières Sessions');
+
+      // Générer le fichier Excel
+      const fileName = `statistiques_zstation_${filter}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      showToast("Export Excel réussi!", "success");
+    } catch (error) {
+      console.error("Export error:", error);
+      showToast("Erreur lors de l'export Excel", "error");
+    }
+  };
+
+  const exportToPDF = () => {
+    try {
+      const doc = new jsPDF();
+
+      // Titre principal
+      doc.setFontSize(20);
+      doc.setTextColor(123, 92, 255);
+      doc.text('Z-STATION - Rapport de Statistiques', 105, 20, { align: 'center' });
+
+      // Informations générales
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      const periodText = filter === 'today' ? 'Aujourd\'hui' : filter === 'week' ? '7 Jours' : filter === 'month' ? '30 Jours' : 'Personnalisé';
+      doc.text(`Période: ${periodText}`, 14, 35);
+      doc.text(`Date d'export: ${new Date().toLocaleString('fr-FR')}`, 14, 42);
+
+      // Statistiques principales
+      doc.setFontSize(14);
+      doc.setTextColor(123, 92, 255);
+      doc.text('Statistiques Générales', 14, 55);
+
+      doc.autoTable({
+        startY: 60,
+        head: [['Métrique', 'Valeur']],
+        body: [
+          ['Recettes Sessions', `${(stats?.stats?.total_revenue || 0).toFixed(2)} DH`],
+          ['Recettes Produits', `${(stats?.stats?.product_revenue || 0).toFixed(2)} DH`],
+          ['Total Sessions', `${stats?.stats?.total_sessions || 0}`],
+          ['Total Ventes Produits', `${stats?.stats?.total_product_sales || 0}`],
+          ['Sessions Actives', `${stats?.stats?.active_sessions || 0}`],
+          ['Machines Disponibles', `${stats?.stats?.available_machines || 0}/${stats?.stats?.total_machines || 0}`],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [123, 92, 255] },
+      });
+
+      // Top Jeux
+      doc.setFontSize(14);
+      doc.setTextColor(123, 92, 255);
+      doc.text('Top Jeux', 14, doc.lastAutoTable.finalY + 15);
+
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 20,
+        head: [['Rang', 'Nom du Jeu', 'Sessions', 'Recettes (DH)']],
+        body: (stats?.top_games || []).map((game, idx) => [
+          idx + 1,
+          game.game_name,
+          game.sessions_count,
+          game.total_revenue.toFixed(2)
+        ]),
+        theme: 'grid',
+        headStyles: { fillColor: [16, 185, 129] },
+      });
+
+      // Top Produits
+      doc.addPage();
+      doc.setFontSize(14);
+      doc.setTextColor(123, 92, 255);
+      doc.text('Top Produits', 14, 20);
+
+      doc.autoTable({
+        startY: 25,
+        head: [['Rang', 'Nom du Produit', 'Quantité', 'Recettes (DH)']],
+        body: (stats?.top_products || []).map((product, idx) => [
+          idx + 1,
+          product.product_name,
+          product.total_quantity,
+          product.total_revenue.toFixed(2)
+        ]),
+        theme: 'grid',
+        headStyles: { fillColor: [245, 158, 11] },
+      });
+
+      // Méthodes de paiement Sessions
+      doc.setFontSize(14);
+      doc.setTextColor(123, 92, 255);
+      doc.text('Paiements Sessions par Méthode', 14, doc.lastAutoTable.finalY + 15);
+
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 20,
+        head: [['Méthode', 'Total (DH)']],
+        body: (stats?.revenue_by_method || []).map(item => [
+          item.method === 'cash' ? 'Espèces' : item.method === 'card' ? 'Carte' : 'Mobile',
+          item.total.toFixed(2)
+        ]),
+        theme: 'grid',
+        headStyles: { fillColor: [59, 130, 246] },
+      });
+
+      // Méthodes de paiement Produits
+      doc.setFontSize(14);
+      doc.setTextColor(123, 92, 255);
+      doc.text('Paiements Produits par Méthode', 14, doc.lastAutoTable.finalY + 15);
+
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 20,
+        head: [['Méthode', 'Total (DH)']],
+        body: (stats?.product_revenue_by_method || []).map(item => [
+          item.method === 'cash' ? 'Espèces' : item.method === 'card' ? 'Carte' : 'Mobile',
+          item.total.toFixed(2)
+        ]),
+        theme: 'grid',
+        headStyles: { fillColor: [236, 72, 153] },
+      });
+
+      // Derniers paiements
+      doc.addPage();
+      doc.setFontSize(14);
+      doc.setTextColor(123, 92, 255);
+      doc.text('Derniers Paiements', 14, 20);
+
+      doc.autoTable({
+        startY: 25,
+        head: [['Machine', 'Jeu', 'Méthode', 'Montant', 'Date']],
+        body: payments.slice(0, 15).map(payment => [
+          payment.machine_name || 'N/A',
+          payment.game_name || 'N/A',
+          payment.payment_method === 'cash' ? 'Espèces' : 'Carte',
+          `${payment.amount} DH`,
+          new Date(payment.payment_date).toLocaleString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        ]),
+        theme: 'grid',
+        headStyles: { fillColor: [16, 185, 129] },
+        styles: { fontSize: 8 },
+      });
+
+      // Dernières sessions
+      if (doc.lastAutoTable.finalY > 200) {
+        doc.addPage();
+      }
+
+      doc.setFontSize(14);
+      doc.setTextColor(123, 92, 255);
+      doc.text('Dernières Sessions', 14, doc.lastAutoTable.finalY > 200 ? 20 : doc.lastAutoTable.finalY + 15);
+
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY > 200 ? 25 : doc.lastAutoTable.finalY + 20,
+        head: [['Machine', 'Jeu', 'Client', 'Statut', 'Date']],
+        body: sessions.slice(0, 15).map(session => [
+          session.machine_name || 'N/A',
+          session.game_name || 'N/A',
+          session.customer_name || 'Invité',
+          session.is_active ? 'En cours' : 'Terminée',
+          new Date(session.start_time).toLocaleString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        ]),
+        theme: 'grid',
+        headStyles: { fillColor: [59, 130, 246] },
+        styles: { fontSize: 8 },
+      });
+
+      // Sauvegarder le PDF
+      const fileName = `statistiques_zstation_${filter}_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(fileName);
+
+      showToast("Export PDF réussi!", "success");
+    } catch (error) {
+      console.error("Export error:", error);
+      showToast("Erreur lors de l'export PDF", "error");
+    }
   };
 
   if (showStockManagement) {
@@ -167,10 +459,20 @@ function AdminDashboard({ user, onLogout }) {
             <span>Personnalisé</span>
           </button>
         </div>
-        <button onClick={loadData} style={styles.refreshBtn} disabled={loading}>
-          <RefreshCw size={16} style={loading ? styles.spinIcon : {}} />
-          <span>Actualiser</span>
-        </button>
+        <div style={styles.filterGroup}>
+          <button onClick={exportToExcel} style={styles.exportExcelBtn} disabled={loading || !stats}>
+            <FileSpreadsheet size={16} />
+            <span>Excel</span>
+          </button>
+          <button onClick={exportToPDF} style={styles.exportPdfBtn} disabled={loading || !stats}>
+            <FileText size={16} />
+            <span>PDF</span>
+          </button>
+          <button onClick={loadData} style={styles.refreshBtn} disabled={loading}>
+            <RefreshCw size={16} style={loading ? styles.spinIcon : {}} />
+            <span>Actualiser</span>
+          </button>
+        </div>
       </div>
 
       {/* Custom Date Picker */}
@@ -747,6 +1049,36 @@ const styles = {
     color: "#fff",
     borderColor: "transparent",
     boxShadow: "0 8px 24px rgba(123,92,255,0.3)",
+  },
+
+  exportExcelBtn: {
+    padding: "10px 20px",
+    background: "linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(5,150,105,0.05) 100%)",
+    border: "1px solid rgba(16,185,129,0.2)",
+    borderRadius: "10px",
+    color: "#10b981",
+    fontWeight: "700",
+    fontSize: "14px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    transition: "all 0.2s ease",
+  },
+
+  exportPdfBtn: {
+    padding: "10px 20px",
+    background: "linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(220,38,38,0.05) 100%)",
+    border: "1px solid rgba(239,68,68,0.2)",
+    borderRadius: "10px",
+    color: "#ef4444",
+    fontWeight: "700",
+    fontSize: "14px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    transition: "all 0.2s ease",
   },
 
   refreshBtn: {
