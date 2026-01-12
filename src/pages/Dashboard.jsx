@@ -292,19 +292,19 @@ Monnaie: ${receipt.change}
       <div style={bgGradient2} />
       <div style={bgGradient3} />
 
-      <div style={contentWrapper}>
+      <div className="dashboard-content-wrapper" style={contentWrapper}>
         {/* Header */}
-        <div style={header}>
-          <div>
-            <h1 style={headerTitle}>
+        <div className="dashboard-header" style={header}>
+          <div className="dashboard-header-left">
+            <h1 className="dashboard-header-title" style={headerTitle}>
               <Gamepad2 size={32} />
               Point de Vente ZSTATION
             </h1>
-            <p style={headerSubtitle}>
+            <p className="dashboard-header-subtitle" style={headerSubtitle}>
               {user.role === "agent" ? <User size={16} /> : <Crown size={16} />} {user.role === "agent" ? "Agent" : "Admin"} - {user.name}
             </p>
           </div>
-          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <div className="dashboard-header-buttons" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
             <ThemeToggle />
             <button
               onClick={() => setShowProducts(true)}
@@ -338,7 +338,7 @@ Monnaie: ${receipt.change}
 
         {/* Quick Stats Bar */}
         {!showStats && (
-          <div style={statsGrid}>
+          <div className="dashboard-stats-grid" style={statsGrid}>
             <div style={{...statCard, ...statCardGreen}}>
               <div style={statIcon}>
                 <Check size={32} color="#10b981" />
@@ -655,139 +655,155 @@ const emptyState = {
   fontSize: "16px",
 };
 
-// Add responsive styles
+// Add comprehensive responsive styles
 const styleSheet = document.createElement("style");
 styleSheet.textContent = `
-  /* Responsive Design for Dashboard */
+  /* Prevent horizontal scroll */
+  body, html {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+  }
+
+  /* Dashboard content wrapper */
+  .dashboard-content-wrapper {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* Machines grid */
+  .dashboard-machines-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Stats grid */
+  .dashboard-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* ========== TABLET (1024px and below) ========== */
   @media (max-width: 1024px) {
-    /* Tablets */
     .dashboard-machines-grid {
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
     }
   }
 
+  /* ========== MOBILE (768px and below) ========== */
   @media (max-width: 768px) {
-    /* Mobile Phones */
+    /* Prevent horizontal overflow */
+    body, html, #root {
+      overflow-x: hidden !important;
+      max-width: 100vw !important;
+    }
 
-    /* Header responsive */
-    header[style*="display: flex"] {
+    /* Content wrapper */
+    .dashboard-content-wrapper {
+      padding: 16px !important;
+    }
+
+    /* Header */
+    .dashboard-header {
       flex-direction: column !important;
       gap: 16px !important;
       padding: 20px 16px !important;
+      align-items: stretch !important;
     }
 
-    header[style*="display: flex"] > div:first-child {
-      width: 100%;
-      text-align: center;
+    .dashboard-header-left {
+      width: 100% !important;
+      text-align: center !important;
     }
 
-    header[style*="display: flex"] > div:last-child {
-      width: 100%;
-      flex-direction: column !important;
-      gap: 10px !important;
-    }
-
-    /* Header title */
-    h1[style*="fontSize"] {
+    .dashboard-header-title {
       font-size: 22px !important;
+      justify-content: center !important;
     }
 
-    /* Header subtitle */
-    p[style*="fontSize: 14px"] {
+    .dashboard-header-subtitle {
       font-size: 12px !important;
       justify-content: center !important;
     }
 
-    /* Buttons in header */
-    header button {
+    .dashboard-header-buttons {
+      width: 100% !important;
+      flex-direction: column !important;
+      gap: 10px !important;
+    }
+
+    .dashboard-header-buttons button {
       width: 100% !important;
       justify-content: center !important;
       padding: 12px 16px !important;
       font-size: 14px !important;
     }
 
-    /* Stats grid */
-    div[style*="gridTemplateColumns: repeat(auto-fit, minmax(250px, 1fr))"] {
+    /* Stats grid - single column */
+    .dashboard-stats-grid {
       grid-template-columns: 1fr !important;
       gap: 16px !important;
     }
 
-    /* Stat cards */
-    div[style*="gridTemplateColumns: repeat(auto-fit, minmax(250px, 1fr))"] > div {
+    .dashboard-stats-grid > div {
       padding: 20px !important;
     }
 
     /* Stat values */
-    div[style*="fontSize: 32px"][style*="fontWeight: 700"] {
+    .dashboard-stats-grid div[style*="fontSize: 32px"] {
       font-size: 28px !important;
     }
 
-    /* Machines grid */
-    .dashboard-machines-grid,
-    div[style*="gridTemplateColumns: repeat(auto-fill, minmax(350px, 1fr))"] {
+    /* Machines grid - single column */
+    .dashboard-machines-grid {
       grid-template-columns: 1fr !important;
       gap: 16px !important;
     }
 
-    /* Content wrapper */
-    div[style*="padding: 24px"] {
-      padding: 16px !important;
-    }
-
-    /* Cards padding */
-    div[style*="padding: 32px"][style*="borderRadius: 16px"] {
-      padding: 20px !important;
-    }
-
     /* Card titles */
-    h2[style*="fontSize: 24px"] {
+    h2 {
       font-size: 20px !important;
     }
   }
 
+  /* ========== SMALL MOBILE (480px and below) ========== */
   @media (max-width: 480px) {
-    /* Small Mobile Phones */
+    .dashboard-content-wrapper {
+      padding: 12px !important;
+    }
 
-    /* Even smaller text */
-    h1[style*="fontSize"] {
+    .dashboard-header {
+      padding: 16px 12px !important;
+    }
+
+    .dashboard-header-title {
       font-size: 18px !important;
     }
 
-    /* Smaller buttons */
-    button {
+    .dashboard-header-subtitle {
+      font-size: 11px !important;
+    }
+
+    .dashboard-header-buttons button {
       font-size: 13px !important;
       padding: 10px 14px !important;
     }
 
-    /* Smaller stat cards */
-    div[style*="gridTemplateColumns: repeat(auto-fit, minmax(250px, 1fr))"] > div {
+    .dashboard-stats-grid > div {
       padding: 16px !important;
     }
 
-    div[style*="fontSize: 32px"][style*="fontWeight: 700"] {
+    .dashboard-stats-grid div[style*="fontSize: 32px"] {
       font-size: 24px !important;
     }
 
-    /* Reduce content padding */
-    div[style*="padding: 24px"] {
-      padding: 12px !important;
-    }
-
-    div[style*="padding: 32px"][style*="borderRadius: 16px"] {
-      padding: 16px !important;
-    }
-  }
-
-  /* Utility class for machines grid */
-  .dashboard-machines-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 20px;
-  }
-
-  @media (max-width: 768px) {
-    .dashboard-machines-grid {
-      grid-template-columns: 1fr !important;
+    h2 {
+      font-size: 18px !important;
     }
   }
 `;
