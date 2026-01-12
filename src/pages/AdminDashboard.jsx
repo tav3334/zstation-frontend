@@ -400,16 +400,16 @@ function AdminDashboard({ user, onLogout }) {
       <div style={styles.bgGradient2} />
       <div style={styles.bgGradient3} />
 
-      <div style={styles.contentWrapper}>
+      <div className="contentWrapper" style={styles.contentWrapper}>
       {/* Header */}
-      <header style={styles.header} className="slide-down">
-        <div style={styles.headerLeft}>
+      <header className="header slide-down" style={styles.header}>
+        <div className="headerLeft" style={styles.headerLeft}>
           <div style={styles.logoContainer}>
             <div style={styles.logoIcon}><Crown size={24} /></div>
           </div>
           <div>
-            <h1 style={styles.headerTitle}>Admin Dashboard</h1>
-            <p style={styles.headerSubtitle}>
+            <h1 className="headerTitle" style={styles.headerTitle}>Admin Dashboard</h1>
+            <p className="headerSubtitle" style={styles.headerSubtitle}>
               <span style={styles.dot} />
               Bienvenue, <strong>{user.name}</strong>
             </p>
@@ -417,11 +417,11 @@ function AdminDashboard({ user, onLogout }) {
         </div>
         <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
           <ThemeToggle />
-          <button onClick={() => setShowStockManagement(true)} style={styles.stockBtn}>
+          <button className="stockBtn" onClick={() => setShowStockManagement(true)} style={styles.stockBtn}>
             <Package size={18} />
             <span>Gestion des Stocks</span>
           </button>
-          <button onClick={onLogout} style={styles.logoutBtn}>
+          <button className="logoutBtn" onClick={onLogout} style={styles.logoutBtn}>
             <LogOut size={18} />
             <span>Déconnexion</span>
           </button>
@@ -429,8 +429,8 @@ function AdminDashboard({ user, onLogout }) {
       </header>
 
       {/* Filter Bar */}
-      <div style={styles.filterBar} className="fade-in">
-        <div style={styles.filterGroup}>
+      <div className="filterBar fade-in" style={styles.filterBar}>
+        <div className="filterGroup" style={styles.filterGroup}>
           {[
             { id: "today", icon: <Calendar size={16} />, label: "Aujourd'hui" },
             { id: "week", icon: <BarChart3 size={16} />, label: "7 Jours" },
@@ -438,6 +438,7 @@ function AdminDashboard({ user, onLogout }) {
           ].map((filterItem) => (
             <button
               key={filterItem.id}
+              className="filterBtn"
               onClick={() => setFilter(filterItem.id)}
               style={{
                 ...styles.filterBtn,
@@ -459,16 +460,16 @@ function AdminDashboard({ user, onLogout }) {
             <span>Personnalisé</span>
           </button>
         </div>
-        <div style={styles.filterGroup}>
-          <button onClick={exportToExcel} style={styles.exportExcelBtn} disabled={loading || !stats}>
+        <div className="filterGroup" style={styles.filterGroup}>
+          <button className="exportExcelBtn" onClick={exportToExcel} style={styles.exportExcelBtn} disabled={loading || !stats}>
             <FileSpreadsheet size={16} />
             <span>Excel</span>
           </button>
-          <button onClick={exportToPDF} style={styles.exportPdfBtn} disabled={loading || !stats}>
+          <button className="exportPdfBtn" onClick={exportToPDF} style={styles.exportPdfBtn} disabled={loading || !stats}>
             <FileText size={16} />
             <span>PDF</span>
           </button>
-          <button onClick={loadData} style={styles.refreshBtn} disabled={loading}>
+          <button className="refreshBtn" onClick={loadData} style={styles.refreshBtn} disabled={loading}>
             <RefreshCw size={16} style={loading ? styles.spinIcon : {}} />
             <span>Actualiser</span>
           </button>
@@ -513,7 +514,7 @@ function AdminDashboard({ user, onLogout }) {
       )}
 
       {/* Stats Grid */}
-      <div style={styles.statsGrid}>
+      <div className="statsGrid" style={styles.statsGrid}>
         <StatCard
           icon={<DollarSign size={24} />}
           label="Recettes Sessions"
@@ -559,18 +560,18 @@ function AdminDashboard({ user, onLogout }) {
       </div>
 
       {/* Details Grid */}
-      <div style={styles.detailsGrid}>
+      <div className="detailsGrid" style={styles.detailsGrid}>
         {/* Top Games */}
-        <div style={styles.card} className="fade-in">
-          <div style={styles.cardHeader}>
-            <h3 style={styles.cardTitle}>
+        <div className="card fade-in" style={styles.card}>
+          <div className="cardHeader" style={styles.cardHeader}>
+            <h3 className="cardTitle" style={styles.cardTitle}>
               <span style={styles.cardIcon}><Gamepad2 size={20} /></span>
               Top Jeux
             </h3>
           </div>
           <div style={styles.cardBody}>
             {(stats?.top_games || []).map((game, idx) => (
-              <div key={game.game_id} style={styles.listItem} className="list-item">
+              <div key={game.game_id} className="listItem list-item" style={styles.listItem}>
                 <div style={styles.listItemLeft}>
                   <div style={styles.listItemRank}>{idx + 1}</div>
                   <div>
@@ -578,7 +579,7 @@ function AdminDashboard({ user, onLogout }) {
                     <div style={styles.listItemSubtitle}>{game.sessions_count} sessions</div>
                   </div>
                 </div>
-                <div style={styles.listItemAmount}>{game.total_revenue.toFixed(2)} DH</div>
+                <div className="listItemAmount" style={styles.listItemAmount}>{game.total_revenue.toFixed(2)} DH</div>
               </div>
             ))}
             {(!stats?.top_games || stats.top_games.length === 0) && (
@@ -820,12 +821,12 @@ function AdminDashboard({ user, onLogout }) {
 
 function StatCard({ icon, label, value, gradient, delay }) {
   return (
-    <div style={{ ...styles.statCard, animationDelay: delay }} className="stat-card">
+    <div className="statCard stat-card" style={{ ...styles.statCard, animationDelay: delay }}>
       <div style={{ ...styles.statCardBg, background: gradient }} />
       <div style={styles.statCardContent}>
         <div style={styles.statCardIcon}>{icon}</div>
         <div style={styles.statCardLabel}>{label}</div>
-        <div style={styles.statCardValue}>{value}</div>
+        <div className="statCardValue" style={styles.statCardValue}>{value}</div>
       </div>
     </div>
   );
