@@ -17,6 +17,7 @@ import StatsCard from "../components/StatsCard";
 import Toast from "../components/Toast";
 import ProductsModal from "../components/ProductsModal";
 import ThemeToggle from "../components/ThemeToggle";
+import UserProfile from "../components/UserProfile";
 
 function Dashboard({ user, onLogout }) {
   const [machines, setMachines] = useState([]);
@@ -27,6 +28,7 @@ function Dashboard({ user, onLogout }) {
   const [paymentSession, setPaymentSession] = useState(null);
   const [showStats, setShowStats] = useState(false);
   const [showProducts, setShowProducts] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [toast, setToast] = useState(null);
 
   // Helper pour afficher un toast
@@ -307,6 +309,15 @@ Monnaie: ${receipt.change}
           <div className="dashboard-header-buttons" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
             <ThemeToggle />
             <button
+              onClick={() => setShowProfile(true)}
+              style={buttonInfo}
+              onMouseOver={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
+              onMouseOut={(e) => e.currentTarget.style.transform = "translateY(0)"}
+            >
+              <User size={18} />
+              Profil
+            </button>
+            <button
               onClick={() => setShowProducts(true)}
               style={buttonSuccess}
               onMouseOver={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
@@ -432,6 +443,14 @@ Monnaie: ${receipt.change}
               showToast(message, "success");
               loadMachines();
             }}
+          />
+        )}
+
+        {showProfile && (
+          <UserProfile
+            user={user}
+            onClose={() => setShowProfile(false)}
+            showToast={showToast}
           />
         )}
       </div>
@@ -580,6 +599,22 @@ const buttonSuccess = {
   gap: "8px",
   transition: "all 0.2s ease",
   boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)",
+};
+
+const buttonInfo = {
+  padding: "12px 24px",
+  background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+  color: "white",
+  border: "none",
+  borderRadius: "12px",
+  cursor: "pointer",
+  fontSize: "15px",
+  fontWeight: "600",
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  transition: "all 0.2s ease",
+  boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)",
 };
 
 const statsGrid = {

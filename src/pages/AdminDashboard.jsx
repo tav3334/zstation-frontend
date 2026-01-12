@@ -17,13 +17,15 @@ import {
   Gamepad2,
   Clock,
   FileSpreadsheet,
-  FileText
+  FileText,
+  User
 } from "lucide-react";
 import api from "../services/api";
 import Toast from "../components/Toast";
 import StockManagement from "./StockManagement";
 import ProductSalesHistory from "./ProductSalesHistory";
 import ThemeToggle from "../components/ThemeToggle";
+import UserProfile from "../components/UserProfile";
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
@@ -40,6 +42,7 @@ function AdminDashboard({ user, onLogout }) {
   const [toast, setToast] = useState(null);
   const [showStockManagement, setShowStockManagement] = useState(false);
   const [showSalesHistory, setShowSalesHistory] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   const showToast = (message, type = "info", duration = 3000) => {
     setToast({ message, type, duration });
@@ -417,6 +420,10 @@ function AdminDashboard({ user, onLogout }) {
         </div>
         <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
           <ThemeToggle />
+          <button className="profileBtn" onClick={() => setShowProfile(true)} style={styles.profileBtn}>
+            <User size={18} />
+            <span>Profil</span>
+          </button>
           <button className="stockBtn" onClick={() => setShowStockManagement(true)} style={styles.stockBtn}>
             <Package size={18} />
             <span>Gestion des Stocks</span>
@@ -806,6 +813,15 @@ function AdminDashboard({ user, onLogout }) {
       </div>
       </div>
 
+      {/* User Profile Modal */}
+      {showProfile && (
+        <UserProfile
+          user={user}
+          onClose={() => setShowProfile(false)}
+          showToast={showToast}
+        />
+      )}
+
       {/* Toast Notification */}
       {toast && (
         <Toast
@@ -977,6 +993,21 @@ const styles = {
     background: "#10b981",
     boxShadow: "0 0 12px #10b981",
     animation: "pulse-dot 2s ease-in-out infinite",
+  },
+
+  profileBtn: {
+    padding: "12px 24px",
+    background: "linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(37,99,235,0.05) 100%)",
+    border: "1px solid rgba(59,130,246,0.2)",
+    borderRadius: "12px",
+    color: "#3b82f6",
+    fontWeight: "700",
+    fontSize: "14px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    transition: "all 0.2s ease",
   },
 
   stockBtn: {
