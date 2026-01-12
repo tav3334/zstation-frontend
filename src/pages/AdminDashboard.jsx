@@ -1540,10 +1540,176 @@ styleSheet.textContent = `
     cursor: not-allowed;
   }
 
+  @media (max-width: 1024px) {
+    .detailsGrid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+
   @media (max-width: 768px) {
-    .table-row {
+    /* Container and layout */
+    body, html {
+      overflow-x: hidden !important;
+    }
+
+    .contentWrapper {
+      padding: 16px !important;
+    }
+
+    /* Header responsive */
+    .header {
+      flex-direction: column !important;
+      gap: 16px !important;
+      padding: 20px 16px !important;
+    }
+
+    .headerLeft {
+      flex-direction: row !important;
+      width: 100% !important;
+    }
+
+    .logoContainer {
+      width: 48px !important;
+      height: 48px !important;
+    }
+
+    .headerTitle {
+      font-size: 22px !important;
+    }
+
+    .headerSubtitle {
+      font-size: 12px !important;
+    }
+
+    .stockBtn, .logoutBtn {
+      padding: 10px 16px !important;
+      font-size: 13px !important;
+    }
+
+    /* Filter bar responsive */
+    .filterBar {
+      flex-direction: column !important;
+      gap: 12px !important;
+      padding: 16px !important;
+    }
+
+    .filterGroup {
+      width: 100% !important;
+      justify-content: center !important;
+    }
+
+    .filterBtn, .exportExcelBtn, .exportPdfBtn, .refreshBtn {
+      padding: 10px 16px !important;
+      font-size: 13px !important;
+      flex: 1 !important;
+      min-width: 0 !important;
+    }
+
+    .filterBtn span, .exportExcelBtn span, .exportPdfBtn span, .refreshBtn span {
+      display: none !important;
+    }
+
+    /* Stats grid responsive */
+    .statsGrid {
+      grid-template-columns: 1fr !important;
+      gap: 16px !important;
+    }
+
+    .statCard {
+      padding: 20px !important;
+    }
+
+    .statCardValue {
+      font-size: 28px !important;
+    }
+
+    /* Details grid */
+    .detailsGrid {
+      grid-template-columns: 1fr !important;
+    }
+
+    /* Cards */
+    .card {
+      border-radius: 16px !important;
+    }
+
+    .cardHeader {
+      padding: 16px 20px !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 8px !important;
+    }
+
+    .cardTitle {
+      font-size: 16px !important;
+    }
+
+    /* List items */
+    .listItem {
+      padding: 16px 20px !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 12px !important;
+    }
+
+    .listItemAmount {
+      font-size: 20px !important;
+      align-self: flex-end !important;
+    }
+
+    /* Tables */
+    .tableRow {
       grid-template-columns: 1fr !important;
       gap: 12px !important;
+      padding: 16px 20px !important;
+    }
+
+    .tableCellTitle {
+      font-size: 14px !important;
+    }
+
+    .tableCellAmount {
+      font-size: 16px !important;
+    }
+
+    /* Custom date picker */
+    .dateInputs {
+      grid-template-columns: 1fr !important;
+    }
+
+    .datePickerActions {
+      flex-direction: column !important;
+    }
+
+    .applyBtn, .cancelBtn {
+      width: 100% !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .contentWrapper {
+      padding: 12px !important;
+    }
+
+    .headerTitle {
+      font-size: 18px !important;
+    }
+
+    .filterGroup {
+      flex-wrap: wrap !important;
+    }
+
+    .statCardValue {
+      font-size: 24px !important;
+    }
+
+    .cardTitle {
+      font-size: 14px !important;
+    }
+
+    .badge {
+      font-size: 10px !important;
+      padding: 4px 8px !important;
     }
   }
 `;
