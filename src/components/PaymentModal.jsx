@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function PaymentModal({ session, onConfirm, onClose }) {
+function PaymentModal({ session, onConfirm, onClose, zIndex = 2000 }) {
   const [amountGiven, setAmountGiven] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -42,7 +42,7 @@ function PaymentModal({ session, onConfirm, onClose }) {
   };
 
   return (
-    <div className="payment-modal-overlay" style={overlay}>
+    <div className="payment-modal-overlay" style={{...overlay, zIndex}}>
       <div className="payment-modal-content" style={modal}>
         <h2 style={modalTitle}>💰 Paiement</h2>
 
@@ -124,19 +124,12 @@ function PaymentModal({ session, onConfirm, onClose }) {
             disabled={!isValid || isProcessing}
             style={{
               ...button,
-              flex: 1,
+              width: '100%',
               backgroundColor: isValid ? "#4CAF50" : "#ccc",
               cursor: isValid ? "pointer" : "not-allowed"
             }}
           >
             {isProcessing ? "⏳ Traitement..." : "✅ Confirmer"}
-          </button>
-          <button
-            onClick={onClose}
-            disabled={isProcessing}
-            style={{ ...button, flex: 1, backgroundColor: "#f44336" }}
-          >
-            ❌ Annuler
           </button>
         </div>
       </div>

@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { User, Lock, Eye, EyeOff, Save, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { User, Lock, Eye, EyeOff, Save, X, Gamepad2 } from "lucide-react";
 import api from "../services/api";
 import useSanitize from "../hooks/useSanitize";
 
 function UserProfile({ user, onClose, showToast }) {
   const { sanitize } = useSanitize();
+  const [activeSessions, setActiveSessions] = useState(0);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -13,6 +14,26 @@ function UserProfile({ user, onClose, showToast }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Load active sessions count for agent
+  useEffect(() => {
+    const loadActiveSessions = async () => {
+      try {
+        const res = await api.get("/machines");
+        const activeCount = res.data.filter(m => m.status === 'occupied').length;
+        setActiveSessions(activeCount);
+      } catch (e) {
+        // Silent fail - not critical
+      }
+    };
+
+    if (user.role === 'agent') {
+      loadActiveSessions();
+      // Refresh every 10 seconds
+      const interval = setInterval(loadActiveSessions, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [user.role]);
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
@@ -85,6 +106,17 @@ function UserProfile({ user, onClose, showToast }) {
               {user.role === "admin" ? "Administrateur" : "Agent"}
             </span>
           </div>
+          {user.role === 'agent' && (
+            <div className="info-row">
+              <span className="info-label">
+                <Gamepad2 size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
+                Sessions actives:
+              </span>
+              <span className="info-value" style={{ fontSize: '18px', fontWeight: '700', color: '#f59e0b' }}>
+                {activeSessions}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="divider"></div>

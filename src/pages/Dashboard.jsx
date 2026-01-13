@@ -24,7 +24,7 @@ function Dashboard({ user, onLogout }) {
   const [selectedMachine, setSelectedMachine] = useState(null);
   const [selectedGame, setSelectedGame] = useState("");
   const [selectedPricing, setSelectedPricing] = useState("");
-  const [paymentSession, setPaymentSession] = useState(null);
+  const [paymentSessions, setPaymentSessions] = useState([]);
   const [showStats, setShowStats] = useState(false);
   const [showProducts, setShowProducts] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -124,8 +124,8 @@ function Dashboard({ user, onLogout }) {
     try {
       const res = await api.post(`/sessions/stop/${sessionId}`);
 
-      // Ouvrir le modal de paiement
-      setPaymentSession(res.data);
+      // Ajouter le modal de paiement à la liste (permet plusieurs modals simultanés)
+      setPaymentSessions(prev => [...prev, res.data]);
       await loadMachines();
     } catch (e) {
       showToast("Erreur arrêt session: " + (e.response?.data?.message || e.message), "error");
@@ -147,71 +147,13 @@ function Dashboard({ user, onLogout }) {
         return;
       }
 
-      // Générer et télécharger le reçu
-      try {
-        generateReceipt(receipt);
-      } catch (receiptError) {
-        showToast("Erreur lors de la génération du reçu: " + receiptError.message, "error");
-      }
-
       showToast(`Paiement enregistré avec succès! Montant: ${receipt.amount} - Monnaie: ${receipt.change}`, "success", 5000);
 
-      setPaymentSession(null);
+      // Retirer ce modal de la liste
+      setPaymentSessions(prev => prev.filter(ps => ps.session.id !== sessionId));
       await loadMachines();
     } catch (e) {
       showToast("Erreur paiement: " + (e.response?.data?.message || e.message), "error");
-    }
-  };
-
-  // ================= GENERATE RECEIPT =================
-  const generateReceipt = (receipt) => {
-
-    const receiptContent = `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         ZSTATION
-     Gaming Station Management
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Date: ${receipt.date}
-Session: #${receipt.session_id}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-DÉTAILS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Machine: ${receipt.machine}
-Jeu: ${receipt.game}
-Durée: ${receipt.duration}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PAIEMENT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Montant: ${receipt.amount}
-Donné: ${receipt.amount_given}
-Monnaie: ${receipt.change}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   Merci et à bientôt !
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-`;
-
-    try {
-      // Créer un blob et le télécharger
-      const blob = new Blob([receiptContent], { type: 'text/plain' });
-      const url = window.URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = url;
-      const filename = `Recu_${receipt.session_id}_${new Date().getTime()}.txt`;
-      link.download = filename;
-
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      throw error;
     }
   };
 
@@ -384,13 +326,15 @@ Monnaie: ${receipt.change}
           />
         )}
 
-        {paymentSession && (
+        {paymentSessions.map((paymentSession, index) => (
           <PaymentModal
+            key={paymentSession.session.id}
             session={paymentSession}
             onConfirm={processPayment}
-            onClose={() => setPaymentSession(null)}
+            onClose={() => setPaymentSessions(prev => prev.filter(ps => ps.session.id !== paymentSession.session.id))}
+            zIndex={2000 + index * 10}
           />
-        )}
+        ))}
 
         {showProducts && (
           <ProductsModal
