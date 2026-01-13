@@ -35,7 +35,7 @@ function UserProfile({ user, onClose, showToast }) {
     setLoading(true);
 
     try {
-      await api.post("/user/change-password", {
+      await api.post("/change-password", {
         current_password: currentPassword,
         new_password: newPassword,
         new_password_confirmation: confirmPassword
