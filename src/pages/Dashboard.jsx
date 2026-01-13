@@ -16,7 +16,6 @@ import PaymentModal from "../components/PaymentModal";
 import StatsCard from "../components/StatsCard";
 import Toast from "../components/Toast";
 import ProductsModal from "../components/ProductsModal";
-import ThemeToggle from "../components/ThemeToggle";
 import UserProfile from "../components/UserProfile";
 
 function Dashboard({ user, onLogout }) {
@@ -265,7 +264,6 @@ Monnaie: ${receipt.change}
             </p>
           </div>
           <div className="dashboard-header-buttons" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-            <ThemeToggle />
             <button
               onClick={() => setShowProfile(true)}
               style={buttonInfo}

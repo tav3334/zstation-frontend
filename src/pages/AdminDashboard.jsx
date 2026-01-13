@@ -24,7 +24,6 @@ import api from "../services/api";
 import Toast from "../components/Toast";
 import StockManagement from "./StockManagement";
 import ProductSalesHistory from "./ProductSalesHistory";
-import ThemeToggle from "../components/ThemeToggle";
 import UserProfile from "../components/UserProfile";
 
 // Lazy load heavy libraries - loaded only when export is triggered
@@ -422,7 +421,6 @@ function AdminDashboard({ user, onLogout }) {
           </div>
         </div>
         <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
-          <ThemeToggle />
           <button className="profileBtn" onClick={() => setShowProfile(true)} style={styles.profileBtn}>
             <User size={18} />
             <span>Profil</span>
