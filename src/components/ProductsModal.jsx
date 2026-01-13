@@ -16,7 +16,6 @@ function ProductsModal({ onClose, onSale }) {
       const res = await api.get("/products");
       setProducts(res.data);
     } catch (e) {
-      console.error("Error loading products:", e);
     }
   };
 

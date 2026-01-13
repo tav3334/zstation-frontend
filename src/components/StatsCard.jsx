@@ -11,7 +11,6 @@ function StatsCard() {
       setStats(res.data);
       setLoading(false);
     } catch (e) {
-      console.error("Stats error:", e);
       setLoading(false);
     }
   };

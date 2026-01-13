@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { User, Lock, Eye, EyeOff, Save, X } from "lucide-react";
 import api from "../services/api";
+import useSanitize from "../hooks/useSanitize";
 
 function UserProfile({ user, onClose, showToast }) {
+  const { sanitize } = useSanitize();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -47,7 +49,6 @@ function UserProfile({ user, onClose, showToast }) {
       setConfirmPassword("");
       setTimeout(() => onClose(), 1500);
     } catch (err) {
-      console.error("Erreur changement mot de passe:", err);
       const errorMessage = err.response?.data?.message || err.response?.data?.error || "Erreur lors du changement de mot de passe";
       setError(errorMessage);
       showToast(errorMessage, "error");
@@ -72,15 +73,15 @@ function UserProfile({ user, onClose, showToast }) {
         <div className="profile-info">
           <div className="info-row">
             <span className="info-label">Nom:</span>
-            <span className="info-value">{user.name}</span>
+            <span className="info-value">{sanitize(user.name)}</span>
           </div>
           <div className="info-row">
             <span className="info-label">Email:</span>
-            <span className="info-value">{user.email}</span>
+            <span className="info-value">{sanitize(user.email)}</span>
           </div>
           <div className="info-row">
             <span className="info-label">Rôle:</span>
-            <span className={`role-badge ${user.role}`}>
+            <span className={`role-badge ${sanitize(user.role)}`}>
               {user.role === "admin" ? "Administrateur" : "Agent"}
             </span>
           </div>

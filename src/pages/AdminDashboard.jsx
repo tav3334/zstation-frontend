@@ -26,9 +26,8 @@ import StockManagement from "./StockManagement";
 import ProductSalesHistory from "./ProductSalesHistory";
 import ThemeToggle from "../components/ThemeToggle";
 import UserProfile from "../components/UserProfile";
-import * as XLSX from 'xlsx';
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+
+// Lazy load heavy libraries - loaded only when export is triggered
 
 function AdminDashboard({ user, onLogout }) {
   const [stats, setStats] = useState(null);
@@ -79,7 +78,6 @@ function AdminDashboard({ user, onLogout }) {
       setSessions(sessionsRes.data.sessions || []);
       setLoading(false);
     } catch (e) {
-      console.error("Load error:", e);
       showToast("Erreur de chargement: " + (e.response?.data?.message || e.message), "error");
       setLoading(false);
     }
@@ -96,8 +94,11 @@ function AdminDashboard({ user, onLogout }) {
     loadData();
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     try {
+      // Lazy load XLSX library only when needed
+      const XLSX = await import('xlsx');
+
       // Créer un nouveau workbook
       const wb = XLSX.utils.book_new();
 
@@ -207,13 +208,16 @@ function AdminDashboard({ user, onLogout }) {
 
       showToast("Export Excel réussi!", "success");
     } catch (error) {
-      console.error("Export error:", error);
       showToast("Erreur lors de l'export Excel", "error");
     }
   };
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     try {
+      // Lazy load jsPDF library only when needed
+      const { jsPDF } = await import('jspdf');
+      await import('jspdf-autotable');
+
       const doc = new jsPDF();
 
       // Titre principal
@@ -378,7 +382,6 @@ function AdminDashboard({ user, onLogout }) {
 
       showToast("Export PDF réussi!", "success");
     } catch (error) {
-      console.error("Export error:", error);
       showToast("Erreur lors de l'export PDF", "error");
     }
   };

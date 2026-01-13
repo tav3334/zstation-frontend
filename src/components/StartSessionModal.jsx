@@ -27,9 +27,6 @@ function StartSessionModal({
     }
   }, [selectedGame, games, setSelectedPricing]);
 
-  console.log("📋 Modal opened with games:", games);
-  console.log("🎮 Selected game:", selectedGame);
-  console.log("💰 Available pricings:", availablePricings);
 
   return (
     <div className="session-modal-overlay" style={overlay}>

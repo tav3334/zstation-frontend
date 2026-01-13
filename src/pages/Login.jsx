@@ -115,7 +115,6 @@ function Login({ onLogin }) {
       api.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
       onLogin(res.data.user);
     } catch (err) {
-      console.error("Erreur de connexion:", err);
 
       const errorMessage = err.response?.data?.message || err.response?.data?.error || "Identifiants incorrects. Veuillez réessayer.";
       setError(errorMessage);

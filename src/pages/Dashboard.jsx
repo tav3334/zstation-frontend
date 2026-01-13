@@ -48,29 +48,22 @@ function Dashboard({ user, onLogout }) {
   const loadMachines = async () => {
     try {
       const res = await api.get("/machines");
-      console.log("MACHINES:", res.data);
       setMachines(res.data);
     } catch (e) {
-      console.error("LOAD MACHINES ERROR", e);
       showToast("Erreur chargement machines: " + (e.response?.data?.message || e.message), "error");
     }
   };
 
   const loadGames = async () => {
     try {
-      console.log("🔄 Chargement des jeux...");
       const res = await api.get("/games");
-      console.log("✅ GAMES LOADED:", res.data);
 
       if (!res.data || res.data.length === 0) {
-        console.warn("⚠️ Aucun jeu trouvé dans la base de données");
         showToast("Aucun jeu disponible. Ajoutez des jeux dans la base de données.", "warning");
       }
 
       setGames(res.data);
     } catch (e) {
-      console.error("❌ LOAD GAMES ERROR:", e);
-      console.error("Response:", e.response?.data);
       showToast("Erreur chargement jeux: " + (e.response?.data?.message || e.message), "error");
     }
   };
@@ -88,7 +81,6 @@ function Dashboard({ user, onLogout }) {
         await api.get('/sessions/check-auto-stop');
         await loadMachines(); // Recharger après auto-stop
       } catch (e) {
-        console.error('Auto-stop check error:', e);
       }
     }, 30000);
 
@@ -100,21 +92,13 @@ function Dashboard({ user, onLogout }) {
 
   // ================= START SESSION =================
   const startSession = async () => {
-    console.log("START SESSION PAYLOAD:", {
-      machine_id: selectedMachine?.id,
-      game_id: Number(selectedGame),
-      game_pricing_id: Number(selectedPricing),
-      pricing_mode_id: 1,
-      customer_id: null,
-    });
-
     if (!selectedMachine || !selectedGame || !selectedPricing) {
       showToast("Veuillez sélectionner machine, jeu et durée", "warning");
       return;
     }
 
     try {
-      const response = await api.post("/sessions/start", {
+      await api.post("/sessions/start", {
         machine_id: selectedMachine.id,
         game_id: Number(selectedGame),
         game_pricing_id: Number(selectedPricing),
@@ -122,7 +106,6 @@ function Dashboard({ user, onLogout }) {
         customer_id: null,
       });
 
-      console.log("SESSION STARTED:", response.data);
       showToast("Session démarrée avec succès!", "success");
 
       // Reset modal
@@ -133,7 +116,6 @@ function Dashboard({ user, onLogout }) {
       // Reload machines
       await loadMachines();
     } catch (e) {
-      console.error("START SESSION ERROR:", e.response?.data || e);
       showToast("Erreur démarrage session: " + (e.response?.data?.message || e.message), "error");
     }
   };
@@ -142,13 +124,11 @@ function Dashboard({ user, onLogout }) {
   const stopSession = async (sessionId) => {
     try {
       const res = await api.post(`/sessions/stop/${sessionId}`);
-      console.log("SESSION STOPPED:", res.data);
 
       // Ouvrir le modal de paiement
       setPaymentSession(res.data);
       await loadMachines();
     } catch (e) {
-      console.error("STOP SESSION ERROR:", e.response?.data || e);
       showToast("Erreur arrêt session: " + (e.response?.data?.message || e.message), "error");
     }
   };
@@ -156,31 +136,22 @@ function Dashboard({ user, onLogout }) {
   // ================= PROCESS PAYMENT =================
   const processPayment = async (sessionId, amountGiven) => {
     try {
-      console.log("💰 Processing payment:", { sessionId, amountGiven });
-
       const res = await api.post('/payments', {
         session_id: sessionId,
         amount_given: amountGiven
       });
 
-      console.log("✅ PAYMENT SUCCESS:", res.data);
-
       const receipt = res.data.receipt;
 
       if (!receipt) {
-        console.error("❌ NO RECEIPT in response!");
         showToast("Erreur: Reçu non généré par le serveur", "error");
         return;
       }
 
-      console.log("📄 Receipt data:", receipt);
-
       // Générer et télécharger le reçu
       try {
         generateReceipt(receipt);
-        console.log("✅ Receipt generated and downloaded!");
       } catch (receiptError) {
-        console.error("❌ Receipt generation error:", receiptError);
         showToast("Erreur lors de la génération du reçu: " + receiptError.message, "error");
       }
 
@@ -189,14 +160,12 @@ function Dashboard({ user, onLogout }) {
       setPaymentSession(null);
       await loadMachines();
     } catch (e) {
-      console.error("❌ PAYMENT ERROR:", e.response?.data || e);
       showToast("Erreur paiement: " + (e.response?.data?.message || e.message), "error");
     }
   };
 
   // ================= GENERATE RECEIPT =================
   const generateReceipt = (receipt) => {
-    console.log("📝 Generating receipt with data:", receipt);
 
     const receiptContent = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -228,31 +197,21 @@ Monnaie: ${receipt.change}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `;
 
-    console.log("📄 Receipt content created, length:", receiptContent.length);
-
     try {
       // Créer un blob et le télécharger
       const blob = new Blob([receiptContent], { type: 'text/plain' });
-      console.log("📦 Blob created, size:", blob.size);
-
       const url = window.URL.createObjectURL(blob);
-      console.log("🔗 URL created:", url);
 
       const link = document.createElement('a');
       link.href = url;
       const filename = `Recu_${receipt.session_id}_${new Date().getTime()}.txt`;
       link.download = filename;
 
-      console.log("💾 Downloading file:", filename);
-
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-
-      console.log("✅ Receipt download triggered successfully!");
     } catch (error) {
-      console.error("❌ Error in receipt generation:", error);
       throw error;
     }
   };
@@ -267,7 +226,6 @@ Monnaie: ${receipt.change}
       alert(`✅ Session prolongée ! Total payé : ${res.data.total_paid} DH`);
       await loadMachines();
     } catch (e) {
-      console.error("EXTEND SESSION ERROR:", e.response?.data || e);
       alert("Erreur prolongation: " + (e.response?.data?.message || e.message));
     }
   };

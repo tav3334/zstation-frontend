@@ -45,7 +45,6 @@ function StockManagement({ onBack }) {
       const res = await api.get("/products/low-stock");
       setLowStockProducts(res.data.products);
     } catch (e) {
-      console.error("Error loading low stock:", e);
     }
   };
 

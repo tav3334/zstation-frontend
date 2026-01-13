@@ -4,11 +4,9 @@ function PaymentModal({ session, onConfirm, onClose }) {
   const [amountGiven, setAmountGiven] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  console.log("🔍 PaymentModal received session:", session);
 
   // Vérifier que session existe
   if (!session) {
-    console.error("❌ PaymentModal: session is null or undefined!");
     return null;
   }
 
@@ -27,7 +25,6 @@ function PaymentModal({ session, onConfirm, onClose }) {
     }
 
     if (!sessionData || !sessionData.id) {
-      console.error("❌ No session ID found!");
       alert("Erreur: ID de session manquant");
       return;
     }

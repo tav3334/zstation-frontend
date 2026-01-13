@@ -28,11 +28,9 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
 
       // AUTO-STOP quand le temps est écoulé
       if (remainingSeconds <= 0 && !autoStopTriggered) {
-        console.log(`🛑 AUTO-STOP: Session ${machine.active_session.id} sur ${machine.name}`);
         setAutoStopTriggered(true);
 
         setTimeout(() => {
-          console.log("🛑 Arrêt automatique de la session...");
           onStop(machine.active_session.id);
         }, 5000);
       }

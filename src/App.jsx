@@ -1,9 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import './App.css';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import AdminDashboard from './pages/AdminDashboard';
 import api from './services/api';
+
+// Lazy load pages for better performance
+const Login = lazy(() => import('./pages/Login'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+
+// Loading component
+const LoadingScreen = () => (
+  <div style={{
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '100vh',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    color: '#fff'
+  }}>
+    <div style={{
+      width: '50px',
+      height: '50px',
+      border: '4px solid rgba(255,255,255,0.3)',
+      borderTop: '4px solid #fff',
+      borderRadius: '50%',
+      animation: 'spin 1s linear infinite'
+    }}></div>
+    <h2 style={{ marginTop: '20px' }}>Chargement...</h2>
+    <style>{`
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `}</style>
+  </div>
+);
 
 function App() {
   const [user, setUser] = useState(null);
@@ -30,7 +61,6 @@ function App() {
     try {
       await api.post('/logout');
     } catch (e) {
-      console.error('Logout error:', e);
     }
     
     localStorage.removeItem('token');
@@ -40,30 +70,23 @@ function App() {
   };
 
   if (loading) {
-    return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: '100vh' 
-      }}>
-        <h2>Chargement...</h2>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
-  // Si pas connecté → Login
-  if (!user) {
-    return <Login onLogin={handleLogin} />;
-  }
-
-  // Si Admin → Dashboard Admin
-  if (user.role === 'admin') {
-    return <AdminDashboard user={user} onLogout={handleLogout} />;
-  }
-
-  // Si Agent → Dashboard Caisse
-  return <Dashboard user={user} onLogout={handleLogout} />;
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      {/* Si pas connecté → Login */}
+      {!user ? (
+        <Login onLogin={handleLogin} />
+      ) : user.role === 'admin' ? (
+        /* Si Admin → Dashboard Admin */
+        <AdminDashboard user={user} onLogout={handleLogout} />
+      ) : (
+        /* Si Agent → Dashboard Caisse */
+        <Dashboard user={user} onLogout={handleLogout} />
+      )}
+    </Suspense>
+  );
 }
 
 export default App;
