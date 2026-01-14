@@ -172,7 +172,7 @@ function Dashboard({ user, onLogout }) {
   };
 
   // Calculer les stats en temps réel
-  const activeSessions = machines.filter(m => m.status === 'occupied').length;
+  const activeSessions = machines.filter(m => m.status === 'in_session').length;
   const availableMachines = machines.filter(m => m.status === 'available').length;
 
   // ================= RENDER =================
