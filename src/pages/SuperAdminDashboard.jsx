@@ -718,74 +718,76 @@ function UserModal({ user, onClose, onSuccess }) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Nom complet</label>
-            <input
-              type="text"
-              style={styles.input}
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
+        <form onSubmit={handleSubmit} style={styles.formCompact}>
+          <div style={styles.formRow}>
+            <div style={styles.formGroup}>
+              <label style={styles.labelSmall}>Nom</label>
+              <input
+                type="text"
+                style={styles.inputSmall}
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+                placeholder="Nom complet"
+              />
+            </div>
+            <div style={styles.formGroup}>
+              <label style={styles.labelSmall}>Rôle</label>
+              <select
+                style={styles.inputSmall}
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                required
+              >
+                <option value="agent">Agent</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
           </div>
 
           <div style={styles.formGroup}>
-            <label style={styles.label}>Email</label>
+            <label style={styles.labelSmall}>Email</label>
             <input
               type="email"
-              style={styles.input}
+              style={styles.inputSmall}
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
+              placeholder="email@exemple.com"
             />
           </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Rôle</label>
-            <select
-              style={styles.input}
-              value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-              required
-            >
-              <option value="agent">Agent (Caisse)</option>
-              <option value="admin">Admin (Statistiques)</option>
-            </select>
+          <div style={styles.formRow}>
+            <div style={styles.formGroup}>
+              <label style={styles.labelSmall}>{user ? 'Nouveau MDP' : 'Mot de passe'}</label>
+              <input
+                type="password"
+                style={styles.inputSmall}
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                required={!user}
+                placeholder="••••••••"
+              />
+            </div>
+            <div style={styles.formGroup}>
+              <label style={styles.labelSmall}>Confirmer</label>
+              <input
+                type="password"
+                style={styles.inputSmall}
+                value={formData.password_confirmation}
+                onChange={(e) => setFormData({ ...formData, password_confirmation: e.target.value })}
+                required={!user || formData.password}
+                placeholder="••••••••"
+              />
+            </div>
           </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>
-              {user ? 'Nouveau mot de passe (laisser vide pour ne pas changer)' : 'Mot de passe'}
-            </label>
-            <input
-              type="password"
-              style={styles.input}
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              required={!user}
-            />
-          </div>
+          {error && <div style={styles.errorSmall}>{error}</div>}
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Confirmer le mot de passe</label>
-            <input
-              type="password"
-              style={styles.input}
-              value={formData.password_confirmation}
-              onChange={(e) => setFormData({ ...formData, password_confirmation: e.target.value })}
-              required={!user || formData.password}
-            />
-          </div>
-
-          {error && <div style={styles.error}>{error}</div>}
-
-          <div style={styles.modalActions}>
-            <button type="button" style={styles.cancelBtn} onClick={onClose}>
-              Annuler
-            </button>
-            <button type="submit" style={styles.submitBtn} disabled={loading}>
-              {loading ? 'Enregistrement...' : user ? 'Modifier' : 'Créer'}
+          <div style={styles.modalActionsCompact}>
+            <button type="button" style={styles.cancelBtnSmall} onClick={onClose}>Annuler</button>
+            <button type="submit" style={styles.submitBtnSmall} disabled={loading}>
+              {loading ? '...' : user ? 'Modifier' : 'Créer'}
             </button>
           </div>
         </form>
@@ -1423,10 +1425,10 @@ const styles = {
   },
   modalContent: {
     background: '#1e293b',
-    borderRadius: '20px',
+    borderRadius: '16px',
     padding: '0',
     width: '90%',
-    maxWidth: '550px',
+    maxWidth: '420px',
     boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
     animation: 'slideUp 0.3s',
     border: '1px solid #334155'
@@ -1435,13 +1437,13 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '24px 30px',
-    borderBottom: '2px solid #334155'
+    padding: '16px 20px',
+    borderBottom: '1px solid #334155'
   },
   modalTitle: {
     margin: 0,
-    fontSize: '22px',
-    fontWeight: '800',
+    fontSize: '16px',
+    fontWeight: '700',
     color: '#f1f5f9'
   },
   closeBtn: {
@@ -1515,15 +1517,21 @@ const styles = {
     gap: '20px',
     padding: '24px 30px 30px 30px'
   },
+  formCompact: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    padding: '16px 20px 20px 20px'
+  },
   formGroup: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px',
+    gap: '6px',
     flex: 1
   },
   formRow: {
     display: 'flex',
-    gap: '16px'
+    gap: '12px'
   },
   label: {
     fontSize: '13px',
@@ -1532,11 +1540,29 @@ const styles = {
     textTransform: 'uppercase',
     letterSpacing: '0.5px'
   },
+  labelSmall: {
+    fontSize: '11px',
+    fontWeight: '700',
+    color: '#94a3b8',
+    textTransform: 'uppercase',
+    letterSpacing: '0.3px'
+  },
   input: {
     padding: '12px 14px',
     border: '2px solid #334155',
     borderRadius: '10px',
     fontSize: '14px',
+    outline: 'none',
+    transition: 'all 0.3s',
+    fontWeight: '500',
+    background: '#0f172a',
+    color: '#f1f5f9'
+  },
+  inputSmall: {
+    padding: '10px 12px',
+    border: '1px solid #334155',
+    borderRadius: '8px',
+    fontSize: '13px',
     outline: 'none',
     transition: 'all 0.3s',
     fontWeight: '500',
@@ -1551,6 +1577,15 @@ const styles = {
     color: '#fca5a5',
     fontSize: '14px',
     fontWeight: '700'
+  },
+  errorSmall: {
+    padding: '8px 12px',
+    background: '#450a0a',
+    border: '1px solid #7f1d1d',
+    borderRadius: '6px',
+    color: '#fca5a5',
+    fontSize: '12px',
+    fontWeight: '600'
   },
   modalActions: {
     display: 'flex',
@@ -1579,6 +1614,35 @@ const styles = {
     cursor: 'pointer',
     fontWeight: '700',
     fontSize: '14px',
+    transition: 'all 0.2s'
+  },
+  modalActionsCompact: {
+    display: 'flex',
+    gap: '10px',
+    marginTop: '8px'
+  },
+  cancelBtnSmall: {
+    flex: 1,
+    padding: '10px',
+    background: '#334155',
+    color: '#f1f5f9',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontWeight: '600',
+    fontSize: '13px',
+    transition: 'all 0.2s'
+  },
+  submitBtnSmall: {
+    flex: 1,
+    padding: '10px',
+    background: '#6366f1',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontWeight: '600',
+    fontSize: '13px',
     transition: 'all 0.2s'
   }
 };
