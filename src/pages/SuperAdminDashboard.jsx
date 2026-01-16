@@ -530,7 +530,7 @@ function DashboardView({ stats, machines, users, games, onNavigate }) {
                 </div>
                 <div style={styles.recentInfo}>
                   <span style={styles.recentName}>{g.name}</span>
-                  <span style={styles.recentMeta}>{g.price_1h} DH/h</span>
+                  <span style={styles.recentMeta}>{g.price_1h || g.price_30min || g.price_6min} DH</span>
                 </div>
               </div>
             ))}
@@ -819,10 +819,11 @@ function GamesTable({ games, loading, onEdit, onDelete }) {
               </td>
               <td style={styles.td}>
                 <div style={styles.pricingGrid}>
+                  <PricingBadge duration="6 min" price={game.price_6min} />
+                  <PricingBadge duration="30 min" price={game.price_30min} />
                   <PricingBadge duration="60 min" price={game.price_1h} />
                   <PricingBadge duration="120 min" price={game.price_2h} />
                   <PricingBadge duration="180 min" price={game.price_3h} />
-                  <PricingBadge duration="480 min" price={game.price_night} label="Nuit" />
                 </div>
               </td>
               <td style={styles.td}>
@@ -1116,10 +1117,11 @@ function MachineModal({ machine, onClose, onSuccess }) {
 function GameModal({ game, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     name: game?.name || '',
+    price_6min: game?.price_6min || '',
+    price_30min: game?.price_30min || '',
     price_1h: game?.price_1h || '',
     price_2h: game?.price_2h || '',
-    price_3h: game?.price_3h || '',
-    price_night: game?.price_night || ''
+    price_3h: game?.price_3h || ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -1143,11 +1145,20 @@ function GameModal({ game, onClose, onSuccess }) {
     }
   };
 
+  const pricingFields = [
+    { key: 'price_6min', label: '6 min', placeholder: '6' },
+    { key: 'price_30min', label: '30 min', placeholder: '10' },
+    { key: 'price_1h', label: '60 min', placeholder: '20' },
+    { key: 'price_2h', label: '120 min', placeholder: '45' },
+    { key: 'price_3h', label: '180 min', placeholder: '60' }
+  ];
+
   return (
     <div style={styles.modalOverlay} onClick={onClose}>
-      <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+      <div style={{...styles.modalContent, maxWidth: '500px'}} onClick={(e) => e.stopPropagation()}>
         <div style={styles.modalHeader}>
           <h3 style={styles.modalTitle}>
+            <Gamepad2 size={20} style={{marginRight: '8px'}} />
             {game ? 'Modifier Jeu' : 'Nouveau Jeu'}
           </h3>
           <button style={styles.closeBtn} onClick={onClose}>
@@ -1155,12 +1166,12 @@ function GameModal({ game, onClose, onSuccess }) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
+        <form onSubmit={handleSubmit} style={styles.formCompact}>
           <div style={styles.formGroup}>
-            <label style={styles.label}>Nom du Jeu</label>
+            <label style={styles.labelSmall}>Nom du Jeu</label>
             <input
               type="text"
-              style={styles.input}
+              style={styles.inputSmall}
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Ex: FIFA 25, Call of Duty"
@@ -1168,70 +1179,38 @@ function GameModal({ game, onClose, onSuccess }) {
             />
           </div>
 
-          <div style={styles.formRow}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Prix 1h (DH)</label>
-              <input
-                type="number"
-                style={styles.input}
-                value={formData.price_1h}
-                onChange={(e) => setFormData({ ...formData, price_1h: e.target.value })}
-                required
-                min="0"
-                step="0.01"
-              />
-            </div>
-
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Prix 2h (DH)</label>
-              <input
-                type="number"
-                style={styles.input}
-                value={formData.price_2h}
-                onChange={(e) => setFormData({ ...formData, price_2h: e.target.value })}
-                required
-                min="0"
-                step="0.01"
-              />
+          <div style={{marginTop: '8px'}}>
+            <label style={{...styles.labelSmall, marginBottom: '10px', display: 'block'}}>
+              Tarification (DH)
+            </label>
+            <div style={styles.pricingFieldsGrid}>
+              {pricingFields.map((field) => (
+                <div key={field.key} style={styles.pricingFieldItem}>
+                  <span style={styles.pricingFieldLabel}>{field.label}</span>
+                  <input
+                    type="number"
+                    style={styles.pricingFieldInput}
+                    value={formData[field.key]}
+                    onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
+                    placeholder={field.placeholder}
+                    required
+                    min="0"
+                    step="0.01"
+                  />
+                  <span style={styles.pricingFieldUnit}>DH</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div style={styles.formRow}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Prix 3h (DH)</label>
-              <input
-                type="number"
-                style={styles.input}
-                value={formData.price_3h}
-                onChange={(e) => setFormData({ ...formData, price_3h: e.target.value })}
-                required
-                min="0"
-                step="0.01"
-              />
-            </div>
+          {error && <div style={styles.errorSmall}>{error}</div>}
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Nuit Complète (DH)</label>
-              <input
-                type="number"
-                style={styles.input}
-                value={formData.price_night}
-                onChange={(e) => setFormData({ ...formData, price_night: e.target.value })}
-                required
-                min="0"
-                step="0.01"
-              />
-            </div>
-          </div>
-
-          {error && <div style={styles.error}>{error}</div>}
-
-          <div style={styles.modalActions}>
-            <button type="button" style={styles.cancelBtn} onClick={onClose}>
+          <div style={styles.modalActionsCompact}>
+            <button type="button" style={styles.cancelBtnSmall} onClick={onClose}>
               Annuler
             </button>
-            <button type="submit" style={styles.submitBtn} disabled={loading}>
-              {loading ? 'Enregistrement...' : game ? 'Modifier' : 'Créer'}
+            <button type="submit" style={styles.submitBtnSmall} disabled={loading}>
+              {loading ? '...' : game ? 'Modifier' : 'Créer'}
             </button>
           </div>
         </form>
@@ -1706,6 +1685,47 @@ const styles = {
     color: '#10b981',
     fontWeight: '700',
     marginTop: '2px'
+  },
+
+  // Pricing form fields
+  pricingFieldsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(5, 1fr)',
+    gap: '8px'
+  },
+  pricingFieldItem: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: '10px 6px',
+    background: '#0f172a',
+    borderRadius: '10px',
+    border: '1px solid #334155'
+  },
+  pricingFieldLabel: {
+    fontSize: '11px',
+    color: '#94a3b8',
+    fontWeight: '600',
+    marginBottom: '6px'
+  },
+  pricingFieldInput: {
+    width: '100%',
+    padding: '8px 4px',
+    border: '1px solid #334155',
+    borderRadius: '6px',
+    fontSize: '14px',
+    fontWeight: '700',
+    textAlign: 'center',
+    outline: 'none',
+    background: '#1e293b',
+    color: '#10b981',
+    transition: 'all 0.2s'
+  },
+  pricingFieldUnit: {
+    fontSize: '10px',
+    color: '#64748b',
+    fontWeight: '600',
+    marginTop: '4px'
   },
 
   // Legacy styles below
