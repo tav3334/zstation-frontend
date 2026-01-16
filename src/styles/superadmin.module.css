@@ -1,87 +1,19 @@
-/* Super Admin Dashboard Styles */
+/* Super Admin Dashboard Styles - Enhanced & Responsive */
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .header {
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .headerRight {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .tabsContainer {
-    flex-direction: column;
-  }
-
-  .tableContainer {
-    overflow-x: auto;
-  }
-
-  .actionBtns {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .modalContent {
-    width: 95% !important;
-    padding: 20px !important;
-  }
-
-  .formRow {
-    flex-direction: column !important;
-  }
-}
-
-/* Hover effects */
-.logoutBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
-}
-
-.createBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.editBtn:hover {
-  background: #2563eb;
-}
-
-.deleteBtn:hover {
-  background: #dc2626;
-}
-
-.tab:hover:not(.tabActive) {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-}
-
-.tr:hover {
-  background: #f9fafb;
-}
-
-.input:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.cancelBtn:hover {
-  background: #d1d5db;
-}
-
-.submitBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-/* Animations */
+/* ==========  ANIMATIONS ========== */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -89,29 +21,179 @@
   }
 }
 
-.modalOverlay {
-  animation: fadeIn 0.2s ease-out;
-}
-
-.modalContent {
-  animation: fadeIn 0.3s ease-out;
-}
-
-/* Loading spinner */
-.loading::after {
-  content: '';
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  margin-left: 10px;
-  border: 3px solid #f3f4f6;
-  border-top-color: #667eea;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
 @keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
   to {
     transform: rotate(360deg);
   }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Spinning class for icons */
+:global(.spin) {
+  animation: spin 1s linear infinite;
+}
+
+/* ========== HOVER EFFECTS ========== */
+button:hover {
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+input:focus,
+select:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+}
+
+/* Table row hover */
+table tbody tr:hover {
+  background: #f9fafb;
+}
+
+/* ========== RESPONSIVE DESIGN ========== */
+@media (max-width: 1024px) {
+  .statsContainer {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+
+  .headerRight {
+    width: 100%;
+    flex-direction: column !important;
+  }
+
+  .statsContainer {
+    grid-template-columns: 1fr !important;
+  }
+
+  .toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .searchContainer {
+    max-width: 100% !important;
+  }
+
+  .toolbarActions {
+    flex-direction: column !important;
+  }
+
+  .toolbarActions button {
+    width: 100%;
+  }
+
+  .tableContainer {
+    overflow-x: auto;
+  }
+
+  .actionBtns {
+    flex-direction: row !important;
+    justify-content: center;
+  }
+
+  .modalContent {
+    width: 95% !important;
+    margin: 20px;
+  }
+
+  .formRow {
+    flex-direction: column !important;
+  }
+
+  .deleteModalActions {
+    flex-direction: column !important;
+  }
+
+  .deleteModalActions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 20px !important;
+  }
+
+  .subtitle {
+    font-size: 12px !important;
+  }
+
+  .logoContainer {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .userAvatar {
+    width: 40px !important;
+    height: 40px !important;
+    fontSize: 16px !important;
+  }
+
+  .statValue {
+    font-size: 24px !important;
+  }
+
+  .statTitle {
+    font-size: 11px !important;
+  }
+
+  table th,
+  table td {
+    padding: 12px 8px !important;
+    font-size: 12px !important;
+  }
+}
+
+/* ========== SCROLL IMPROVEMENTS ========== */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #667eea #f1f1f1;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+/* ========== ACCESSIBILITY ========== */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid #667eea;
+  outline-offset: 2px;
 }

@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Users, Monitor, Gamepad2, LogOut, Settings, TrendingUp, UserCog } from 'lucide-react';
+import {
+  Users, Monitor, Gamepad2, LogOut, UserCog, Search, Plus,
+  Edit2, Trash2, X, Check, AlertCircle, TrendingUp, Activity,
+  Filter, Download, RefreshCw
+} from 'lucide-react';
 import api from '../services/api';
 import Toast from '../components/Toast';
 import '../styles/superadmin.module.css';
@@ -8,24 +12,49 @@ function SuperAdminDashboard({ user, onLogout }) {
   const [activeTab, setActiveTab] = useState('users');
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // États pour les données
   const [users, setUsers] = useState([]);
   const [machines, setMachines] = useState([]);
   const [games, setGames] = useState([]);
 
+  // États pour les statistiques
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalMachines: 0,
+    totalGames: 0,
+    activeUsers: 0
+  });
+
   // États pour les modals
   const [showUserModal, setShowUserModal] = useState(false);
   const [showMachineModal, setShowMachineModal] = useState(false);
   const [showGameModal, setShowGameModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [deletingItem, setDeletingItem] = useState(null);
 
   // Charger les données selon l'onglet actif
   useEffect(() => {
-    if (activeTab === 'users') fetchUsers();
-    else if (activeTab === 'machines') fetchMachines();
-    else if (activeTab === 'games') fetchGames();
+    loadData();
   }, [activeTab]);
+
+  // Calculer les statistiques
+  useEffect(() => {
+    setStats({
+      totalUsers: users.length,
+      totalMachines: machines.length,
+      totalGames: games.length,
+      activeUsers: users.filter(u => u.role === 'agent' || u.role === 'admin').length
+    });
+  }, [users, machines, games]);
+
+  const loadData = async () => {
+    if (activeTab === 'users') await fetchUsers();
+    else if (activeTab === 'machines') await fetchMachines();
+    else if (activeTab === 'games') await fetchGames();
+  };
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -45,25 +74,33 @@ function SuperAdminDashboard({ user, onLogout }) {
     }
   };
 
-  const handleCreateUser = () => {
-    setEditingItem(null);
-    setShowUserModal(true);
+  const handleDeleteUser = (user) => {
+    setDeletingItem({ type: 'user', data: user });
+    setShowDeleteConfirm(true);
   };
 
-  const handleEditUser = (user) => {
-    setEditingItem(user);
-    setShowUserModal(true);
-  };
-
-  const handleDeleteUser = async (userId) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) return;
+  const confirmDelete = async () => {
+    if (!deletingItem) return;
 
     try {
-      await api.delete(`/super-admin/users/${userId}`);
-      showToast('Utilisateur supprimé avec succès', 'success');
-      fetchUsers();
+      if (deletingItem.type === 'user') {
+        await api.delete(`/super-admin/users/${deletingItem.data.id}`);
+        showToast('Utilisateur supprimé avec succès', 'success');
+        fetchUsers();
+      } else if (deletingItem.type === 'machine') {
+        await api.delete(`/super-admin/machines/${deletingItem.data.id}`);
+        showToast('Machine supprimée avec succès', 'success');
+        fetchMachines();
+      } else if (deletingItem.type === 'game') {
+        await api.delete(`/super-admin/games/${deletingItem.data.id}`);
+        showToast('Jeu supprimé avec succès', 'success');
+        fetchGames();
+      }
     } catch (error) {
       showToast(error.response?.data?.message || 'Erreur lors de la suppression', 'error');
+    } finally {
+      setShowDeleteConfirm(false);
+      setDeletingItem(null);
     }
   };
 
@@ -80,28 +117,6 @@ function SuperAdminDashboard({ user, onLogout }) {
     }
   };
 
-  const handleCreateMachine = () => {
-    setEditingItem(null);
-    setShowMachineModal(true);
-  };
-
-  const handleEditMachine = (machine) => {
-    setEditingItem(machine);
-    setShowMachineModal(true);
-  };
-
-  const handleDeleteMachine = async (machineId) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette machine ?')) return;
-
-    try {
-      await api.delete(`/super-admin/machines/${machineId}`);
-      showToast('Machine supprimée avec succès', 'success');
-      fetchMachines();
-    } catch (error) {
-      showToast(error.response?.data?.message || 'Erreur lors de la suppression', 'error');
-    }
-  };
-
   // ========== GESTION DES JEUX ==========
   const fetchGames = async () => {
     try {
@@ -115,26 +130,26 @@ function SuperAdminDashboard({ user, onLogout }) {
     }
   };
 
-  const handleCreateGame = () => {
-    setEditingItem(null);
-    setShowGameModal(true);
-  };
-
-  const handleEditGame = (game) => {
-    setEditingItem(game);
-    setShowGameModal(true);
-  };
-
-  const handleDeleteGame = async (gameId) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce jeu ?')) return;
-
-    try {
-      await api.delete(`/super-admin/games/${gameId}`);
-      showToast('Jeu supprimé avec succès', 'success');
-      fetchGames();
-    } catch (error) {
-      showToast(error.response?.data?.message || 'Erreur lors de la suppression', 'error');
+  // Filtrer les données selon la recherche
+  const getFilteredData = () => {
+    const query = searchQuery.toLowerCase();
+    if (activeTab === 'users') {
+      return users.filter(u =>
+        u.name?.toLowerCase().includes(query) ||
+        u.email?.toLowerCase().includes(query) ||
+        u.role?.toLowerCase().includes(query)
+      );
+    } else if (activeTab === 'machines') {
+      return machines.filter(m =>
+        m.machine_number?.toString().includes(query) ||
+        m.type?.toLowerCase().includes(query)
+      );
+    } else if (activeTab === 'games') {
+      return games.filter(g =>
+        g.name?.toLowerCase().includes(query)
+      );
     }
+    return [];
   };
 
   return (
@@ -143,11 +158,11 @@ function SuperAdminDashboard({ user, onLogout }) {
       <header style={styles.header}>
         <div style={styles.headerLeft}>
           <div style={styles.logoContainer}>
-            <UserCog size={32} color="#7b5cff" />
+            <UserCog size={28} color="#fff" strokeWidth={2.5} />
           </div>
           <div>
             <h1 style={styles.title}>Super Admin Panel</h1>
-            <p style={styles.subtitle}>Gestion globale du système</p>
+            <p style={styles.subtitle}>Gestion globale du système Z-STATION</p>
           </div>
         </div>
         <div style={styles.headerRight}>
@@ -167,61 +182,110 @@ function SuperAdminDashboard({ user, onLogout }) {
         </div>
       </header>
 
-      {/* Navigation Tabs */}
-      <nav style={styles.tabsContainer}>
-        <button
-          style={activeTab === 'users' ? { ...styles.tab, ...styles.tabActive } : styles.tab}
+      {/* Statistics Cards */}
+      <div style={styles.statsContainer}>
+        <StatCard
+          icon={<Users size={24} />}
+          title="Total Utilisateurs"
+          value={stats.totalUsers}
+          color="#667eea"
+          active={activeTab === 'users'}
           onClick={() => setActiveTab('users')}
-        >
-          <Users size={20} />
-          <span>Utilisateurs</span>
-        </button>
-        <button
-          style={activeTab === 'machines' ? { ...styles.tab, ...styles.tabActive } : styles.tab}
+        />
+        <StatCard
+          icon={<Monitor size={24} />}
+          title="Total Machines"
+          value={stats.totalMachines}
+          color="#f093fb"
+          active={activeTab === 'machines'}
           onClick={() => setActiveTab('machines')}
-        >
-          <Monitor size={20} />
-          <span>Machines</span>
-        </button>
-        <button
-          style={activeTab === 'games' ? { ...styles.tab, ...styles.tabActive } : styles.tab}
+        />
+        <StatCard
+          icon={<Gamepad2 size={24} />}
+          title="Total Jeux"
+          value={stats.totalGames}
+          color="#4facfe"
+          active={activeTab === 'games'}
           onClick={() => setActiveTab('games')}
-        >
-          <Gamepad2 size={20} />
-          <span>Jeux</span>
-        </button>
-      </nav>
+        />
+        <StatCard
+          icon={<Activity size={24} />}
+          title="Utilisateurs Actifs"
+          value={stats.activeUsers}
+          color="#43e97b"
+        />
+      </div>
 
-      {/* Content Area */}
-      <main style={styles.content}>
+      {/* Main Content */}
+      <div style={styles.mainContent}>
+        {/* Toolbar */}
+        <div style={styles.toolbar}>
+          <div style={styles.searchContainer}>
+            <Search size={20} style={styles.searchIcon} />
+            <input
+              type="text"
+              placeholder={`Rechercher ${activeTab === 'users' ? 'utilisateurs' : activeTab === 'machines' ? 'machines' : 'jeux'}...`}
+              style={styles.searchInput}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div style={styles.toolbarActions}>
+            <button style={styles.refreshBtn} onClick={loadData} disabled={loading}>
+              <RefreshCw size={18} className={loading ? 'spin' : ''} />
+              <span>Actualiser</span>
+            </button>
+            <button
+              style={styles.createBtn}
+              onClick={() => {
+                setEditingItem(null);
+                if (activeTab === 'users') setShowUserModal(true);
+                else if (activeTab === 'machines') setShowMachineModal(true);
+                else if (activeTab === 'games') setShowGameModal(true);
+              }}
+            >
+              <Plus size={18} />
+              <span>
+                {activeTab === 'users' ? 'Nouvel Utilisateur' :
+                 activeTab === 'machines' ? 'Nouvelle Machine' :
+                 'Nouveau Jeu'}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Content Tabs */}
         {activeTab === 'users' && (
-          <UsersTab
-            users={users}
+          <UsersTable
+            users={getFilteredData()}
             loading={loading}
-            onCreateUser={handleCreateUser}
-            onEditUser={handleEditUser}
-            onDeleteUser={handleDeleteUser}
+            onEdit={(user) => { setEditingItem(user); setShowUserModal(true); }}
+            onDelete={handleDeleteUser}
           />
         )}
         {activeTab === 'machines' && (
-          <MachinesTab
-            machines={machines}
+          <MachinesTable
+            machines={getFilteredData()}
             loading={loading}
-            onCreateMachine={handleCreateMachine}
-            onEditMachine={handleEditMachine}
-            onDeleteMachine={handleDeleteMachine}
+            onEdit={(machine) => { setEditingItem(machine); setShowMachineModal(true); }}
+            onDelete={(machine) => {
+              setDeletingItem({ type: 'machine', data: machine });
+              setShowDeleteConfirm(true);
+            }}
           />
         )}
         {activeTab === 'games' && (
-          <GamesTab
-            games={games}
+          <GamesTable
+            games={getFilteredData()}
             loading={loading}
-            onCreateGame={handleCreateGame}
-            onEditGame={handleEditGame}
-            onDeleteGame={handleDeleteGame}
+            onEdit={(game) => { setEditingItem(game); setShowGameModal(true); }}
+            onDelete={(game) => {
+              setDeletingItem({ type: 'game', data: game });
+              setShowDeleteConfirm(true);
+            }}
           />
         )}
-      </main>
+      </div>
 
       {/* Modals */}
       {showUserModal && (
@@ -260,200 +324,247 @@ function SuperAdminDashboard({ user, onLogout }) {
         />
       )}
 
+      {showDeleteConfirm && (
+        <DeleteConfirmModal
+          item={deletingItem}
+          onConfirm={confirmDelete}
+          onCancel={() => {
+            setShowDeleteConfirm(false);
+            setDeletingItem(null);
+          }}
+        />
+      )}
+
       {/* Toast Notifications */}
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }
 
-// ========== USERS TAB ==========
-function UsersTab({ users, loading, onCreateUser, onEditUser, onDeleteUser }) {
+// ========== STAT CARD COMPONENT ==========
+function StatCard({ icon, title, value, color, active, onClick }) {
   return (
-    <div style={styles.tabContent}>
-      <div style={styles.tabHeader}>
-        <div>
-          <h2 style={styles.tabTitle}>Gestion des Utilisateurs</h2>
-          <p style={styles.tabSubtitle}>Créer et gérer les comptes Admin et Agent</p>
-        </div>
-        <button style={styles.createBtn} onClick={onCreateUser}>
-          <Users size={18} />
-          <span>Nouvel Utilisateur</span>
-        </button>
+    <div
+      style={{
+        ...styles.statCard,
+        ...(active && styles.statCardActive),
+        cursor: onClick ? 'pointer' : 'default'
+      }}
+      onClick={onClick}
+    >
+      <div style={{ ...styles.statIcon, background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)` }}>
+        {icon}
       </div>
-
-      {loading ? (
-        <div style={styles.loading}>Chargement...</div>
-      ) : users.length === 0 ? (
-        <div style={styles.emptyState}>Aucun utilisateur trouvé</div>
-      ) : (
-        <div style={styles.tableContainer}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>ID</th>
-                <th style={styles.th}>Nom</th>
-                <th style={styles.th}>Email</th>
-                <th style={styles.th}>Rôle</th>
-                <th style={styles.th}>Date de création</th>
-                <th style={styles.th}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id} style={styles.tr}>
-                  <td style={styles.td}>{user.id}</td>
-                  <td style={styles.td}>{user.name}</td>
-                  <td style={styles.td}>{user.email}</td>
-                  <td style={styles.td}>
-                    <span style={getRoleBadgeStyle(user.role)}>{getRoleLabel(user.role)}</span>
-                  </td>
-                  <td style={styles.td}>{new Date(user.created_at).toLocaleDateString('fr-FR')}</td>
-                  <td style={styles.td}>
-                    <div style={styles.actionBtns}>
-                      <button style={styles.editBtn} onClick={() => onEditUser(user)}>
-                        Modifier
-                      </button>
-                      <button style={styles.deleteBtn} onClick={() => onDeleteUser(user.id)}>
-                        Supprimer
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <div style={styles.statContent}>
+        <div style={styles.statValue}>{value}</div>
+        <div style={styles.statTitle}>{title}</div>
+      </div>
     </div>
   );
 }
 
-// ========== MACHINES TAB ==========
-function MachinesTab({ machines, loading, onCreateMachine, onEditMachine, onDeleteMachine }) {
-  return (
-    <div style={styles.tabContent}>
-      <div style={styles.tabHeader}>
-        <div>
-          <h2 style={styles.tabTitle}>Gestion des Machines</h2>
-          <p style={styles.tabSubtitle}>Configurer les stations de jeu disponibles</p>
-        </div>
-        <button style={styles.createBtn} onClick={onCreateMachine}>
-          <Monitor size={18} />
-          <span>Nouvelle Machine</span>
-        </button>
-      </div>
+// ========== USERS TABLE ==========
+function UsersTable({ users, loading, onEdit, onDelete }) {
+  if (loading) {
+    return <div style={styles.loading}><RefreshCw size={32} className="spin" /> Chargement...</div>;
+  }
 
-      {loading ? (
-        <div style={styles.loading}>Chargement...</div>
-      ) : machines.length === 0 ? (
-        <div style={styles.emptyState}>Aucune machine trouvée</div>
-      ) : (
-        <div style={styles.tableContainer}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>ID</th>
-                <th style={styles.th}>Numéro</th>
-                <th style={styles.th}>Type</th>
-                <th style={styles.th}>Statut</th>
-                <th style={styles.th}>Date de création</th>
-                <th style={styles.th}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {machines.map((machine) => (
-                <tr key={machine.id} style={styles.tr}>
-                  <td style={styles.td}>{machine.id}</td>
-                  <td style={styles.td}>
-                    <strong>Machine {machine.machine_number}</strong>
-                  </td>
-                  <td style={styles.td}>{machine.type || 'Standard'}</td>
-                  <td style={styles.td}>
-                    <span style={getStatusBadgeStyle(machine.status)}>
-                      {machine.status === 'available' ? 'Disponible' : 'Occupée'}
-                    </span>
-                  </td>
-                  <td style={styles.td}>{new Date(machine.created_at).toLocaleDateString('fr-FR')}</td>
-                  <td style={styles.td}>
-                    <div style={styles.actionBtns}>
-                      <button style={styles.editBtn} onClick={() => onEditMachine(machine)}>
-                        Modifier
-                      </button>
-                      <button style={styles.deleteBtn} onClick={() => onDeleteMachine(machine.id)}>
-                        Supprimer
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+  if (users.length === 0) {
+    return (
+      <div style={styles.emptyState}>
+        <Users size={64} color="#ccc" />
+        <p>Aucun utilisateur trouvé</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={styles.tableWrapper}>
+      <table style={styles.table}>
+        <thead>
+          <tr>
+            <th style={styles.th}>Utilisateur</th>
+            <th style={styles.th}>Email</th>
+            <th style={styles.th}>Rôle</th>
+            <th style={styles.th}>Date de création</th>
+            <th style={styles.th}>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((user) => (
+            <tr key={user.id} style={styles.tr}>
+              <td style={styles.td}>
+                <div style={styles.userCell}>
+                  <div style={styles.miniAvatar}>{user.name?.charAt(0).toUpperCase()}</div>
+                  <strong>{user.name}</strong>
+                </div>
+              </td>
+              <td style={styles.td}>{user.email}</td>
+              <td style={styles.td}>
+                <span style={getRoleBadgeStyle(user.role)}>{getRoleLabel(user.role)}</span>
+              </td>
+              <td style={styles.td}>{new Date(user.created_at).toLocaleDateString('fr-FR')}</td>
+              <td style={styles.td}>
+                <div style={styles.actionBtns}>
+                  <button style={styles.editIconBtn} onClick={() => onEdit(user)} title="Modifier">
+                    <Edit2 size={16} />
+                  </button>
+                  <button style={styles.deleteIconBtn} onClick={() => onDelete(user)} title="Supprimer">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-// ========== GAMES TAB ==========
-function GamesTab({ games, loading, onCreateGame, onEditGame, onDeleteGame }) {
-  return (
-    <div style={styles.tabContent}>
-      <div style={styles.tabHeader}>
-        <div>
-          <h2 style={styles.tabTitle}>Gestion des Jeux</h2>
-          <p style={styles.tabSubtitle}>Catalogue des jeux disponibles avec tarification</p>
-        </div>
-        <button style={styles.createBtn} onClick={onCreateGame}>
-          <Gamepad2 size={18} />
-          <span>Nouveau Jeu</span>
-        </button>
-      </div>
+// ========== MACHINES TABLE ==========
+function MachinesTable({ machines, loading, onEdit, onDelete }) {
+  if (loading) {
+    return <div style={styles.loading}><RefreshCw size={32} className="spin" /> Chargement...</div>;
+  }
 
-      {loading ? (
-        <div style={styles.loading}>Chargement...</div>
-      ) : games.length === 0 ? (
-        <div style={styles.emptyState}>Aucun jeu trouvé</div>
-      ) : (
-        <div style={styles.tableContainer}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>ID</th>
-                <th style={styles.th}>Nom du Jeu</th>
-                <th style={styles.th}>Prix 1h</th>
-                <th style={styles.th}>Prix 2h</th>
-                <th style={styles.th}>Prix 3h</th>
-                <th style={styles.th}>Nuit Complète</th>
-                <th style={styles.th}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {games.map((game) => (
-                <tr key={game.id} style={styles.tr}>
-                  <td style={styles.td}>{game.id}</td>
-                  <td style={styles.td}>
-                    <strong>{game.name}</strong>
-                  </td>
-                  <td style={styles.td}>{game.price_1h} DH</td>
-                  <td style={styles.td}>{game.price_2h} DH</td>
-                  <td style={styles.td}>{game.price_3h} DH</td>
-                  <td style={styles.td}>{game.price_night} DH</td>
-                  <td style={styles.td}>
-                    <div style={styles.actionBtns}>
-                      <button style={styles.editBtn} onClick={() => onEditGame(game)}>
-                        Modifier
-                      </button>
-                      <button style={styles.deleteBtn} onClick={() => onDeleteGame(game.id)}>
-                        Supprimer
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+  if (machines.length === 0) {
+    return (
+      <div style={styles.emptyState}>
+        <Monitor size={64} color="#ccc" />
+        <p>Aucune machine trouvée</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={styles.tableWrapper}>
+      <table style={styles.table}>
+        <thead>
+          <tr>
+            <th style={styles.th}>Machine</th>
+            <th style={styles.th}>Type</th>
+            <th style={styles.th}>Statut</th>
+            <th style={styles.th}>Date de création</th>
+            <th style={styles.th}>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {machines.map((machine) => (
+            <tr key={machine.id} style={styles.tr}>
+              <td style={styles.td}>
+                <strong>Machine #{machine.machine_number}</strong>
+              </td>
+              <td style={styles.td}>{machine.type || 'Standard'}</td>
+              <td style={styles.td}>
+                <span style={getStatusBadgeStyle(machine.status)}>
+                  {machine.status === 'available' ? 'Disponible' : 'Occupée'}
+                </span>
+              </td>
+              <td style={styles.td}>{new Date(machine.created_at).toLocaleDateString('fr-FR')}</td>
+              <td style={styles.td}>
+                <div style={styles.actionBtns}>
+                  <button style={styles.editIconBtn} onClick={() => onEdit(machine)} title="Modifier">
+                    <Edit2 size={16} />
+                  </button>
+                  <button style={styles.deleteIconBtn} onClick={() => onDelete(machine)} title="Supprimer">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ========== GAMES TABLE ==========
+function GamesTable({ games, loading, onEdit, onDelete }) {
+  if (loading) {
+    return <div style={styles.loading}><RefreshCw size={32} className="spin" /> Chargement...</div>;
+  }
+
+  if (games.length === 0) {
+    return (
+      <div style={styles.emptyState}>
+        <Gamepad2 size={64} color="#ccc" />
+        <p>Aucun jeu trouvé</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={styles.tableWrapper}>
+      <table style={styles.table}>
+        <thead>
+          <tr>
+            <th style={styles.th}>Nom du Jeu</th>
+            <th style={styles.th}>Prix 1h</th>
+            <th style={styles.th}>Prix 2h</th>
+            <th style={styles.th}>Prix 3h</th>
+            <th style={styles.th}>Nuit Complète</th>
+            <th style={styles.th}>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {games.map((game) => (
+            <tr key={game.id} style={styles.tr}>
+              <td style={styles.td}>
+                <strong>{game.name}</strong>
+              </td>
+              <td style={styles.td}><span style={styles.priceTag}>{game.price_1h} DH</span></td>
+              <td style={styles.td}><span style={styles.priceTag}>{game.price_2h} DH</span></td>
+              <td style={styles.td}><span style={styles.priceTag}>{game.price_3h} DH</span></td>
+              <td style={styles.td}><span style={styles.priceTag}>{game.price_night} DH</span></td>
+              <td style={styles.td}>
+                <div style={styles.actionBtns}>
+                  <button style={styles.editIconBtn} onClick={() => onEdit(game)} title="Modifier">
+                    <Edit2 size={16} />
+                  </button>
+                  <button style={styles.deleteIconBtn} onClick={() => onDelete(game)} title="Supprimer">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ========== DELETE CONFIRM MODAL ==========
+function DeleteConfirmModal({ item, onConfirm, onCancel }) {
+  return (
+    <div style={styles.modalOverlay} onClick={onCancel}>
+      <div style={{...styles.modalContent, maxWidth: '450px'}} onClick={(e) => e.stopPropagation()}>
+        <div style={styles.deleteModalHeader}>
+          <AlertCircle size={48} color="#ef4444" />
         </div>
-      )}
+        <h3 style={styles.deleteModalTitle}>Confirmer la suppression</h3>
+        <p style={styles.deleteModalText}>
+          Êtes-vous sûr de vouloir supprimer{' '}
+          <strong>
+            {item?.type === 'user' && item.data.name}
+            {item?.type === 'machine' && `Machine #${item.data.machine_number}`}
+            {item?.type === 'game' && item.data.name}
+          </strong>
+          ? Cette action est irréversible.
+        </p>
+        <div style={styles.deleteModalActions}>
+          <button style={styles.cancelBtnModal} onClick={onCancel}>
+            <X size={18} />
+            Annuler
+          </button>
+          <button style={styles.deleteBtnModal} onClick={onConfirm}>
+            <Trash2 size={18} />
+            Supprimer
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -508,7 +619,14 @@ function UserModal({ user, onClose, onSuccess }) {
   return (
     <div style={styles.modalOverlay} onClick={onClose}>
       <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-        <h3 style={styles.modalTitle}>{user ? 'Modifier Utilisateur' : 'Nouvel Utilisateur'}</h3>
+        <div style={styles.modalHeader}>
+          <h3 style={styles.modalTitle}>
+            {user ? 'Modifier Utilisateur' : 'Nouvel Utilisateur'}
+          </h3>
+          <button style={styles.closeBtn} onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
 
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.formGroup}>
@@ -618,7 +736,14 @@ function MachineModal({ machine, onClose, onSuccess }) {
   return (
     <div style={styles.modalOverlay} onClick={onClose}>
       <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-        <h3 style={styles.modalTitle}>{machine ? 'Modifier Machine' : 'Nouvelle Machine'}</h3>
+        <div style={styles.modalHeader}>
+          <h3 style={styles.modalTitle}>
+            {machine ? 'Modifier Machine' : 'Nouvelle Machine'}
+          </h3>
+          <button style={styles.closeBtn} onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
 
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.formGroup}>
@@ -706,7 +831,14 @@ function GameModal({ game, onClose, onSuccess }) {
   return (
     <div style={styles.modalOverlay} onClick={onClose}>
       <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-        <h3 style={styles.modalTitle}>{game ? 'Modifier Jeu' : 'Nouveau Jeu'}</h3>
+        <div style={styles.modalHeader}>
+          <h3 style={styles.modalTitle}>
+            {game ? 'Modifier Jeu' : 'Nouveau Jeu'}
+          </h3>
+          <button style={styles.closeBtn} onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
 
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.formGroup}>
@@ -805,10 +937,12 @@ function getRoleLabel(role) {
 
 function getRoleBadgeStyle(role) {
   const baseStyle = {
-    padding: '4px 12px',
-    borderRadius: '12px',
+    padding: '6px 14px',
+    borderRadius: '20px',
     fontSize: '12px',
-    fontWeight: '600'
+    fontWeight: '700',
+    display: 'inline-block',
+    letterSpacing: '0.5px'
   };
 
   if (role === 'super_admin') {
@@ -822,10 +956,12 @@ function getRoleBadgeStyle(role) {
 
 function getStatusBadgeStyle(status) {
   const baseStyle = {
-    padding: '4px 12px',
-    borderRadius: '12px',
+    padding: '6px 14px',
+    borderRadius: '20px',
     fontSize: '12px',
-    fontWeight: '600'
+    fontWeight: '700',
+    display: 'inline-block',
+    letterSpacing: '0.5px'
   };
 
   if (status === 'available') {
@@ -846,29 +982,31 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    background: 'rgba(255, 255, 255, 0.95)',
+    background: 'rgba(255, 255, 255, 0.98)',
     padding: '20px 30px',
-    borderRadius: '16px',
-    marginBottom: '20px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+    borderRadius: '20px',
+    marginBottom: '24px',
+    boxShadow: '0 10px 40px rgba(0,0,0,0.12)',
+    backdropFilter: 'blur(10px)'
   },
   headerLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: '15px'
+    gap: '16px'
   },
   logoContainer: {
-    width: '60px',
-    height: '60px',
+    width: '56px',
+    height: '56px',
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    borderRadius: '12px',
+    borderRadius: '14px',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)'
   },
   title: {
     margin: 0,
-    fontSize: '24px',
+    fontSize: '26px',
     fontWeight: '800',
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     WebkitBackgroundClip: 'text',
@@ -877,8 +1015,9 @@ const styles = {
   },
   subtitle: {
     margin: '4px 0 0 0',
-    fontSize: '14px',
-    color: '#666'
+    fontSize: '13px',
+    color: '#666',
+    fontWeight: '500'
   },
   headerRight: {
     display: 'flex',
@@ -891,8 +1030,8 @@ const styles = {
     gap: '12px'
   },
   userAvatar: {
-    width: '45px',
-    height: '45px',
+    width: '48px',
+    height: '48px',
     borderRadius: '50%',
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     color: '#fff',
@@ -900,83 +1039,136 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: '18px',
-    fontWeight: '700'
+    fontWeight: '800',
+    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
   },
   userName: {
-    fontWeight: '600',
+    fontWeight: '700',
     fontSize: '14px',
     color: '#333'
   },
   userRole: {
     fontSize: '12px',
-    color: '#666'
+    color: '#666',
+    fontWeight: '500'
   },
   logoutBtn: {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    padding: '10px 20px',
+    padding: '11px 22px',
     background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
     color: '#fff',
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: '10px',
     cursor: 'pointer',
-    fontWeight: '600',
+    fontWeight: '700',
     fontSize: '14px',
-    transition: 'transform 0.2s'
+    transition: 'all 0.3s',
+    boxShadow: '0 4px 12px rgba(245, 87, 108, 0.3)'
   },
-  tabsContainer: {
+  statsContainer: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+    gap: '20px',
+    marginBottom: '24px'
+  },
+  statCard: {
+    background: 'rgba(255, 255, 255, 0.98)',
+    borderRadius: '16px',
+    padding: '24px',
     display: 'flex',
-    gap: '10px',
-    marginBottom: '20px'
+    alignItems: 'center',
+    gap: '16px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+    transition: 'all 0.3s',
+    backdropFilter: 'blur(10px)'
   },
-  tab: {
-    flex: 1,
+  statCardActive: {
+    transform: 'translateY(-4px)',
+    boxShadow: '0 12px 30px rgba(102, 126, 234, 0.25)',
+    background: 'rgba(255, 255, 255, 1)'
+  },
+  statIcon: {
+    width: '56px',
+    height: '56px',
+    borderRadius: '14px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '10px',
-    padding: '15px',
-    background: 'rgba(255, 255, 255, 0.2)',
-    border: 'none',
-    borderRadius: '12px',
     color: '#fff',
-    fontSize: '16px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.3s'
+    flexShrink: 0
   },
-  tabActive: {
-    background: '#fff',
-    color: '#667eea',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+  statContent: {
+    flex: 1
   },
-  content: {
-    background: '#fff',
-    borderRadius: '16px',
+  statValue: {
+    fontSize: '32px',
+    fontWeight: '800',
+    color: '#333',
+    lineHeight: 1
+  },
+  statTitle: {
+    fontSize: '13px',
+    color: '#666',
+    marginTop: '6px',
+    fontWeight: '600'
+  },
+  mainContent: {
+    background: 'rgba(255, 255, 255, 0.98)',
+    borderRadius: '20px',
     padding: '30px',
-    minHeight: '500px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+    boxShadow: '0 10px 40px rgba(0,0,0,0.12)',
+    backdropFilter: 'blur(10px)'
   },
-  tabContent: {
-    width: '100%'
-  },
-  tabHeader: {
+  toolbar: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '30px'
+    marginBottom: '24px',
+    gap: '16px',
+    flexWrap: 'wrap'
   },
-  tabTitle: {
-    margin: 0,
-    fontSize: '22px',
-    fontWeight: '800',
-    color: '#333'
+  searchContainer: {
+    position: 'relative',
+    flex: '1 1 300px',
+    maxWidth: '400px'
   },
-  tabSubtitle: {
-    margin: '5px 0 0 0',
+  searchIcon: {
+    position: 'absolute',
+    left: '14px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    color: '#999'
+  },
+  searchInput: {
+    width: '100%',
+    padding: '12px 14px 12px 44px',
+    border: '2px solid #e5e7eb',
+    borderRadius: '12px',
     fontSize: '14px',
-    color: '#666'
+    outline: 'none',
+    transition: 'all 0.3s',
+    fontWeight: '500'
+  },
+  toolbarActions: {
+    display: 'flex',
+    gap: '12px',
+    flexWrap: 'wrap'
+  },
+  refreshBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '12px 20px',
+    background: '#fff',
+    color: '#667eea',
+    border: '2px solid #667eea',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    fontWeight: '700',
+    fontSize: '14px',
+    transition: 'all 0.3s'
   },
   createBtn: {
     display: 'flex',
@@ -986,15 +1178,16 @@ const styles = {
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     color: '#fff',
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: '10px',
     cursor: 'pointer',
-    fontWeight: '600',
+    fontWeight: '700',
     fontSize: '14px',
-    transition: 'transform 0.2s'
+    transition: 'all 0.3s',
+    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
   },
-  tableContainer: {
+  tableWrapper: {
     overflowX: 'auto',
-    borderRadius: '8px',
+    borderRadius: '12px',
     border: '1px solid #e5e7eb'
   },
   table: {
@@ -1003,60 +1196,93 @@ const styles = {
   },
   th: {
     background: '#f9fafb',
-    padding: '12px 16px',
+    padding: '16px 20px',
     textAlign: 'left',
-    fontSize: '12px',
-    fontWeight: '700',
+    fontSize: '13px',
+    fontWeight: '800',
     color: '#6b7280',
     textTransform: 'uppercase',
-    borderBottom: '2px solid #e5e7eb'
+    borderBottom: '2px solid #e5e7eb',
+    letterSpacing: '0.5px'
   },
   tr: {
     borderBottom: '1px solid #e5e7eb',
-    transition: 'background 0.2s'
+    transition: 'all 0.2s'
   },
   td: {
-    padding: '16px',
+    padding: '18px 20px',
     fontSize: '14px',
-    color: '#374151'
+    color: '#374151',
+    fontWeight: '500'
+  },
+  userCell: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px'
+  },
+  miniAvatar: {
+    width: '36px',
+    height: '36px',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    color: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '14px',
+    fontWeight: '700'
   },
   actionBtns: {
     display: 'flex',
     gap: '8px'
   },
-  editBtn: {
-    padding: '6px 12px',
+  editIconBtn: {
+    padding: '8px',
     background: '#3b82f6',
     color: '#fff',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '8px',
     cursor: 'pointer',
-    fontSize: '12px',
-    fontWeight: '600',
-    transition: 'background 0.2s'
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s'
   },
-  deleteBtn: {
-    padding: '6px 12px',
+  deleteIconBtn: {
+    padding: '8px',
     background: '#ef4444',
     color: '#fff',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '8px',
     cursor: 'pointer',
-    fontSize: '12px',
-    fontWeight: '600',
-    transition: 'background 0.2s'
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s'
+  },
+  priceTag: {
+    fontWeight: '700',
+    color: '#10b981'
   },
   loading: {
     textAlign: 'center',
-    padding: '60px',
+    padding: '80px',
     fontSize: '16px',
-    color: '#666'
+    color: '#666',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '16px'
   },
   emptyState: {
     textAlign: 'center',
-    padding: '60px',
+    padding: '80px',
     fontSize: '16px',
-    color: '#999'
+    color: '#999',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '16px'
   },
   modalOverlay: {
     position: 'fixed',
@@ -1064,35 +1290,111 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'rgba(0, 0, 0, 0.5)',
+    background: 'rgba(0, 0, 0, 0.6)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1000
+    zIndex: 1000,
+    backdropFilter: 'blur(4px)',
+    animation: 'fadeIn 0.2s'
   },
   modalContent: {
     background: '#fff',
-    borderRadius: '16px',
-    padding: '30px',
+    borderRadius: '20px',
+    padding: '0',
     width: '90%',
-    maxWidth: '500px',
-    boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+    maxWidth: '550px',
+    boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+    animation: 'slideUp 0.3s'
+  },
+  modalHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '24px 30px',
+    borderBottom: '2px solid #f3f4f6'
   },
   modalTitle: {
-    margin: '0 0 20px 0',
-    fontSize: '20px',
+    margin: 0,
+    fontSize: '22px',
     fontWeight: '800',
     color: '#333'
+  },
+  closeBtn: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: '#999',
+    padding: '4px',
+    borderRadius: '6px',
+    transition: 'all 0.2s'
+  },
+  deleteModalHeader: {
+    textAlign: 'center',
+    padding: '30px 30px 0 30px'
+  },
+  deleteModalTitle: {
+    margin: '16px 0 12px 0',
+    fontSize: '22px',
+    fontWeight: '800',
+    color: '#333',
+    textAlign: 'center'
+  },
+  deleteModalText: {
+    margin: '0 0 24px 0',
+    fontSize: '15px',
+    color: '#666',
+    textAlign: 'center',
+    padding: '0 30px',
+    lineHeight: '1.6'
+  },
+  deleteModalActions: {
+    display: 'flex',
+    gap: '12px',
+    padding: '0 30px 30px 30px'
+  },
+  cancelBtnModal: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    padding: '14px',
+    background: '#e5e7eb',
+    color: '#374151',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    fontWeight: '700',
+    fontSize: '14px',
+    transition: 'all 0.2s'
+  },
+  deleteBtnModal: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    padding: '14px',
+    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    fontWeight: '700',
+    fontSize: '14px',
+    transition: 'all 0.2s'
   },
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '16px'
+    gap: '20px',
+    padding: '24px 30px 30px 30px'
   },
   formGroup: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '6px',
+    gap: '8px',
     flex: 1
   },
   formRow: {
@@ -1101,25 +1403,28 @@ const styles = {
   },
   label: {
     fontSize: '13px',
-    fontWeight: '600',
-    color: '#374151'
+    fontWeight: '700',
+    color: '#374151',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
   },
   input: {
-    padding: '10px 12px',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
+    padding: '12px 14px',
+    border: '2px solid #e5e7eb',
+    borderRadius: '10px',
     fontSize: '14px',
     outline: 'none',
-    transition: 'border 0.2s'
+    transition: 'all 0.3s',
+    fontWeight: '500'
   },
   error: {
-    padding: '12px',
+    padding: '14px',
     background: '#fee2e2',
-    border: '1px solid #fecaca',
-    borderRadius: '8px',
+    border: '2px solid #fecaca',
+    borderRadius: '10px',
     color: '#dc2626',
     fontSize: '14px',
-    fontWeight: '600'
+    fontWeight: '700'
   },
   modalActions: {
     display: 'flex',
@@ -1128,25 +1433,27 @@ const styles = {
   },
   cancelBtn: {
     flex: 1,
-    padding: '12px',
+    padding: '14px',
     background: '#e5e7eb',
     color: '#374151',
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: '10px',
     cursor: 'pointer',
-    fontWeight: '600',
-    fontSize: '14px'
+    fontWeight: '700',
+    fontSize: '14px',
+    transition: 'all 0.2s'
   },
   submitBtn: {
     flex: 1,
-    padding: '12px',
+    padding: '14px',
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     color: '#fff',
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: '10px',
     cursor: 'pointer',
-    fontWeight: '600',
-    fontSize: '14px'
+    fontWeight: '700',
+    fontSize: '14px',
+    transition: 'all 0.2s'
   }
 };
 
