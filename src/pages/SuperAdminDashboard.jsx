@@ -784,7 +784,7 @@ function MachinesTable({ machines, loading, onEdit, onDelete }) {
 // ========== GAMES TABLE ==========
 function GamesTable({ games, loading, onEdit, onDelete }) {
   if (loading) {
-    return <SkeletonTable rows={5} columns={6} />;
+    return <SkeletonTable rows={5} columns={3} />;
   }
 
   if (games.length === 0) {
@@ -801,11 +801,8 @@ function GamesTable({ games, loading, onEdit, onDelete }) {
       <table style={styles.table}>
         <thead>
           <tr>
-            <th style={styles.th}>Nom du Jeu</th>
-            <th style={styles.th}>Prix 1h</th>
-            <th style={styles.th}>Prix 2h</th>
-            <th style={styles.th}>Prix 3h</th>
-            <th style={styles.th}>Nuit Complète</th>
+            <th style={styles.th}>Jeu</th>
+            <th style={styles.th}>Tarifs</th>
             <th style={styles.th}>Actions</th>
           </tr>
         </thead>
@@ -820,10 +817,14 @@ function GamesTable({ games, loading, onEdit, onDelete }) {
                   <strong style={{color: '#f1f5f9'}}>{game.name}</strong>
                 </div>
               </td>
-              <td style={styles.td}><span style={styles.priceTag}>{game.price_1h} DH</span></td>
-              <td style={styles.td}><span style={styles.priceTag}>{game.price_2h} DH</span></td>
-              <td style={styles.td}><span style={styles.priceTag}>{game.price_3h} DH</span></td>
-              <td style={styles.td}><span style={styles.priceTag}>{game.price_night} DH</span></td>
+              <td style={styles.td}>
+                <div style={styles.pricingGrid}>
+                  <PricingBadge duration="60 min" price={game.price_1h} />
+                  <PricingBadge duration="120 min" price={game.price_2h} />
+                  <PricingBadge duration="180 min" price={game.price_3h} />
+                  <PricingBadge duration="480 min" price={game.price_night} label="Nuit" />
+                </div>
+              </td>
               <td style={styles.td}>
                 <div style={styles.actionBtns}>
                   <ActionButton type="edit" onClick={() => onEdit(game)} title="Modifier" />
@@ -834,6 +835,16 @@ function GamesTable({ games, loading, onEdit, onDelete }) {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// ========== PRICING BADGE ==========
+function PricingBadge({ duration, price, label }) {
+  return (
+    <div style={styles.pricingBadge}>
+      <span style={styles.pricingDuration}>{label || duration}</span>
+      <span style={styles.pricingPrice}>{price} DH</span>
     </div>
   );
 }
@@ -1666,6 +1677,35 @@ const styles = {
     fontWeight: '600',
     fontSize: '13px',
     transition: 'all 0.2s'
+  },
+
+  // Pricing Grid
+  pricingGrid: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '8px'
+  },
+  pricingBadge: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: '8px 12px',
+    background: '#0f172a',
+    borderRadius: '8px',
+    border: '1px solid #334155',
+    minWidth: '70px'
+  },
+  pricingDuration: {
+    fontSize: '10px',
+    color: '#64748b',
+    fontWeight: '600',
+    textTransform: 'uppercase'
+  },
+  pricingPrice: {
+    fontSize: '14px',
+    color: '#10b981',
+    fontWeight: '700',
+    marginTop: '2px'
   },
 
   // Legacy styles below
