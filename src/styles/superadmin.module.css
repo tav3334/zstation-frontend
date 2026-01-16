@@ -55,8 +55,8 @@ button:active {
 
 input:focus,
 select:focus {
-  border-color: #667eea !important;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+  border-color: #7b5cff !important;
+  box-shadow: 0 0 0 3px rgba(123, 92, 255, 0.1) !important;
 }
 
 /* Table row hover */

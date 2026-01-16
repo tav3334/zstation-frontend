@@ -946,7 +946,7 @@ function getRoleBadgeStyle(role) {
   };
 
   if (role === 'super_admin') {
-    return { ...baseStyle, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: '#fff' };
+    return { ...baseStyle, background: 'linear-gradient(135deg, #7b5cff 0%, #00e6ff 100%)', color: '#fff' };
   } else if (role === 'admin') {
     return { ...baseStyle, background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: '#fff' };
   } else {
@@ -975,8 +975,9 @@ function getStatusBadgeStyle(status) {
 const styles = {
   container: {
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    padding: '20px'
+    background: 'linear-gradient(135deg, #7b5cff 0%, #00e6ff 100%)',
+    padding: '0',
+    margin: '0'
   },
   header: {
     display: 'flex',
@@ -984,9 +985,9 @@ const styles = {
     alignItems: 'center',
     background: 'rgba(255, 255, 255, 0.98)',
     padding: '20px 30px',
-    borderRadius: '20px',
-    marginBottom: '24px',
-    boxShadow: '0 10px 40px rgba(0,0,0,0.12)',
+    borderRadius: '0',
+    marginBottom: '0',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
     backdropFilter: 'blur(10px)'
   },
   headerLeft: {
@@ -997,18 +998,18 @@ const styles = {
   logoContainer: {
     width: '56px',
     height: '56px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: 'linear-gradient(135deg, #7b5cff 0%, #00e6ff 100%)',
     borderRadius: '14px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)'
+    boxShadow: '0 4px 12px rgba(123, 92, 255, 0.4)'
   },
   title: {
     margin: 0,
     fontSize: '26px',
     fontWeight: '800',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: 'linear-gradient(135deg, #7b5cff 0%, #00e6ff 100%)',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     backgroundClip: 'text'
@@ -1033,14 +1034,14 @@ const styles = {
     width: '48px',
     height: '48px',
     borderRadius: '50%',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: 'linear-gradient(135deg, #7b5cff 0%, #00e6ff 100%)',
     color: '#fff',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: '18px',
     fontWeight: '800',
-    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
+    boxShadow: '0 4px 12px rgba(123, 92, 255, 0.3)'
   },
   userName: {
     fontWeight: '700',
@@ -1071,7 +1072,8 @@ const styles = {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
     gap: '20px',
-    marginBottom: '24px'
+    padding: '20px 30px',
+    background: 'linear-gradient(135deg, #7b5cff 0%, #00e6ff 100%)'
   },
   statCard: {
     background: 'rgba(255, 255, 255, 0.98)',
@@ -1086,7 +1088,7 @@ const styles = {
   },
   statCardActive: {
     transform: 'translateY(-4px)',
-    boxShadow: '0 12px 30px rgba(102, 126, 234, 0.25)',
+    boxShadow: '0 12px 30px rgba(123, 92, 255, 0.35)',
     background: 'rgba(255, 255, 255, 1)'
   },
   statIcon: {
@@ -1115,11 +1117,10 @@ const styles = {
     fontWeight: '600'
   },
   mainContent: {
-    background: 'rgba(255, 255, 255, 0.98)',
-    borderRadius: '20px',
+    background: '#f8f9fa',
+    borderRadius: '0',
     padding: '30px',
-    boxShadow: '0 10px 40px rgba(0,0,0,0.12)',
-    backdropFilter: 'blur(10px)'
+    minHeight: 'calc(100vh - 240px)'
   },
   toolbar: {
     display: 'flex',
@@ -1162,8 +1163,8 @@ const styles = {
     gap: '8px',
     padding: '12px 20px',
     background: '#fff',
-    color: '#667eea',
-    border: '2px solid #667eea',
+    color: '#7b5cff',
+    border: '2px solid #7b5cff',
     borderRadius: '10px',
     cursor: 'pointer',
     fontWeight: '700',
@@ -1175,7 +1176,7 @@ const styles = {
     alignItems: 'center',
     gap: '8px',
     padding: '12px 24px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: 'linear-gradient(135deg, #7b5cff 0%, #00e6ff 100%)',
     color: '#fff',
     border: 'none',
     borderRadius: '10px',
@@ -1183,7 +1184,7 @@ const styles = {
     fontWeight: '700',
     fontSize: '14px',
     transition: 'all 0.3s',
-    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
+    boxShadow: '0 4px 12px rgba(123, 92, 255, 0.3)'
   },
   tableWrapper: {
     overflowX: 'auto',
@@ -1224,7 +1225,7 @@ const styles = {
     width: '36px',
     height: '36px',
     borderRadius: '50%',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: 'linear-gradient(135deg, #7b5cff 0%, #00e6ff 100%)',
     color: '#fff',
     display: 'flex',
     alignItems: 'center',
@@ -1446,7 +1447,7 @@ const styles = {
   submitBtn: {
     flex: 1,
     padding: '14px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: 'linear-gradient(135deg, #7b5cff 0%, #00e6ff 100%)',
     color: '#fff',
     border: 'none',
     borderRadius: '10px',
