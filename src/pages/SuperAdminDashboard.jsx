@@ -946,7 +946,7 @@ function getRoleBadgeStyle(role) {
   };
 
   if (role === 'super_admin') {
-    return { ...baseStyle, background: '#6366f1', color: '#fff' };
+    return { ...baseStyle, background: '#7b5cff', color: '#fff' };
   } else if (role === 'admin') {
     return { ...baseStyle, background: '#f59e0b', color: '#fff' };
   } else {
@@ -975,7 +975,7 @@ function getStatusBadgeStyle(status) {
 const styles = {
   container: {
     minHeight: '100vh',
-    background: '#0f172a',
+    background: '#7b5cff',
     padding: '0',
     margin: '0',
     width: '100%'
@@ -984,11 +984,11 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    background: '#1e293b',
+    background: '#ffffff',
     padding: '20px 30px',
     borderRadius: '0',
     marginBottom: '0',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
   },
   headerLeft: {
     display: 'flex',
@@ -998,23 +998,23 @@ const styles = {
   logoContainer: {
     width: '56px',
     height: '56px',
-    background: '#6366f1',
+    background: '#7b5cff',
     borderRadius: '14px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 2px 8px rgba(99, 102, 241, 0.4)'
+    boxShadow: '0 2px 8px rgba(123, 92, 255, 0.3)'
   },
   title: {
     margin: 0,
     fontSize: '26px',
     fontWeight: '800',
-    color: '#f1f5f9'
+    color: '#7b5cff'
   },
   subtitle: {
     margin: '4px 0 0 0',
     fontSize: '13px',
-    color: '#94a3b8',
+    color: '#666',
     fontWeight: '500'
   },
   headerRight: {
@@ -1031,23 +1031,23 @@ const styles = {
     width: '48px',
     height: '48px',
     borderRadius: '50%',
-    background: '#6366f1',
+    background: '#7b5cff',
     color: '#fff',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: '18px',
     fontWeight: '800',
-    boxShadow: '0 2px 8px rgba(99, 102, 241, 0.4)'
+    boxShadow: '0 2px 8px rgba(123, 92, 255, 0.3)'
   },
   userName: {
     fontWeight: '700',
     fontSize: '14px',
-    color: '#f1f5f9'
+    color: '#333'
   },
   userRole: {
     fontSize: '12px',
-    color: '#94a3b8',
+    color: '#666',
     fontWeight: '500'
   },
   logoutBtn: {
@@ -1070,25 +1070,23 @@ const styles = {
     gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
     gap: '20px',
     padding: '20px 30px',
-    background: '#0f172a',
+    background: '#7b5cff',
     width: '100%'
   },
   statCard: {
-    background: '#1e293b',
+    background: '#ffffff',
     borderRadius: '16px',
     padding: '24px',
     display: 'flex',
     alignItems: 'center',
     gap: '16px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-    transition: 'all 0.3s',
-    border: '1px solid #334155'
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    transition: 'all 0.3s'
   },
   statCardActive: {
     transform: 'translateY(-4px)',
-    boxShadow: '0 4px 16px rgba(99, 102, 241, 0.4)',
-    background: '#1e293b',
-    borderColor: '#6366f1'
+    boxShadow: '0 4px 16px rgba(123, 92, 255, 0.3)',
+    background: '#ffffff'
   },
   statIcon: {
     width: '56px',
@@ -1106,17 +1104,17 @@ const styles = {
   statValue: {
     fontSize: '32px',
     fontWeight: '800',
-    color: '#f1f5f9',
+    color: '#333',
     lineHeight: 1
   },
   statTitle: {
     fontSize: '13px',
-    color: '#94a3b8',
+    color: '#666',
     marginTop: '6px',
     fontWeight: '600'
   },
   mainContent: {
-    background: '#0f172a',
+    background: '#f8f9fa',
     borderRadius: '0',
     padding: '30px',
     minHeight: 'calc(100vh - 240px)',
@@ -1140,15 +1138,13 @@ const styles = {
     left: '14px',
     top: '50%',
     transform: 'translateY(-50%)',
-    color: '#64748b'
+    color: '#999'
   },
   searchInput: {
     width: '100%',
     padding: '12px 14px 12px 44px',
-    border: '2px solid #334155',
+    border: '2px solid #e5e7eb',
     borderRadius: '12px',
-    backgroundColor: '#1e293b',
-    color: '#f1f5f9',
     fontSize: '14px',
     outline: 'none',
     transition: 'all 0.3s',
@@ -1164,9 +1160,9 @@ const styles = {
     alignItems: 'center',
     gap: '8px',
     padding: '12px 20px',
-    background: '#1e293b',
-    color: '#6366f1',
-    border: '2px solid #6366f1',
+    background: '#fff',
+    color: '#7b5cff',
+    border: '2px solid #7b5cff',
     borderRadius: '10px',
     cursor: 'pointer',
     fontWeight: '700',
@@ -1178,7 +1174,7 @@ const styles = {
     alignItems: 'center',
     gap: '8px',
     padding: '12px 24px',
-    background: '#6366f1',
+    background: '#7b5cff',
     color: '#fff',
     border: 'none',
     borderRadius: '10px',
@@ -1186,39 +1182,37 @@ const styles = {
     fontWeight: '700',
     fontSize: '14px',
     transition: 'all 0.3s',
-    boxShadow: '0 2px 8px rgba(99, 102, 241, 0.4)'
+    boxShadow: '0 2px 8px rgba(123, 92, 255, 0.3)'
   },
   tableWrapper: {
     overflowX: 'auto',
     borderRadius: '12px',
-    border: '1px solid #334155'
+    border: '1px solid #e5e7eb'
   },
   table: {
     width: '100%',
-    borderCollapse: 'collapse',
-    backgroundColor: '#1e293b'
+    borderCollapse: 'collapse'
   },
   th: {
-    background: '#0f172a',
+    background: '#f9fafb',
     padding: '16px 20px',
     textAlign: 'left',
     fontSize: '13px',
     fontWeight: '800',
-    color: '#f1f5f9',
+    color: '#6b7280',
     textTransform: 'uppercase',
-    borderBottom: '2px solid #334155',
+    borderBottom: '2px solid #e5e7eb',
     letterSpacing: '0.5px'
   },
   tr: {
-    borderBottom: '1px solid #334155',
+    borderBottom: '1px solid #e5e7eb',
     transition: 'all 0.2s'
   },
   td: {
     padding: '18px 20px',
     fontSize: '14px',
-    color: '#cbd5e1',
-    fontWeight: '500',
-    backgroundColor: '#1e293b'
+    color: '#374151',
+    fontWeight: '500'
   },
   userCell: {
     display: 'flex',
@@ -1229,7 +1223,7 @@ const styles = {
     width: '36px',
     height: '36px',
     borderRadius: '50%',
-    background: '#6366f1',
+    background: '#7b5cff',
     color: '#fff',
     display: 'flex',
     alignItems: 'center',
@@ -1273,7 +1267,7 @@ const styles = {
     textAlign: 'center',
     padding: '80px',
     fontSize: '16px',
-    color: '#94a3b8',
+    color: '#666',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -1283,7 +1277,7 @@ const styles = {
     textAlign: 'center',
     padding: '80px',
     fontSize: '16px',
-    color: '#64748b',
+    color: '#999',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -1295,7 +1289,7 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'rgba(0, 0, 0, 0.8)',
+    background: 'rgba(0, 0, 0, 0.6)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1304,12 +1298,11 @@ const styles = {
     animation: 'fadeIn 0.2s'
   },
   modalContent: {
-    background: '#1e293b',
+    background: '#fff',
     borderRadius: '20px',
     padding: '0',
     width: '90%',
     maxWidth: '550px',
-    border: '1px solid #334155'
     boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
     animation: 'slideUp 0.3s'
   },
@@ -1318,40 +1311,38 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '24px 30px',
-    borderBottom: '2px solid #334155',
-    background: '#1e293b'
+    borderBottom: '2px solid #f3f4f6'
   },
   modalTitle: {
     margin: 0,
     fontSize: '22px',
     fontWeight: '800',
-    color: '#f1f5f9'
+    color: '#333'
   },
   closeBtn: {
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    color: '#94a3b8',
+    color: '#999',
     padding: '4px',
     borderRadius: '6px',
     transition: 'all 0.2s'
   },
   deleteModalHeader: {
     textAlign: 'center',
-    padding: '30px 30px 0 30px',
-    background: '#1e293b'
+    padding: '30px 30px 0 30px'
   },
   deleteModalTitle: {
     margin: '16px 0 12px 0',
     fontSize: '22px',
     fontWeight: '800',
-    color: '#f1f5f9',
+    color: '#333',
     textAlign: 'center'
   },
   deleteModalText: {
     margin: '0 0 24px 0',
     fontSize: '15px',
-    color: '#94a3b8',
+    color: '#666',
     textAlign: 'center',
     padding: '0 30px',
     lineHeight: '1.6'
@@ -1359,8 +1350,7 @@ const styles = {
   deleteModalActions: {
     display: 'flex',
     gap: '12px',
-    padding: '0 30px 30px 30px',
-    background: '#1e293b'
+    padding: '0 30px 30px 30px'
   },
   cancelBtnModal: {
     flex: 1,
@@ -1369,9 +1359,9 @@ const styles = {
     justifyContent: 'center',
     gap: '8px',
     padding: '14px',
-    background: '#0f172a',
-    color: '#cbd5e1',
-    border: '2px solid #334155',
+    background: '#e5e7eb',
+    color: '#374151',
+    border: 'none',
     borderRadius: '10px',
     cursor: 'pointer',
     fontWeight: '700',
@@ -1385,7 +1375,7 @@ const styles = {
     justifyContent: 'center',
     gap: '8px',
     padding: '14px',
-    background: '#ef4444',
+    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
     color: '#fff',
     border: 'none',
     borderRadius: '10px',
@@ -1398,8 +1388,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '20px',
-    padding: '24px 30px 30px 30px',
-    background: '#1e293b'
+    padding: '24px 30px 30px 30px'
   },
   formGroup: {
     display: 'flex',
@@ -1414,27 +1403,25 @@ const styles = {
   label: {
     fontSize: '13px',
     fontWeight: '700',
-    color: '#f1f5f9',
+    color: '#374151',
     textTransform: 'uppercase',
     letterSpacing: '0.5px'
   },
   input: {
     padding: '12px 14px',
-    border: '2px solid #334155',
+    border: '2px solid #e5e7eb',
     borderRadius: '10px',
     fontSize: '14px',
     outline: 'none',
     transition: 'all 0.3s',
-    fontWeight: '500',
-    backgroundColor: '#0f172a',
-    color: '#f1f5f9'
+    fontWeight: '500'
   },
   error: {
     padding: '14px',
-    background: 'rgba(239, 68, 68, 0.2)',
-    border: '2px solid #ef4444',
+    background: '#fee2e2',
+    border: '2px solid #fecaca',
     borderRadius: '10px',
-    color: '#fca5a5',
+    color: '#dc2626',
     fontSize: '14px',
     fontWeight: '700'
   },
@@ -1446,9 +1433,9 @@ const styles = {
   cancelBtn: {
     flex: 1,
     padding: '14px',
-    background: '#0f172a',
-    color: '#cbd5e1',
-    border: '2px solid #334155',
+    background: '#e5e7eb',
+    color: '#374151',
+    border: 'none',
     borderRadius: '10px',
     cursor: 'pointer',
     fontWeight: '700',
@@ -1458,7 +1445,7 @@ const styles = {
   submitBtn: {
     flex: 1,
     padding: '14px',
-    background: '#6366f1',
+    background: '#7b5cff',
     color: '#fff',
     border: 'none',
     borderRadius: '10px',
