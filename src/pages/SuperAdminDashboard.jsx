@@ -341,38 +341,107 @@ function SuperAdminDashboard({ user, onLogout }) {
   );
 }
 
+// ========== SKELETON LOADER ==========
+function SkeletonRow({ columns = 5 }) {
+  return (
+    <tr style={styles.tr}>
+      {Array(columns).fill(0).map((_, i) => (
+        <td key={i} style={styles.td}>
+          <div style={styles.skeleton}></div>
+        </td>
+      ))}
+    </tr>
+  );
+}
+
+function SkeletonTable({ rows = 5, columns = 5 }) {
+  return (
+    <div style={styles.tableWrapper}>
+      <table style={styles.table}>
+        <thead>
+          <tr>
+            {Array(columns).fill(0).map((_, i) => (
+              <th key={i} style={styles.th}>
+                <div style={{...styles.skeleton, width: '80px', height: '14px'}}></div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array(rows).fill(0).map((_, i) => (
+            <SkeletonRow key={i} columns={columns} />
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // ========== STAT CARD COMPONENT ==========
 function StatCard({ icon, title, value, color, active, onClick }) {
+  const [isHovered, setIsHovered] = useState(false);
+
   return (
     <div
       style={{
         ...styles.statCard,
         ...(active && styles.statCardActive),
+        ...(isHovered && styles.statCardHover),
         cursor: onClick ? 'pointer' : 'default'
       }}
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <div style={{ ...styles.statIcon, background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)` }}>
+      <div style={{
+        ...styles.statIcon,
+        background: color,
+        transform: isHovered ? 'scale(1.1) rotate(5deg)' : 'scale(1)',
+        transition: 'transform 0.3s ease'
+      }}>
         {icon}
       </div>
       <div style={styles.statContent}>
-        <div style={styles.statValue}>{value}</div>
+        <div style={{
+          ...styles.statValue,
+          transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+          transition: 'transform 0.3s ease'
+        }}>{value}</div>
         <div style={styles.statTitle}>{title}</div>
       </div>
     </div>
   );
 }
 
+// ========== TABLE ROW WITH HOVER ==========
+function TableRow({ children, onClick }) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <tr
+      style={{
+        ...styles.tr,
+        ...(isHovered && styles.trHover)
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={onClick}
+    >
+      {children}
+    </tr>
+  );
+}
+
 // ========== USERS TABLE ==========
 function UsersTable({ users, loading, onEdit, onDelete }) {
   if (loading) {
-    return <div style={styles.loading}><RefreshCw size={32} className="spin" /> Chargement...</div>;
+    return <SkeletonTable rows={5} columns={5} />;
   }
 
   if (users.length === 0) {
     return (
       <div style={styles.emptyState}>
-        <Users size={64} color="#ccc" />
+        <Users size={64} color="#64748b" />
         <p>Aucun utilisateur trouvé</p>
       </div>
     );
@@ -391,12 +460,12 @@ function UsersTable({ users, loading, onEdit, onDelete }) {
           </tr>
         </thead>
         <tbody>
-          {users.map((user) => (
-            <tr key={user.id} style={styles.tr}>
-              <td style={styles.td}>
+          {users.map((user, index) => (
+            <TableRow key={user.id}>
+              <td style={{...styles.td, animationDelay: `${index * 0.05}s`}} className="fade-in-row">
                 <div style={styles.userCell}>
                   <div style={styles.miniAvatar}>{user.name?.charAt(0).toUpperCase()}</div>
-                  <strong>{user.name}</strong>
+                  <strong style={{color: '#f1f5f9'}}>{user.name}</strong>
                 </div>
               </td>
               <td style={styles.td}>{user.email}</td>
@@ -406,15 +475,11 @@ function UsersTable({ users, loading, onEdit, onDelete }) {
               <td style={styles.td}>{new Date(user.created_at).toLocaleDateString('fr-FR')}</td>
               <td style={styles.td}>
                 <div style={styles.actionBtns}>
-                  <button style={styles.editIconBtn} onClick={() => onEdit(user)} title="Modifier">
-                    <Edit2 size={16} />
-                  </button>
-                  <button style={styles.deleteIconBtn} onClick={() => onDelete(user)} title="Supprimer">
-                    <Trash2 size={16} />
-                  </button>
+                  <ActionButton type="edit" onClick={() => onEdit(user)} title="Modifier" />
+                  <ActionButton type="delete" onClick={() => onDelete(user)} title="Supprimer" />
                 </div>
               </td>
-            </tr>
+            </TableRow>
           ))}
         </tbody>
       </table>
@@ -422,16 +487,39 @@ function UsersTable({ users, loading, onEdit, onDelete }) {
   );
 }
 
+// ========== ACTION BUTTON WITH HOVER ==========
+function ActionButton({ type, onClick, title }) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const baseStyle = type === 'edit' ? styles.editIconBtn : styles.deleteIconBtn;
+  const hoverStyle = type === 'edit' ? styles.editIconBtnHover : styles.deleteIconBtnHover;
+
+  return (
+    <button
+      style={{
+        ...baseStyle,
+        ...(isHovered && hoverStyle)
+      }}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      title={title}
+    >
+      {type === 'edit' ? <Edit2 size={16} /> : <Trash2 size={16} />}
+    </button>
+  );
+}
+
 // ========== MACHINES TABLE ==========
 function MachinesTable({ machines, loading, onEdit, onDelete }) {
   if (loading) {
-    return <div style={styles.loading}><RefreshCw size={32} className="spin" /> Chargement...</div>;
+    return <SkeletonTable rows={5} columns={5} />;
   }
 
   if (machines.length === 0) {
     return (
       <div style={styles.emptyState}>
-        <Monitor size={64} color="#ccc" />
+        <Monitor size={64} color="#64748b" />
         <p>Aucune machine trouvée</p>
       </div>
     );
@@ -451,9 +539,14 @@ function MachinesTable({ machines, loading, onEdit, onDelete }) {
         </thead>
         <tbody>
           {machines.map((machine) => (
-            <tr key={machine.id} style={styles.tr}>
+            <TableRow key={machine.id}>
               <td style={styles.td}>
-                <strong>Machine #{machine.machine_number}</strong>
+                <div style={styles.userCell}>
+                  <div style={{...styles.miniAvatar, background: '#8b5cf6'}}>
+                    <Monitor size={16} />
+                  </div>
+                  <strong style={{color: '#f1f5f9'}}>Machine #{machine.machine_number}</strong>
+                </div>
               </td>
               <td style={styles.td}>{machine.type || 'Standard'}</td>
               <td style={styles.td}>
@@ -464,15 +557,11 @@ function MachinesTable({ machines, loading, onEdit, onDelete }) {
               <td style={styles.td}>{new Date(machine.created_at).toLocaleDateString('fr-FR')}</td>
               <td style={styles.td}>
                 <div style={styles.actionBtns}>
-                  <button style={styles.editIconBtn} onClick={() => onEdit(machine)} title="Modifier">
-                    <Edit2 size={16} />
-                  </button>
-                  <button style={styles.deleteIconBtn} onClick={() => onDelete(machine)} title="Supprimer">
-                    <Trash2 size={16} />
-                  </button>
+                  <ActionButton type="edit" onClick={() => onEdit(machine)} title="Modifier" />
+                  <ActionButton type="delete" onClick={() => onDelete(machine)} title="Supprimer" />
                 </div>
               </td>
-            </tr>
+            </TableRow>
           ))}
         </tbody>
       </table>
@@ -483,13 +572,13 @@ function MachinesTable({ machines, loading, onEdit, onDelete }) {
 // ========== GAMES TABLE ==========
 function GamesTable({ games, loading, onEdit, onDelete }) {
   if (loading) {
-    return <div style={styles.loading}><RefreshCw size={32} className="spin" /> Chargement...</div>;
+    return <SkeletonTable rows={5} columns={6} />;
   }
 
   if (games.length === 0) {
     return (
       <div style={styles.emptyState}>
-        <Gamepad2 size={64} color="#ccc" />
+        <Gamepad2 size={64} color="#64748b" />
         <p>Aucun jeu trouvé</p>
       </div>
     );
@@ -510,9 +599,14 @@ function GamesTable({ games, loading, onEdit, onDelete }) {
         </thead>
         <tbody>
           {games.map((game) => (
-            <tr key={game.id} style={styles.tr}>
+            <TableRow key={game.id}>
               <td style={styles.td}>
-                <strong>{game.name}</strong>
+                <div style={styles.userCell}>
+                  <div style={{...styles.miniAvatar, background: '#10b981'}}>
+                    <Gamepad2 size={16} />
+                  </div>
+                  <strong style={{color: '#f1f5f9'}}>{game.name}</strong>
+                </div>
               </td>
               <td style={styles.td}><span style={styles.priceTag}>{game.price_1h} DH</span></td>
               <td style={styles.td}><span style={styles.priceTag}>{game.price_2h} DH</span></td>
@@ -520,15 +614,11 @@ function GamesTable({ games, loading, onEdit, onDelete }) {
               <td style={styles.td}><span style={styles.priceTag}>{game.price_night} DH</span></td>
               <td style={styles.td}>
                 <div style={styles.actionBtns}>
-                  <button style={styles.editIconBtn} onClick={() => onEdit(game)} title="Modifier">
-                    <Edit2 size={16} />
-                  </button>
-                  <button style={styles.deleteIconBtn} onClick={() => onDelete(game)} title="Supprimer">
-                    <Trash2 size={16} />
-                  </button>
+                  <ActionButton type="edit" onClick={() => onEdit(game)} title="Modifier" />
+                  <ActionButton type="delete" onClick={() => onDelete(game)} title="Supprimer" />
                 </div>
               </td>
-            </tr>
+            </TableRow>
           ))}
         </tbody>
       </table>
@@ -1090,6 +1180,11 @@ const styles = {
     boxShadow: '0 4px 16px rgba(99, 102, 241, 0.3)',
     background: '#1e293b'
   },
+  statCardHover: {
+    transform: 'translateY(-6px)',
+    boxShadow: '0 8px 24px rgba(99, 102, 241, 0.4)',
+    borderColor: '#6366f1'
+  },
   statIcon: {
     width: '56px',
     height: '56px',
@@ -1211,13 +1306,19 @@ const styles = {
   },
   tr: {
     borderBottom: '1px solid #334155',
-    transition: 'all 0.2s'
+    transition: 'all 0.3s ease'
+  },
+  trHover: {
+    background: '#334155',
+    transform: 'scale(1.01)',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
   },
   td: {
     padding: '18px 20px',
     fontSize: '14px',
     color: '#cbd5e1',
-    fontWeight: '500'
+    fontWeight: '500',
+    transition: 'all 0.3s ease'
   },
   userCell: {
     display: 'flex',
@@ -1241,28 +1342,38 @@ const styles = {
     gap: '8px'
   },
   editIconBtn: {
-    padding: '8px',
+    padding: '10px',
     background: '#3b82f6',
     color: '#fff',
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: '10px',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    transition: 'all 0.2s'
+    transition: 'all 0.3s ease'
+  },
+  editIconBtnHover: {
+    background: '#2563eb',
+    transform: 'scale(1.15) rotate(5deg)',
+    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.5)'
   },
   deleteIconBtn: {
-    padding: '8px',
+    padding: '10px',
     background: '#ef4444',
     color: '#fff',
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: '10px',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    transition: 'all 0.2s'
+    transition: 'all 0.3s ease'
+  },
+  deleteIconBtnHover: {
+    background: '#dc2626',
+    transform: 'scale(1.15) rotate(-5deg)',
+    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.5)'
   },
   priceTag: {
     fontWeight: '700',
@@ -1287,6 +1398,14 @@ const styles = {
     flexDirection: 'column',
     alignItems: 'center',
     gap: '16px'
+  },
+  skeleton: {
+    background: 'linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%)',
+    backgroundSize: '200% 100%',
+    animation: 'shimmer 1.5s infinite',
+    borderRadius: '6px',
+    height: '20px',
+    width: '100%'
   },
   modalOverlay: {
     position: 'fixed',

@@ -39,6 +39,26 @@
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes fadeInRow {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 /* Spinning class for icons */
 :global(.spin) {
   animation: spin 1s linear infinite;
@@ -55,13 +75,18 @@ button:active {
 
 input:focus,
 select:focus {
-  border-color: #7b5cff !important;
-  box-shadow: 0 0 0 3px rgba(123, 92, 255, 0.1) !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
 }
 
-/* Table row hover */
+/* Table row hover - Dark theme */
 table tbody tr:hover {
-  background: #f9fafb;
+  background: #334155 !important;
+}
+
+/* Fade in row animation */
+:global(.fade-in-row) {
+  animation: fadeInRow 0.3s ease forwards;
 }
 
 /* ========== RESPONSIVE DESIGN ========== */
@@ -165,10 +190,10 @@ table tbody tr:hover {
   }
 }
 
-/* ========== SCROLL IMPROVEMENTS ========== */
+/* ========== SCROLL IMPROVEMENTS - Dark Theme ========== */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #667eea #f1f1f1;
+  scrollbar-color: #6366f1 #1e293b;
 }
 
 *::-webkit-scrollbar {
@@ -177,23 +202,23 @@ table tbody tr:hover {
 }
 
 *::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #1e293b;
   border-radius: 10px;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #6366f1;
   border-radius: 10px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: #818cf8;
 }
 
 /* ========== ACCESSIBILITY ========== */
 button:focus-visible,
 input:focus-visible,
 select:focus-visible {
-  outline: 3px solid #667eea;
+  outline: 3px solid #6366f1;
   outline-offset: 2px;
 }
