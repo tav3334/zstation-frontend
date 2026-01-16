@@ -1,18 +1,27 @@
 import { useState, useEffect } from 'react';
 import {
-  Users, Monitor, Gamepad2, LogOut, UserCog, Search, Plus,
-  Edit2, Trash2, X, Check, AlertCircle, TrendingUp, Activity,
-  Filter, Download, RefreshCw
+  Users, Monitor, Gamepad2, LogOut, Search, Plus,
+  Edit2, Trash2, X, AlertCircle, Activity,
+  Download, RefreshCw, LayoutDashboard,
+  ChevronLeft, ChevronRight, Zap, Wifi, WifiOff, Clock
 } from 'lucide-react';
 import api from '../services/api';
 import Toast from '../components/Toast';
 import '../styles/superadmin.module.css';
 
 function SuperAdminDashboard({ user, onLogout }) {
-  const [activeTab, setActiveTab] = useState('users');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Horloge temps réel
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // États pour les données
   const [users, setUsers] = useState([]);
@@ -66,12 +75,6 @@ function SuperAdminDashboard({ user, onLogout }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const loadData = async () => {
-    if (activeTab === 'users') await fetchUsers();
-    else if (activeTab === 'machines') await fetchMachines();
-    else if (activeTab === 'games') await fetchGames();
   };
 
   const showToast = (message, type = 'success') => {
@@ -170,139 +173,202 @@ function SuperAdminDashboard({ user, onLogout }) {
     return [];
   };
 
+  // Export CSV
+  const exportToCSV = (data, filename) => {
+    if (!data || data.length === 0) {
+      showToast('Aucune donnée à exporter', 'error');
+      return;
+    }
+    const headers = Object.keys(data[0]).join(',');
+    const rows = data.map(item => Object.values(item).map(v => `"${v || ''}"`).join(',')).join('\n');
+    const csv = `${headers}\n${rows}`;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    showToast(`${filename} exporté avec succès`, 'success');
+  };
+
+  const menuItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'users', label: 'Utilisateurs', icon: Users, count: stats.totalUsers },
+    { id: 'machines', label: 'Machines', icon: Monitor, count: stats.totalMachines },
+    { id: 'games', label: 'Jeux', icon: Gamepad2, count: stats.totalGames },
+  ];
+
   return (
-    <div style={styles.container}>
-      {/* Header */}
-      <header style={styles.header}>
-        <div style={styles.headerLeft}>
-          <div style={styles.logoContainer}>
-            <UserCog size={28} color="#fff" strokeWidth={2.5} />
+    <div style={styles.appContainer}>
+      {/* Sidebar */}
+      <aside style={{
+        ...styles.sidebar,
+        width: sidebarCollapsed ? '70px' : '260px'
+      }}>
+        {/* Logo */}
+        <div style={styles.sidebarHeader}>
+          <div style={styles.logoBox}>
+            <Zap size={24} color="#fff" />
           </div>
-          <div>
-            <h1 style={styles.title}>Super Admin Panel</h1>
-            <p style={styles.subtitle}>Gestion globale du système Z-STATION</p>
-          </div>
+          {!sidebarCollapsed && (
+            <div style={styles.logoText}>
+              <span style={styles.logoTitle}>Z-STATION</span>
+              <span style={styles.logoSubtitle}>Super Admin</span>
+            </div>
+          )}
         </div>
-        <div style={styles.headerRight}>
-          <div style={styles.userInfo}>
-            <div style={styles.userAvatar}>
-              {user.name?.charAt(0).toUpperCase() || 'S'}
-            </div>
-            <div>
-              <div style={styles.userName}>{user.name}</div>
-              <div style={styles.userRole}>Super Administrateur</div>
-            </div>
-          </div>
-          <button style={styles.logoutBtn} onClick={onLogout}>
-            <LogOut size={18} />
-            <span>Déconnexion</span>
+
+        {/* Menu Items */}
+        <nav style={styles.sidebarNav}>
+          {menuItems.map(item => (
+            <button
+              key={item.id}
+              style={{
+                ...styles.menuItem,
+                ...(activeTab === item.id && styles.menuItemActive)
+              }}
+              onClick={() => setActiveTab(item.id)}
+            >
+              <item.icon size={20} />
+              {!sidebarCollapsed && (
+                <>
+                  <span style={styles.menuLabel}>{item.label}</span>
+                  {item.count !== undefined && (
+                    <span style={styles.menuBadge}>{item.count}</span>
+                  )}
+                </>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        {/* Sidebar Footer */}
+        <div style={styles.sidebarFooter}>
+          <button
+            style={styles.collapseBtn}
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          >
+            {sidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
           </button>
         </div>
-      </header>
+      </aside>
 
-      {/* Statistics Cards */}
-      <div style={styles.statsContainer}>
-        <StatCard
-          icon={<Users size={24} />}
-          title="Total Utilisateurs"
-          value={stats.totalUsers}
-          color="#667eea"
-          active={activeTab === 'users'}
-          onClick={() => setActiveTab('users')}
-        />
-        <StatCard
-          icon={<Monitor size={24} />}
-          title="Total Machines"
-          value={stats.totalMachines}
-          color="#f093fb"
-          active={activeTab === 'machines'}
-          onClick={() => setActiveTab('machines')}
-        />
-        <StatCard
-          icon={<Gamepad2 size={24} />}
-          title="Total Jeux"
-          value={stats.totalGames}
-          color="#4facfe"
-          active={activeTab === 'games'}
-          onClick={() => setActiveTab('games')}
-        />
-        <StatCard
-          icon={<Activity size={24} />}
-          title="Utilisateurs Actifs"
-          value={stats.activeUsers}
-          color="#43e97b"
-        />
-      </div>
+      {/* Main Area */}
+      <div style={{...styles.mainArea, marginLeft: sidebarCollapsed ? '70px' : '260px'}}>
+        {/* Top Bar */}
+        <header style={styles.topBar}>
+          <div style={styles.topBarLeft}>
+            <h1 style={styles.pageTitle}>
+              {activeTab === 'dashboard' ? 'Dashboard' :
+               activeTab === 'users' ? 'Gestion Utilisateurs' :
+               activeTab === 'machines' ? 'Gestion Machines' : 'Gestion Jeux'}
+            </h1>
+          </div>
+          <div style={styles.topBarRight}>
+            <div style={styles.clockDisplay}>
+              <Clock size={16} />
+              <span>{currentTime.toLocaleTimeString('fr-FR')}</span>
+            </div>
+            <div style={styles.userPill}>
+              <div style={styles.userAvatarSmall}>
+                {user.name?.charAt(0).toUpperCase()}
+              </div>
+              <span style={styles.userNameSmall}>{user.name}</span>
+            </div>
+            <button style={styles.logoutBtnSmall} onClick={onLogout}>
+              <LogOut size={18} />
+            </button>
+          </div>
+        </header>
 
-      {/* Main Content */}
-      <div style={styles.mainContent}>
-        {/* Toolbar */}
-        <div style={styles.toolbar}>
-          <div style={styles.searchContainer}>
-            <Search size={20} style={styles.searchIcon} />
-            <input
-              type="text"
-              placeholder={`Rechercher ${activeTab === 'users' ? 'utilisateurs' : activeTab === 'machines' ? 'machines' : 'jeux'}...`}
-              style={styles.searchInput}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+        {/* Content */}
+        <main style={styles.content}>
+          {/* Dashboard View */}
+          {activeTab === 'dashboard' && (
+            <DashboardView
+              stats={stats}
+              machines={machines}
+              users={users}
+              games={games}
+              onNavigate={setActiveTab}
             />
-          </div>
-          <div style={styles.toolbarActions}>
-            <button style={styles.refreshBtn} onClick={loadData} disabled={loading}>
-              <RefreshCw size={18} className={loading ? 'spin' : ''} />
-              <span>Actualiser</span>
-            </button>
-            <button
-              style={styles.createBtn}
-              onClick={() => {
-                setEditingItem(null);
-                if (activeTab === 'users') setShowUserModal(true);
-                else if (activeTab === 'machines') setShowMachineModal(true);
-                else if (activeTab === 'games') setShowGameModal(true);
-              }}
-            >
-              <Plus size={18} />
-              <span>
-                {activeTab === 'users' ? 'Nouvel Utilisateur' :
-                 activeTab === 'machines' ? 'Nouvelle Machine' :
-                 'Nouveau Jeu'}
-              </span>
-            </button>
-          </div>
-        </div>
+          )}
 
-        {/* Content Tabs */}
-        {activeTab === 'users' && (
-          <UsersTable
-            users={getFilteredData()}
-            loading={loading}
-            onEdit={(user) => { setEditingItem(user); setShowUserModal(true); }}
-            onDelete={handleDeleteUser}
-          />
-        )}
-        {activeTab === 'machines' && (
-          <MachinesTable
-            machines={getFilteredData()}
-            loading={loading}
-            onEdit={(machine) => { setEditingItem(machine); setShowMachineModal(true); }}
-            onDelete={(machine) => {
-              setDeletingItem({ type: 'machine', data: machine });
-              setShowDeleteConfirm(true);
-            }}
-          />
-        )}
-        {activeTab === 'games' && (
-          <GamesTable
-            games={getFilteredData()}
-            loading={loading}
-            onEdit={(game) => { setEditingItem(game); setShowGameModal(true); }}
-            onDelete={(game) => {
-              setDeletingItem({ type: 'game', data: game });
-              setShowDeleteConfirm(true);
-            }}
-          />
-        )}
+          {/* Data Tables with Toolbar */}
+          {(activeTab === 'users' || activeTab === 'machines' || activeTab === 'games') && (
+            <>
+              <div style={styles.toolbar}>
+                <div style={styles.searchContainer}>
+                  <Search size={18} style={styles.searchIcon} />
+                  <input
+                    type="text"
+                    placeholder={`Rechercher...`}
+                    style={styles.searchInput}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <div style={styles.toolbarActions}>
+                  <button
+                    style={styles.exportBtn}
+                    onClick={() => exportToCSV(
+                      activeTab === 'users' ? users : activeTab === 'machines' ? machines : games,
+                      activeTab
+                    )}
+                  >
+                    <Download size={16} />
+                    <span>Export CSV</span>
+                  </button>
+                  <button style={styles.refreshBtn} onClick={loadAllData} disabled={loading}>
+                    <RefreshCw size={16} className={loading ? 'spin' : ''} />
+                  </button>
+                  <button
+                    style={styles.createBtn}
+                    onClick={() => {
+                      setEditingItem(null);
+                      if (activeTab === 'users') setShowUserModal(true);
+                      else if (activeTab === 'machines') setShowMachineModal(true);
+                      else if (activeTab === 'games') setShowGameModal(true);
+                    }}
+                  >
+                    <Plus size={16} />
+                    <span>Ajouter</span>
+                  </button>
+                </div>
+              </div>
+
+              {activeTab === 'users' && (
+                <UsersTable
+                  users={getFilteredData()}
+                  loading={loading}
+                  onEdit={(user) => { setEditingItem(user); setShowUserModal(true); }}
+                  onDelete={handleDeleteUser}
+                />
+              )}
+              {activeTab === 'machines' && (
+                <MachinesTable
+                  machines={getFilteredData()}
+                  loading={loading}
+                  onEdit={(machine) => { setEditingItem(machine); setShowMachineModal(true); }}
+                  onDelete={(machine) => {
+                    setDeletingItem({ type: 'machine', data: machine });
+                    setShowDeleteConfirm(true);
+                  }}
+                />
+              )}
+              {activeTab === 'games' && (
+                <GamesTable
+                  games={getFilteredData()}
+                  loading={loading}
+                  onEdit={(game) => { setEditingItem(game); setShowGameModal(true); }}
+                  onDelete={(game) => {
+                    setDeletingItem({ type: 'game', data: game });
+                    setShowDeleteConfirm(true);
+                  }}
+                />
+              )}
+            </>
+          )}
+        </main>
       </div>
 
       {/* Modals */}
@@ -359,6 +425,170 @@ function SuperAdminDashboard({ user, onLogout }) {
   );
 }
 
+// ========== DASHBOARD VIEW ==========
+function DashboardView({ stats, machines, users, games, onNavigate }) {
+  const availableMachines = machines.filter(m => m.status === 'available').length;
+  const occupiedMachines = machines.filter(m => m.status !== 'available').length;
+
+  return (
+    <div style={styles.dashboardGrid}>
+      {/* Stats Row */}
+      <div style={styles.statsRow}>
+        <MiniStatCard
+          icon={<Users size={20} />}
+          label="Utilisateurs"
+          value={stats.totalUsers}
+          color="#6366f1"
+          onClick={() => onNavigate('users')}
+        />
+        <MiniStatCard
+          icon={<Monitor size={20} />}
+          label="Machines"
+          value={stats.totalMachines}
+          color="#8b5cf6"
+          onClick={() => onNavigate('machines')}
+        />
+        <MiniStatCard
+          icon={<Gamepad2 size={20} />}
+          label="Jeux"
+          value={stats.totalGames}
+          color="#10b981"
+          onClick={() => onNavigate('games')}
+        />
+        <MiniStatCard
+          icon={<Activity size={20} />}
+          label="Actifs"
+          value={stats.activeUsers}
+          color="#f59e0b"
+        />
+      </div>
+
+      {/* Machines Map */}
+      <div style={styles.dashboardCard}>
+        <div style={styles.cardHeader}>
+          <h3 style={styles.cardTitle}>
+            <Monitor size={18} /> Carte des Machines
+          </h3>
+          <div style={styles.machineStats}>
+            <span style={styles.availableTag}>
+              <Wifi size={14} /> {availableMachines} Libres
+            </span>
+            <span style={styles.occupiedTag}>
+              <WifiOff size={14} /> {occupiedMachines} Occupées
+            </span>
+          </div>
+        </div>
+        <div style={styles.machinesGrid}>
+          {machines.length === 0 ? (
+            <div style={styles.emptyMachines}>
+              <Monitor size={40} color="#64748b" />
+              <p>Aucune machine configurée</p>
+            </div>
+          ) : (
+            machines.map(machine => (
+              <MachineCard key={machine.id} machine={machine} />
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Bottom Row */}
+      <div style={styles.bottomRow}>
+        {/* Recent Users */}
+        <div style={styles.dashboardCardSmall}>
+          <div style={styles.cardHeader}>
+            <h3 style={styles.cardTitle}>
+              <Users size={18} /> Derniers Utilisateurs
+            </h3>
+          </div>
+          <div style={styles.recentList}>
+            {users.slice(0, 5).map(u => (
+              <div key={u.id} style={styles.recentItem}>
+                <div style={styles.recentAvatar}>{u.name?.charAt(0)}</div>
+                <div style={styles.recentInfo}>
+                  <span style={styles.recentName}>{u.name}</span>
+                  <span style={styles.recentMeta}>{u.email}</span>
+                </div>
+                <span style={getRoleBadgeStyle(u.role)}>{getRoleLabel(u.role)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Games List */}
+        <div style={styles.dashboardCardSmall}>
+          <div style={styles.cardHeader}>
+            <h3 style={styles.cardTitle}>
+              <Gamepad2 size={18} /> Catalogue Jeux
+            </h3>
+          </div>
+          <div style={styles.recentList}>
+            {games.slice(0, 5).map(g => (
+              <div key={g.id} style={styles.recentItem}>
+                <div style={{...styles.recentAvatar, background: '#10b981'}}>
+                  <Gamepad2 size={14} />
+                </div>
+                <div style={styles.recentInfo}>
+                  <span style={styles.recentName}>{g.name}</span>
+                  <span style={styles.recentMeta}>{g.price_1h} DH/h</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========== MINI STAT CARD ==========
+function MiniStatCard({ icon, label, value, color, onClick }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      style={{
+        ...styles.miniStatCard,
+        borderColor: hovered ? color : '#334155',
+        transform: hovered ? 'translateY(-4px)' : 'none',
+        cursor: onClick ? 'pointer' : 'default'
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={onClick}
+    >
+      <div style={{...styles.miniStatIcon, background: color}}>{icon}</div>
+      <div style={styles.miniStatValue}>{value}</div>
+      <div style={styles.miniStatLabel}>{label}</div>
+    </div>
+  );
+}
+
+// ========== MACHINE CARD ==========
+function MachineCard({ machine }) {
+  const isAvailable = machine.status === 'available';
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      style={{
+        ...styles.machineCardItem,
+        background: isAvailable ? '#064e3b' : '#7f1d1d',
+        borderColor: isAvailable ? '#10b981' : '#ef4444',
+        transform: hovered ? 'scale(1.05)' : 'scale(1)'
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div style={styles.machineNumber}>#{machine.machine_number}</div>
+      <div style={styles.machineStatus}>
+        {isAvailable ? <Wifi size={16} /> : <WifiOff size={16} />}
+      </div>
+      <div style={styles.machineType}>{machine.type || 'Standard'}</div>
+    </div>
+  );
+}
+
 // ========== SKELETON LOADER ==========
 function SkeletonRow({ columns = 5 }) {
   return (
@@ -391,42 +621,6 @@ function SkeletonTable({ rows = 5, columns = 5 }) {
           ))}
         </tbody>
       </table>
-    </div>
-  );
-}
-
-// ========== STAT CARD COMPONENT ==========
-function StatCard({ icon, title, value, color, active, onClick }) {
-  const [isHovered, setIsHovered] = useState(false);
-
-  return (
-    <div
-      style={{
-        ...styles.statCard,
-        ...(active && styles.statCardActive),
-        ...(isHovered && styles.statCardHover),
-        cursor: onClick ? 'pointer' : 'default'
-      }}
-      onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div style={{
-        ...styles.statIcon,
-        background: color,
-        transform: isHovered ? 'scale(1.1) rotate(5deg)' : 'scale(1)',
-        transition: 'transform 0.3s ease'
-      }}>
-        {icon}
-      </div>
-      <div style={styles.statContent}>
-        <div style={{
-          ...styles.statValue,
-          transform: isHovered ? 'scale(1.05)' : 'scale(1)',
-          transition: 'transform 0.3s ease'
-        }}>{value}</div>
-        <div style={styles.statTitle}>{title}</div>
-      </div>
     </div>
   );
 }
@@ -1083,6 +1277,398 @@ function getStatusBadgeStyle(status) {
 
 // ========== STYLES ==========
 const styles = {
+  // App Layout
+  appContainer: {
+    display: 'flex',
+    minHeight: '100vh',
+    background: '#0f172a',
+    width: '100%'
+  },
+
+  // Sidebar
+  sidebar: {
+    background: '#1e293b',
+    borderRight: '1px solid #334155',
+    display: 'flex',
+    flexDirection: 'column',
+    transition: 'width 0.3s ease',
+    position: 'fixed',
+    height: '100vh',
+    zIndex: 100
+  },
+  sidebarHeader: {
+    padding: '20px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    borderBottom: '1px solid #334155'
+  },
+  logoBox: {
+    width: '40px',
+    height: '40px',
+    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+    borderRadius: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0
+  },
+  logoText: {
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  logoTitle: {
+    color: '#f1f5f9',
+    fontWeight: '800',
+    fontSize: '16px'
+  },
+  logoSubtitle: {
+    color: '#64748b',
+    fontSize: '11px',
+    fontWeight: '500'
+  },
+  sidebarNav: {
+    flex: 1,
+    padding: '12px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px'
+  },
+  menuItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '12px 14px',
+    borderRadius: '10px',
+    border: 'none',
+    background: 'transparent',
+    color: '#94a3b8',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    width: '100%',
+    textAlign: 'left',
+    fontSize: '14px',
+    fontWeight: '500'
+  },
+  menuItemActive: {
+    background: '#6366f1',
+    color: '#fff'
+  },
+  menuLabel: {
+    flex: 1
+  },
+  menuBadge: {
+    background: '#334155',
+    color: '#94a3b8',
+    padding: '2px 8px',
+    borderRadius: '10px',
+    fontSize: '12px',
+    fontWeight: '600'
+  },
+  sidebarFooter: {
+    padding: '12px',
+    borderTop: '1px solid #334155'
+  },
+  collapseBtn: {
+    width: '100%',
+    padding: '10px',
+    background: '#334155',
+    border: 'none',
+    borderRadius: '8px',
+    color: '#94a3b8',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s'
+  },
+
+  // Main Area
+  mainArea: {
+    flex: 1,
+    marginLeft: '260px',
+    transition: 'margin-left 0.3s ease',
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: '100vh'
+  },
+
+  // Top Bar
+  topBar: {
+    background: '#1e293b',
+    padding: '16px 24px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottom: '1px solid #334155',
+    position: 'sticky',
+    top: 0,
+    zIndex: 50
+  },
+  topBarLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px'
+  },
+  pageTitle: {
+    margin: 0,
+    fontSize: '20px',
+    fontWeight: '700',
+    color: '#f1f5f9'
+  },
+  topBarRight: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px'
+  },
+  clockDisplay: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    color: '#64748b',
+    fontSize: '14px',
+    fontWeight: '500'
+  },
+  userPill: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: '#334155',
+    padding: '6px 12px 6px 6px',
+    borderRadius: '20px'
+  },
+  userAvatarSmall: {
+    width: '28px',
+    height: '28px',
+    borderRadius: '50%',
+    background: '#6366f1',
+    color: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '12px',
+    fontWeight: '700'
+  },
+  userNameSmall: {
+    color: '#f1f5f9',
+    fontSize: '13px',
+    fontWeight: '500'
+  },
+  logoutBtnSmall: {
+    padding: '8px',
+    background: '#ef4444',
+    border: 'none',
+    borderRadius: '8px',
+    color: '#fff',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s'
+  },
+
+  // Content
+  content: {
+    flex: 1,
+    padding: '24px',
+    overflowY: 'auto'
+  },
+
+  // Dashboard Grid
+  dashboardGrid: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '24px'
+  },
+  statsRow: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: '16px'
+  },
+  miniStatCard: {
+    background: '#1e293b',
+    borderRadius: '12px',
+    padding: '20px',
+    border: '1px solid #334155',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '8px',
+    transition: 'all 0.3s ease'
+  },
+  miniStatIcon: {
+    width: '44px',
+    height: '44px',
+    borderRadius: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#fff'
+  },
+  miniStatValue: {
+    fontSize: '28px',
+    fontWeight: '800',
+    color: '#f1f5f9'
+  },
+  miniStatLabel: {
+    fontSize: '12px',
+    color: '#64748b',
+    fontWeight: '500'
+  },
+
+  // Dashboard Cards
+  dashboardCard: {
+    background: '#1e293b',
+    borderRadius: '16px',
+    border: '1px solid #334155',
+    overflow: 'hidden'
+  },
+  dashboardCardSmall: {
+    background: '#1e293b',
+    borderRadius: '16px',
+    border: '1px solid #334155',
+    overflow: 'hidden',
+    flex: 1
+  },
+  cardHeader: {
+    padding: '16px 20px',
+    borderBottom: '1px solid #334155',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  cardTitle: {
+    margin: 0,
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#f1f5f9',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
+  },
+  machineStats: {
+    display: 'flex',
+    gap: '12px'
+  },
+  availableTag: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    color: '#10b981',
+    fontSize: '12px',
+    fontWeight: '600'
+  },
+  occupiedTag: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    color: '#ef4444',
+    fontSize: '12px',
+    fontWeight: '600'
+  },
+
+  // Machines Grid
+  machinesGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+    gap: '12px',
+    padding: '20px'
+  },
+  emptyMachines: {
+    gridColumn: '1 / -1',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '40px',
+    color: '#64748b'
+  },
+  machineCardItem: {
+    padding: '16px',
+    borderRadius: '12px',
+    border: '2px solid',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '8px',
+    transition: 'all 0.2s ease',
+    cursor: 'default'
+  },
+  machineNumber: {
+    fontSize: '18px',
+    fontWeight: '800',
+    color: '#fff'
+  },
+  machineStatus: {
+    color: '#fff'
+  },
+  machineType: {
+    fontSize: '10px',
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '500'
+  },
+
+  // Bottom Row
+  bottomRow: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: '24px'
+  },
+  recentList: {
+    padding: '12px'
+  },
+  recentItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '10px 12px',
+    borderRadius: '8px',
+    transition: 'background 0.2s'
+  },
+  recentAvatar: {
+    width: '32px',
+    height: '32px',
+    borderRadius: '8px',
+    background: '#6366f1',
+    color: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '12px',
+    fontWeight: '700'
+  },
+  recentInfo: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  recentName: {
+    color: '#f1f5f9',
+    fontSize: '13px',
+    fontWeight: '600'
+  },
+  recentMeta: {
+    color: '#64748b',
+    fontSize: '11px'
+  },
+
+  // Export Button
+  exportBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '10px 14px',
+    background: '#334155',
+    color: '#f1f5f9',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontWeight: '600',
+    fontSize: '13px',
+    transition: 'all 0.2s'
+  },
+
+  // Legacy styles below
   container: {
     minHeight: '100vh',
     background: '#0f172a',
