@@ -35,10 +35,10 @@ function SuperAdminDashboard({ user, onLogout }) {
   const [editingItem, setEditingItem] = useState(null);
   const [deletingItem, setDeletingItem] = useState(null);
 
-  // Charger les données selon l'onglet actif
+  // Charger TOUTES les données au démarrage pour les statistiques
   useEffect(() => {
-    loadData();
-  }, [activeTab]);
+    loadAllData();
+  }, []);
 
   // Calculer les statistiques
   useEffect(() => {
@@ -49,6 +49,24 @@ function SuperAdminDashboard({ user, onLogout }) {
       activeUsers: users.filter(u => u.role === 'agent' || u.role === 'admin').length
     });
   }, [users, machines, games]);
+
+  const loadAllData = async () => {
+    setLoading(true);
+    try {
+      const [usersRes, machinesRes, gamesRes] = await Promise.all([
+        api.get('/super-admin/users'),
+        api.get('/super-admin/machines'),
+        api.get('/super-admin/games')
+      ]);
+      setUsers(usersRes.data.users || usersRes.data || []);
+      setMachines(machinesRes.data.machines || machinesRes.data || []);
+      setGames(gamesRes.data.games || gamesRes.data || []);
+    } catch (error) {
+      showToast('Erreur lors du chargement des données', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadData = async () => {
     if (activeTab === 'users') await fetchUsers();
