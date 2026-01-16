@@ -6,6 +6,7 @@ import api from './services/api';
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const SuperAdminDashboard = lazy(() => import('./pages/SuperAdminDashboard'));
 
 // Loading component
 const LoadingScreen = () => (
@@ -78,6 +79,9 @@ function App() {
       {/* Si pas connecté → Login */}
       {!user ? (
         <Login onLogin={handleLogin} />
+      ) : user.role === 'super_admin' ? (
+        /* Si Super Admin → Super Admin Panel */
+        <SuperAdminDashboard user={user} onLogout={handleLogout} />
       ) : user.role === 'admin' ? (
         /* Si Admin → Dashboard Admin */
         <AdminDashboard user={user} onLogout={handleLogout} />

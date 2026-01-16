@@ -1,0 +1,117 @@
+/* Super Admin Dashboard Styles */
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .headerRight {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .tabsContainer {
+    flex-direction: column;
+  }
+
+  .tableContainer {
+    overflow-x: auto;
+  }
+
+  .actionBtns {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .modalContent {
+    width: 95% !important;
+    padding: 20px !important;
+  }
+
+  .formRow {
+    flex-direction: column !important;
+  }
+}
+
+/* Hover effects */
+.logoutBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
+}
+
+.createBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.editBtn:hover {
+  background: #2563eb;
+}
+
+.deleteBtn:hover {
+  background: #dc2626;
+}
+
+.tab:hover:not(.tabActive) {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.tr:hover {
+  background: #f9fafb;
+}
+
+.input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.cancelBtn:hover {
+  background: #d1d5db;
+}
+
+.submitBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modalOverlay {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modalContent {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Loading spinner */
+.loading::after {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-left: 10px;
+  border: 3px solid #f3f4f6;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
