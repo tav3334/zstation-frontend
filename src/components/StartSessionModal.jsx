@@ -67,56 +67,96 @@ function StartSessionModal({
         </div>
 
         <div style={{ marginBottom: 20 }}>
-          <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "8px" }}>
-            <span style={{ marginRight: "6px" }}>⏱️</span>
-            Mode de Tarification:
+          <label style={{ display: "block", fontSize: "16px", fontWeight: "700", color: "#111827", marginBottom: "12px" }}>
+            Choisir le mode de facturation:
           </label>
-          <select
-            value={selectedPricing}
-            onChange={(e) => setSelectedPricing(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "12px 14px",
-              fontSize: "15px",
-              border: "2px solid #e5e7eb",
+
+          {/* Options de tarification sous forme de cartes */}
+          {selectedGame && availablePricings.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {availablePricings.map((pricing) => {
+                const mode = pricing.pricing_mode?.code || 'fixed';
+                const isSelected = selectedPricing === String(pricing.id);
+                const isPerMatch = mode === 'per_match';
+
+                return (
+                  <div
+                    key={pricing.id}
+                    onClick={() => setSelectedPricing(String(pricing.id))}
+                    style={{
+                      padding: "16px",
+                      borderRadius: "10px",
+                      border: isSelected ? `3px solid ${isPerMatch ? '#10b981' : '#3b82f6'}` : "2px solid #e5e7eb",
+                      backgroundColor: isSelected
+                        ? (isPerMatch ? '#f0fdf4' : '#eff6ff')
+                        : '#f9fafb',
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      position: "relative"
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{
+                          fontSize: "18px",
+                          fontWeight: "700",
+                          color: isPerMatch ? '#059669' : '#1e40af',
+                          marginBottom: "4px"
+                        }}>
+                          {isPerMatch ? '⚽ MODE PAR MATCH' : '⏱️ MODE PAR TEMPS'}
+                        </div>
+                        <div style={{ fontSize: "14px", color: "#6b7280" }}>
+                          {isPerMatch
+                            ? `${pricing.matches_count} match - ${pricing.price} DH`
+                            : `${pricing.duration_minutes} minutes - ${pricing.price} DH`
+                          }
+                        </div>
+                        {isPerMatch && (
+                          <div style={{
+                            fontSize: "12px",
+                            color: "#059669",
+                            marginTop: "4px",
+                            fontStyle: "italic"
+                          }}>
+                            Prix final = nombre de matchs joués × {pricing.price} DH
+                          </div>
+                        )}
+                      </div>
+                      {isSelected && (
+                        <div style={{
+                          width: "24px",
+                          height: "24px",
+                          borderRadius: "50%",
+                          backgroundColor: isPerMatch ? '#10b981' : '#3b82f6',
+                          color: "white",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "14px",
+                          fontWeight: "700"
+                        }}>
+                          ✓
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{
+              padding: "16px",
+              backgroundColor: "#fef3c7",
               borderRadius: "10px",
-              backgroundColor: "#f9fafb",
-              cursor: "pointer"
-            }}
-            disabled={!selectedGame || availablePricings.length === 0}
-          >
-            <option value="">-- Sélectionner un tarif --</option>
-            {availablePricings.map((pricing) => {
-              const mode = pricing.pricing_mode?.code || 'fixed';
-              let label = '';
-
-              if (mode === 'per_match') {
-                label = `⚽ Par Match (${pricing.matches_count} match) - ${pricing.price} DH`;
-              } else {
-                label = `⏱️ ${pricing.duration_minutes} min - ${pricing.price} DH`;
+              border: "2px solid #fbbf24",
+              textAlign: "center",
+              color: "#92400e"
+            }}>
+              {!selectedGame
+                ? "⚠️ Veuillez d'abord sélectionner un jeu"
+                : "⚠️ Aucun tarif disponible pour ce jeu"
               }
-
-              return (
-                <option key={pricing.id} value={pricing.id}>
-                  {label}
-                </option>
-              );
-            })}
-          </select>
-          {selectedGame && availablePricings.length === 0 && (
-            <small style={{ color: "#ef4444", display: "block", marginTop: "5px" }}>
-              ⚠️ Aucun tarif disponible pour ce jeu
-            </small>
-          )}
-          {!selectedGame && (
-            <small style={{ color: "#6b7280", display: "block", marginTop: "5px" }}>
-              Veuillez d'abord sélectionner un jeu
-            </small>
-          )}
-          {selectedPricing && availablePricings.find(p => p.id === Number(selectedPricing))?.pricing_mode?.code === 'per_match' && (
-            <small style={{ color: "#10b981", display: "block", marginTop: "5px", fontWeight: "600" }}>
-              ℹ️ Vous devrez saisir le nombre de matchs joués à la fin
-            </small>
+            </div>
           )}
         </div>
 
