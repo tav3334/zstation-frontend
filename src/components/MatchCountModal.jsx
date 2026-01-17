@@ -18,53 +18,52 @@ function MatchCountModal({ session, onConfirm, onClose }) {
   return (
     <div className="match-modal-overlay" style={overlay}>
       <div className="match-modal-content" style={modal}>
-        <h3 style={{ margin: "0 0 16px 0", fontSize: "24px", fontWeight: "700", color: "#111827" }}>
-          ⚽ Nombre de Matchs Joués
+        <h3 style={{ margin: "0 0 20px 0", fontSize: "26px", fontWeight: "700", color: "#111827", textAlign: "center" }}>
+          ⚽ Combien de matchs joués ?
         </h3>
 
         <div style={{
-          backgroundColor: "#f0fdf4",
-          padding: "16px",
+          backgroundColor: "#10b981",
+          padding: "20px",
           borderRadius: "12px",
-          marginBottom: "20px",
-          border: "2px solid #86efac"
+          marginBottom: "24px",
+          textAlign: "center",
+          color: "white"
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-            <span style={{ fontSize: "20px" }}>🎮</span>
-            <span style={{ fontSize: "16px", fontWeight: "600", color: "#166534" }}>
-              {session?.game?.name || "FIFA/PES"}
-            </span>
+          <div style={{ fontSize: "18px", fontWeight: "600", marginBottom: "8px" }}>
+            {session?.game?.name || "FIFA/PES"}
           </div>
-          <div style={{ fontSize: "14px", color: "#16a34a" }}>
-            Prix par match: <strong>{pricePerMatch} DH</strong>
+          <div style={{ fontSize: "24px", fontWeight: "700" }}>
+            {pricePerMatch} DH / match
           </div>
         </div>
 
         <div style={{ marginBottom: 24 }}>
           <label style={{
             display: "block",
-            fontSize: "14px",
+            fontSize: "16px",
             fontWeight: "600",
             color: "#374151",
-            marginBottom: "8px"
+            marginBottom: "12px",
+            textAlign: "center"
           }}>
-            Combien de matchs ont été joués?
+            Nombre de matchs
           </label>
           <input
             type="number"
             min="1"
             value={matchCount}
             onChange={(e) => setMatchCount(e.target.value)}
-            placeholder="Ex: 3"
+            placeholder="0"
             style={{
               width: "100%",
-              padding: "14px 16px",
-              fontSize: "18px",
-              border: "2px solid #e5e7eb",
-              borderRadius: "10px",
-              backgroundColor: "#f9fafb",
+              padding: "18px 20px",
+              fontSize: "32px",
+              border: "3px solid #10b981",
+              borderRadius: "12px",
+              backgroundColor: "#f0fdf4",
               textAlign: "center",
-              fontWeight: "600",
+              fontWeight: "700",
               color: "#111827",
               boxSizing: "border-box"
             }}
@@ -74,18 +73,21 @@ function MatchCountModal({ session, onConfirm, onClose }) {
 
         {matchCount && parseInt(matchCount) > 0 && (
           <div style={{
-            backgroundColor: "#eff6ff",
-            padding: "16px",
+            backgroundColor: "#fef3c7",
+            padding: "20px",
             borderRadius: "12px",
             marginBottom: "20px",
-            border: "2px solid #93c5fd",
-            textAlign: "center"
+            textAlign: "center",
+            border: "2px solid #fbbf24"
           }}>
-            <div style={{ fontSize: "14px", color: "#1e40af", marginBottom: "8px" }}>
-              Calcul:
+            <div style={{ fontSize: "16px", color: "#92400e", marginBottom: "8px" }}>
+              Total à payer
             </div>
-            <div style={{ fontSize: "20px", fontWeight: "700", color: "#1e3a8a" }}>
-              {matchCount} match(s) × {pricePerMatch} DH = {totalPrice} DH
+            <div style={{ fontSize: "36px", fontWeight: "700", color: "#78350f" }}>
+              {totalPrice} DH
+            </div>
+            <div style={{ fontSize: "14px", color: "#92400e", marginTop: "4px" }}>
+              ({matchCount} × {pricePerMatch} DH)
             </div>
           </div>
         )}

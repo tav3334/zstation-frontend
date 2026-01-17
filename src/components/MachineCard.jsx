@@ -140,65 +140,108 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
 
       {isInSession && machine.active_session && (
         <>
-          {/* Timer Display - Seulement pour mode par temps */}
-          {!isPerMatchMode && (
+          {/* MODE PAR MATCH - Interface simple */}
+          {isPerMatchMode ? (
             <div style={{
-              background: "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)",
+              background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
               borderRadius: "12px",
-              padding: "20px",
+              padding: "24px",
               marginBottom: "16px",
-              textAlign: "center"
+              textAlign: "center",
+              color: "white"
             }}>
               <div style={{
-                fontSize: "48px",
+                fontSize: "18px",
                 fontWeight: "700",
-                color: isExpired ? "#ef4444" : "#3b82f6",
-                lineHeight: "1",
-                marginBottom: "8px",
-                fontFamily: "monospace"
+                marginBottom: "12px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px"
               }}>
-                {formatTime(elapsed)}
-              </div>
-              <div style={{
-                fontSize: "14px",
-                fontWeight: "600",
-                color: isExpired ? "#ef4444" : "#6b7280"
-              }}>
-                {isExpired ? <><Clock size={16} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> TEMPS ÉCOULÉ !</> : <><Timer size={16} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> Reste: {formatTime(remainingSeconds)}</>}
-              </div>
-            </div>
-          )}
-
-          {/* Game Info */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "12px",
-            backgroundColor: "#f9fafb",
-            borderRadius: "8px",
-            marginBottom: "16px"
-          }}>
-            <Gamepad2 size={24} color="#6366f1" />
-            <div style={{ flex: 1 }}>
-              <div style={{
-                fontSize: "14px",
-                fontWeight: "600",
-                color: "#111827"
-              }}>
+                <Gamepad2 size={24} />
                 {machine.active_session.game_name || "N/A"}
               </div>
               <div style={{
-                fontSize: "12px",
-                color: "#6b7280"
+                fontSize: "32px",
+                fontWeight: "700",
+                marginBottom: "8px"
               }}>
-                {isPerMatchMode
-                  ? `⚽ Par Match (${machine.active_session.matches_count || 1} match = ${machine.active_session.price || 6} DH)`
-                  : `${machine.active_session.duration_minutes} minutes`
-                }
+                ⚽ MODE PAR MATCH
+              </div>
+              <div style={{
+                fontSize: "16px",
+                opacity: 0.95
+              }}>
+                Prix: {machine.active_session.price} DH / match
+              </div>
+              <div style={{
+                fontSize: "14px",
+                marginTop: "8px",
+                opacity: 0.9,
+                fontStyle: "italic"
+              }}>
+                Arrêtez la session pour indiquer le nombre de matchs joués
               </div>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* MODE PAR TEMPS - Chronomètre */}
+              <div style={{
+                background: "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)",
+                borderRadius: "12px",
+                padding: "20px",
+                marginBottom: "16px",
+                textAlign: "center"
+              }}>
+                <div style={{
+                  fontSize: "48px",
+                  fontWeight: "700",
+                  color: isExpired ? "#ef4444" : "#3b82f6",
+                  lineHeight: "1",
+                  marginBottom: "8px",
+                  fontFamily: "monospace"
+                }}>
+                  {formatTime(elapsed)}
+                </div>
+                <div style={{
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  color: isExpired ? "#ef4444" : "#6b7280"
+                }}>
+                  {isExpired ? <><Clock size={16} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> TEMPS ÉCOULÉ !</> : <><Timer size={16} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> Reste: {formatTime(remainingSeconds)}</>}
+                </div>
+              </div>
+
+              {/* Game Info - Mode par temps */}
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "12px",
+                backgroundColor: "#f9fafb",
+                borderRadius: "8px",
+                marginBottom: "16px"
+              }}>
+                <Gamepad2 size={24} color="#6366f1" />
+                <div style={{ flex: 1 }}>
+                  <div style={{
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    color: "#111827"
+                  }}>
+                    {machine.active_session.game_name || "N/A"}
+                  </div>
+                  <div style={{
+                    fontSize: "12px",
+                    color: "#6b7280"
+                  }}>
+                    {machine.active_session.duration_minutes} minutes - {machine.active_session.price} DH
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Action Buttons */}
           <div style={{ display: "flex", gap: "8px" }}>
