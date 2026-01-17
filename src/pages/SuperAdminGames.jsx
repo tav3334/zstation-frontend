@@ -159,7 +159,7 @@ function SuperAdminGames({ onBack }) {
   };
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto', background: '#f9fafb', minHeight: '100vh' }}>
+    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
       {toast && <Toast message={toast.message} type={toast.type} />}
 
       {/* Header */}
