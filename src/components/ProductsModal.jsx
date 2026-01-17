@@ -4,7 +4,7 @@ import api from "../services/api";
 function ProductsModal({ onClose, onSale }) {
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState({});
-  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const paymentMethod = "cash"; // Seule méthode de paiement disponible pour les produits
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -177,12 +177,11 @@ Total: ${totalPrice.toFixed(2)} DH
         )}
 
         <div style={styles.paymentSection}>
-          <label style={styles.label}>Methode de paiement:</label>
-          <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} style={styles.select}>
-            <option value="cash">Especes</option>
-            <option value="card">Carte</option>
-            <option value="mobile">Mobile</option>
-          </select>
+          <label style={styles.label}>Méthode de paiement:</label>
+          <div style={styles.paymentDisplay}>
+            <span style={styles.paymentIcon}>💵</span>
+            <span style={styles.paymentText}>Espèces</span>
+          </div>
         </div>
 
         <div style={styles.actions}>
@@ -247,7 +246,9 @@ const styles = {
   totalPrice: { fontSize: "24px", fontWeight: "700", color: "#10b981" },
   paymentSection: { padding: "20px 24px" },
   label: { display: "block", fontSize: "14px", fontWeight: "600", color: "#d1d5db", marginBottom: "8px" },
-  select: { width: "100%", padding: "12px", background: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "10px", color: "#ffffff", fontSize: "14px", cursor: "pointer" },
+  paymentDisplay: { display: "flex", alignItems: "center", gap: "12px", padding: "14px 16px", background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: "10px" },
+  paymentIcon: { fontSize: "24px" },
+  paymentText: { fontSize: "16px", fontWeight: "700", color: "#10b981" },
   actions: { display: "flex", gap: "12px", padding: "20px 24px", borderTop: "1px solid rgba(255, 255, 255, 0.1)" },
   cancelBtn: { flex: 1, padding: "14px", background: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "10px", color: "#d1d5db", fontSize: "15px", fontWeight: "600", cursor: "pointer" },
   confirmBtn: { flex: 2, padding: "14px", background: "linear-gradient(135deg, #10b981 0%, #059669 100%)", border: "none", borderRadius: "10px", color: "#ffffff", fontSize: "15px", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)" }

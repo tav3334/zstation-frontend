@@ -389,6 +389,10 @@ function AdminDashboard({ user, onLogout }) {
     return <StockManagement onBack={() => setShowStockManagement(false)} />;
   }
 
+  if (showSalesHistory) {
+    return <ProductSalesHistory onBack={() => setShowSalesHistory(false)} />;
+  }
+
   if (loading && !stats) {
     return (
       <div style={styles.loadingContainer}>
@@ -425,9 +429,13 @@ function AdminDashboard({ user, onLogout }) {
             <User size={18} />
             <span>Profil</span>
           </button>
+          <button className="salesHistoryBtn" onClick={() => setShowSalesHistory(true)} style={styles.salesHistoryBtn}>
+            <ShoppingBag size={18} />
+            <span>Ventes Produits</span>
+          </button>
           <button className="stockBtn" onClick={() => setShowStockManagement(true)} style={styles.stockBtn}>
             <Package size={18} />
-            <span>Gestion des Stocks</span>
+            <span>Gestion Stocks</span>
           </button>
           <button className="logoutBtn" onClick={onLogout} style={styles.logoutBtn}>
             <LogOut size={18} />
@@ -1017,6 +1025,21 @@ const styles = {
     border: "1px solid rgba(16,185,129,0.2)",
     borderRadius: "12px",
     color: "#10b981",
+    fontWeight: "700",
+    fontSize: "14px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    transition: "all 0.2s ease",
+  },
+
+  salesHistoryBtn: {
+    padding: "12px 24px",
+    background: "linear-gradient(135deg, rgba(245,158,11,0.1) 0%, rgba(249,115,22,0.05) 100%)",
+    border: "1px solid rgba(245,158,11,0.2)",
+    borderRadius: "12px",
+    color: "#f59e0b",
     fontWeight: "700",
     fontSize: "14px",
     cursor: "pointer",

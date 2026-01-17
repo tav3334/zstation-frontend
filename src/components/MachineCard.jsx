@@ -140,36 +140,34 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
 
       {isInSession && machine.active_session && (
         <>
-          {/* Timer Display */}
-          <div style={{
-            background: "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)",
-            borderRadius: "12px",
-            padding: "20px",
-            marginBottom: "16px",
-            textAlign: "center"
-          }}>
+          {/* Timer Display - Seulement pour mode par temps */}
+          {!isPerMatchMode && (
             <div style={{
-              fontSize: "48px",
-              fontWeight: "700",
-              color: isExpired ? "#ef4444" : "#3b82f6",
-              lineHeight: "1",
-              marginBottom: "8px",
-              fontFamily: "monospace"
+              background: "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)",
+              borderRadius: "12px",
+              padding: "20px",
+              marginBottom: "16px",
+              textAlign: "center"
             }}>
-              {formatTime(elapsed)}
+              <div style={{
+                fontSize: "48px",
+                fontWeight: "700",
+                color: isExpired ? "#ef4444" : "#3b82f6",
+                lineHeight: "1",
+                marginBottom: "8px",
+                fontFamily: "monospace"
+              }}>
+                {formatTime(elapsed)}
+              </div>
+              <div style={{
+                fontSize: "14px",
+                fontWeight: "600",
+                color: isExpired ? "#ef4444" : "#6b7280"
+              }}>
+                {isExpired ? <><Clock size={16} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> TEMPS ÉCOULÉ !</> : <><Timer size={16} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> Reste: {formatTime(remainingSeconds)}</>}
+              </div>
             </div>
-            <div style={{
-              fontSize: "14px",
-              fontWeight: "600",
-              color: isExpired ? "#ef4444" : "#6b7280"
-            }}>
-              {isPerMatchMode ? (
-                <><Gamepad2 size={16} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> Mode Par Match - Temps écoulé</>
-              ) : (
-                isExpired ? <><Clock size={16} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> TEMPS ÉCOULÉ !</> : <><Timer size={16} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> Reste: {formatTime(remainingSeconds)}</>
-              )}
-            </div>
-          </div>
+          )}
 
           {/* Game Info */}
           <div style={{
@@ -207,7 +205,8 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
             <button
               onClick={() => onStop(machine.active_session.id)}
               style={{
-                flex: 1,
+                flex: isPerMatchMode ? "none" : 1,
+                width: isPerMatchMode ? "100%" : "auto",
                 padding: "12px 16px",
                 background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
                 color: "white",
@@ -236,37 +235,40 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
               Arrêter
             </button>
 
-            <button
-              onClick={() => setShowExtendModal(true)}
-              style={{
-                flex: 1,
-                padding: "12px 16px",
-                background: "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
-                color: "white",
-                border: "none",
-                borderRadius: "10px",
-                cursor: "pointer",
-                fontSize: "14px",
-                fontWeight: "600",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px",
-                transition: "all 0.2s ease",
-                boxShadow: "0 4px 12px rgba(245, 158, 11, 0.3)"
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(245, 158, 11, 0.4)";
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(245, 158, 11, 0.3)";
-              }}
-            >
-              <span>➕</span>
-              Prolonger
-            </button>
+            {/* Bouton Prolonger seulement pour mode par temps */}
+            {!isPerMatchMode && (
+              <button
+                onClick={() => setShowExtendModal(true)}
+                style={{
+                  flex: 1,
+                  padding: "12px 16px",
+                  background: "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  transition: "all 0.2s ease",
+                  boxShadow: "0 4px 12px rgba(245, 158, 11, 0.3)"
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(245, 158, 11, 0.4)";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(245, 158, 11, 0.3)";
+                }}
+              >
+                <span>➕</span>
+                Prolonger
+              </button>
+            )}
           </div>
         </>
       )}
