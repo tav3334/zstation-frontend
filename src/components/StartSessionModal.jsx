@@ -31,49 +31,69 @@ function StartSessionModal({
   return (
     <div className="session-modal-overlay" style={overlay}>
       <div className="session-modal-content" style={modal}>
-        <h3 style={{ margin: "0 0 20px 0", fontSize: "24px", fontWeight: "700", color: "#111827" }}>
-          Démarrer Session - {machine.name}
+        <h3 style={{ margin: "0 0 20px 0", fontSize: "22px", fontWeight: "700", color: "#111827", textAlign: "center" }}>
+          🎮 {machine.name}
         </h3>
 
-        <div style={{ marginBottom: 20 }}>
-          <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "8px" }}>
-            <span style={{ marginRight: "6px" }}>🎮</span>
-            Jeu:
-          </label>
-          <select
-            value={selectedGame}
-            onChange={(e) => setSelectedGame(e.target.value)}
-            style={{
-              width: "100%",
+        {/* Ligne avec 2 colonnes */}
+        <div style={{ display: "flex", gap: "16px", marginBottom: 20 }}>
+          {/* Colonne 1: Sélection du jeu */}
+          <div style={{ flex: 1 }}>
+            <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "8px" }}>
+              Jeu
+            </label>
+            <select
+              value={selectedGame}
+              onChange={(e) => setSelectedGame(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "12px 14px",
+                fontSize: "15px",
+                border: "2px solid #e5e7eb",
+                borderRadius: "10px",
+                backgroundColor: "#f9fafb",
+                cursor: "pointer"
+              }}
+            >
+              <option value="">-- Choisir --</option>
+              {games.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Colonne 2: Nombre de tarifs disponibles (info) */}
+          <div style={{ flex: 1 }}>
+            <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "8px" }}>
+              Modes disponibles
+            </label>
+            <div style={{
               padding: "12px 14px",
               fontSize: "15px",
               border: "2px solid #e5e7eb",
               borderRadius: "10px",
-              backgroundColor: "#f9fafb",
-              cursor: "pointer"
-            }}
-          >
-            <option value="">-- Sélectionner un jeu --</option>
-            {games.length === 0 && <option disabled>Aucun jeu disponible</option>}
-            {games.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name}
-              </option>
-            ))}
-          </select>
-          <small style={{ color: "#6b7280", display: "block", marginTop: "5px" }}>
-            {games.length} jeu(x) disponible(s)
-          </small>
+              backgroundColor: "#f0fdf4",
+              textAlign: "center",
+              fontWeight: "600",
+              color: "#059669"
+            }}>
+              {selectedGame && availablePricings.length > 0
+                ? `${availablePricings.length} mode(s)`
+                : "Choisir un jeu"}
+            </div>
+          </div>
         </div>
 
-        <div style={{ marginBottom: 20 }}>
-          <label style={{ display: "block", fontSize: "16px", fontWeight: "700", color: "#111827", marginBottom: "12px" }}>
-            Choisir le mode de facturation:
-          </label>
+        {/* Section modes de tarification */}
+        {selectedGame && availablePricings.length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "10px" }}>
+              Mode de facturation
+            </label>
 
-          {/* Options de tarification sous forme de cartes */}
-          {selectedGame && availablePricings.length > 0 ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {availablePricings.map((pricing) => {
                 const mode = pricing.pricing_mode?.code || 'fixed';
                 const isSelected = selectedPricing === String(pricing.id);
@@ -84,55 +104,44 @@ function StartSessionModal({
                     key={pricing.id}
                     onClick={() => setSelectedPricing(String(pricing.id))}
                     style={{
-                      padding: "16px",
+                      padding: "14px",
                       borderRadius: "10px",
                       border: isSelected ? `3px solid ${isPerMatch ? '#10b981' : '#3b82f6'}` : "2px solid #e5e7eb",
                       backgroundColor: isSelected
                         ? (isPerMatch ? '#f0fdf4' : '#eff6ff')
                         : '#f9fafb',
                       cursor: "pointer",
-                      transition: "all 0.2s ease",
-                      position: "relative"
+                      transition: "all 0.2s ease"
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <div style={{ flex: 1 }}>
                         <div style={{
-                          fontSize: "18px",
+                          fontSize: "16px",
                           fontWeight: "700",
                           color: isPerMatch ? '#059669' : '#1e40af',
-                          marginBottom: "4px"
+                          marginBottom: "2px"
                         }}>
-                          {isPerMatch ? '⚽ MODE PAR MATCH' : '⏱️ MODE PAR TEMPS'}
+                          {isPerMatch ? '⚽ Par Match' : '⏱️ Par Temps'}
                         </div>
-                        <div style={{ fontSize: "14px", color: "#6b7280" }}>
+                        <div style={{ fontSize: "13px", color: "#6b7280" }}>
                           {isPerMatch
-                            ? `${pricing.matches_count} match - ${pricing.price} DH`
-                            : `${pricing.duration_minutes} minutes - ${pricing.price} DH`
+                            ? `${pricing.matches_count} match × ${pricing.price} DH`
+                            : `${pricing.duration_minutes} min = ${pricing.price} DH`
                           }
                         </div>
-                        {isPerMatch && (
-                          <div style={{
-                            fontSize: "12px",
-                            color: "#059669",
-                            marginTop: "4px",
-                            fontStyle: "italic"
-                          }}>
-                            Prix final = nombre de matchs joués × {pricing.price} DH
-                          </div>
-                        )}
                       </div>
                       {isSelected && (
                         <div style={{
-                          width: "24px",
-                          height: "24px",
+                          width: "22px",
+                          height: "22px",
                           borderRadius: "50%",
                           backgroundColor: isPerMatch ? '#10b981' : '#3b82f6',
                           color: "white",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          fontSize: "14px",
+                          fontSize: "12px",
                           fontWeight: "700"
                         }}>
                           ✓
@@ -143,22 +152,23 @@ function StartSessionModal({
                 );
               })}
             </div>
-          ) : (
-            <div style={{
-              padding: "16px",
-              backgroundColor: "#fef3c7",
-              borderRadius: "10px",
-              border: "2px solid #fbbf24",
-              textAlign: "center",
-              color: "#92400e"
-            }}>
-              {!selectedGame
-                ? "⚠️ Veuillez d'abord sélectionner un jeu"
-                : "⚠️ Aucun tarif disponible pour ce jeu"
-              }
-            </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {!selectedGame && (
+          <div style={{
+            padding: "14px",
+            backgroundColor: "#fef3c7",
+            borderRadius: "10px",
+            border: "2px solid #fbbf24",
+            textAlign: "center",
+            color: "#92400e",
+            fontSize: "14px",
+            marginBottom: 20
+          }}>
+            ⚠️ Sélectionnez un jeu pour voir les modes
+          </div>
+        )}
 
         <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
           <button
@@ -220,8 +230,8 @@ const overlay = {
 
 const modal = {
   background: "#fff",
-  padding: "32px",
-  width: "450px",
+  padding: "28px",
+  width: "550px",
   maxWidth: "90%",
   borderRadius: "16px",
   boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
