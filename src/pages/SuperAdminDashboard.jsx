@@ -7,10 +7,12 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import Toast from '../components/Toast';
+import SuperAdminGames from './SuperAdminGames';
 import '../styles/superadmin.module.css';
 
 function SuperAdminDashboard({ user, onLogout }) {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [showGamesManagement, setShowGamesManagement] = useState(false);
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -197,6 +199,11 @@ function SuperAdminDashboard({ user, onLogout }) {
     { id: 'games', label: 'Jeux', icon: Gamepad2, count: stats.totalGames },
   ];
 
+  // Si on est en mode gestion des jeux, afficher uniquement cette page
+  if (showGamesManagement) {
+    return <SuperAdminGames onBack={() => setShowGamesManagement(false)} />;
+  }
+
   return (
     <div style={styles.appContainer}>
       {/* Sidebar */}
@@ -321,6 +328,15 @@ function SuperAdminDashboard({ user, onLogout }) {
                   <button style={styles.refreshBtn} onClick={loadAllData} disabled={loading}>
                     <RefreshCw size={16} className={loading ? 'spin' : ''} />
                   </button>
+                  {activeTab === 'games' && (
+                    <button
+                      style={{...styles.createBtn, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}
+                      onClick={() => setShowGamesManagement(true)}
+                    >
+                      <Gamepad2 size={16} />
+                      <span>Gestion Avancée</span>
+                    </button>
+                  )}
                   <button
                     style={styles.createBtn}
                     onClick={() => {
