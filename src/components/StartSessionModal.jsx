@@ -69,7 +69,7 @@ function StartSessionModal({
         <div style={{ marginBottom: 20 }}>
           <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "8px" }}>
             <span style={{ marginRight: "6px" }}>⏱️</span>
-            Durée:
+            Mode de Tarification:
           </label>
           <select
             value={selectedPricing}
@@ -85,12 +85,23 @@ function StartSessionModal({
             }}
             disabled={!selectedGame || availablePricings.length === 0}
           >
-            <option value="">-- Sélectionner une durée --</option>
-            {availablePricings.map((pricing) => (
-              <option key={pricing.id} value={pricing.id}>
-                {pricing.duration_minutes} min - {pricing.price} DH
-              </option>
-            ))}
+            <option value="">-- Sélectionner un tarif --</option>
+            {availablePricings.map((pricing) => {
+              const mode = pricing.pricing_mode?.code || 'fixed';
+              let label = '';
+
+              if (mode === 'per_match') {
+                label = `⚽ Par Match (${pricing.matches_count} match) - ${pricing.price} DH`;
+              } else {
+                label = `⏱️ ${pricing.duration_minutes} min - ${pricing.price} DH`;
+              }
+
+              return (
+                <option key={pricing.id} value={pricing.id}>
+                  {label}
+                </option>
+              );
+            })}
           </select>
           {selectedGame && availablePricings.length === 0 && (
             <small style={{ color: "#ef4444", display: "block", marginTop: "5px" }}>
@@ -100,6 +111,11 @@ function StartSessionModal({
           {!selectedGame && (
             <small style={{ color: "#6b7280", display: "block", marginTop: "5px" }}>
               Veuillez d'abord sélectionner un jeu
+            </small>
+          )}
+          {selectedPricing && availablePricings.find(p => p.id === Number(selectedPricing))?.pricing_mode?.code === 'per_match' && (
+            <small style={{ color: "#10b981", display: "block", marginTop: "5px", fontWeight: "600" }}>
+              ℹ️ Vous devrez saisir le nombre de matchs joués à la fin
             </small>
           )}
         </div>

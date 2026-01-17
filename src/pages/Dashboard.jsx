@@ -17,6 +17,7 @@ import StatsCard from "../components/StatsCard";
 import Toast from "../components/Toast";
 import ProductsModal from "../components/ProductsModal";
 import UserProfile from "../components/UserProfile";
+import MatchCountModal from "../components/MatchCountModal";
 
 function Dashboard({ user, onLogout }) {
   const [machines, setMachines] = useState([]);
@@ -29,6 +30,7 @@ function Dashboard({ user, onLogout }) {
   const [showProducts, setShowProducts] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [toast, setToast] = useState(null);
+  const [matchCountSession, setMatchCountSession] = useState(null);
 
   // Helper pour afficher un toast
   const showToast = (message, type = "info", duration = 3000) => {
@@ -122,6 +124,25 @@ function Dashboard({ user, onLogout }) {
   // ================= STOP SESSION =================
   const stopSession = async (sessionId) => {
     try {
+      // Récupérer les informations de la session d'abord
+      const sessionResponse = await api.get(`/sessions/status/${sessionId}`);
+      const sessionStatus = sessionResponse.data;
+
+      // Vérifier si c'est une session par match
+      if (sessionStatus.pricing_mode === 'per_match') {
+        // Demander le nombre de matchs via le modal
+        const machine = machines.find(m => m.active_session?.id === sessionId);
+        setMatchCountSession({
+          id: sessionId,
+          game: { name: sessionStatus.machine || 'FIFA/PES' },
+          gamePricing: {
+            price: parseFloat(sessionStatus.price_per_match) || 6
+          }
+        });
+        return;
+      }
+
+      // Mode par temps: arrêter normalement
       const res = await api.post(`/sessions/stop/${sessionId}`);
 
       // Ajouter le modal de paiement à la liste (permet plusieurs modals simultanés)
@@ -129,6 +150,27 @@ function Dashboard({ user, onLogout }) {
       await loadMachines();
     } catch (e) {
       showToast("Erreur arrêt session: " + (e.response?.data?.message || e.message), "error");
+    }
+  };
+
+  // ================= STOP SESSION WITH MATCH COUNT =================
+  const stopSessionWithMatchCount = async (matchCount) => {
+    if (!matchCountSession) return;
+
+    try {
+      const res = await api.post(`/sessions/stop/${matchCountSession.id}`, {
+        matches_played: matchCount
+      });
+
+      // Fermer le modal de saisie de matchs
+      setMatchCountSession(null);
+
+      // Ajouter le modal de paiement à la liste
+      setPaymentSessions(prev => [...prev, res.data]);
+      await loadMachines();
+    } catch (e) {
+      showToast("Erreur arrêt session: " + (e.response?.data?.message || e.message), "error");
+      setMatchCountSession(null);
     }
   };
 
@@ -323,6 +365,14 @@ function Dashboard({ user, onLogout }) {
               setSelectedGame("");
               setSelectedPricing("");
             }}
+          />
+        )}
+
+        {matchCountSession && (
+          <MatchCountModal
+            session={matchCountSession}
+            onConfirm={stopSessionWithMatchCount}
+            onClose={() => setMatchCountSession(null)}
           />
         )}
 

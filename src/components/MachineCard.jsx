@@ -15,29 +15,33 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
     }
 
     const startTime = new Date(machine.active_session.start_time).getTime();
+    const pricingMode = machine.active_session.pricing_mode || 'fixed';
 
     const interval = setInterval(() => {
       const now = Date.now();
       const elapsedSeconds = Math.floor((now - startTime) / 1000);
       setElapsed(elapsedSeconds);
 
-      // Calculer le temps restant
-      const durationMinutes = machine.active_session.duration_minutes || 6;
-      const totalSeconds = durationMinutes * 60;
-      const remainingSeconds = totalSeconds - elapsedSeconds;
+      // AUTO-STOP seulement pour le mode "fixed" (par temps)
+      if (pricingMode === 'fixed' && machine.active_session.duration_minutes) {
+        const durationMinutes = machine.active_session.duration_minutes;
+        const totalSeconds = durationMinutes * 60;
+        const remainingSeconds = totalSeconds - elapsedSeconds;
 
-      // AUTO-STOP quand le temps est écoulé
-      if (remainingSeconds <= 0 && !autoStopTriggered) {
-        setAutoStopTriggered(true);
+        // AUTO-STOP quand le temps est écoulé
+        if (remainingSeconds <= 0 && !autoStopTriggered) {
+          setAutoStopTriggered(true);
 
-        setTimeout(() => {
-          onStop(machine.active_session.id);
-        }, 5000);
+          setTimeout(() => {
+            onStop(machine.active_session.id);
+          }, 5000);
+        }
       }
+      // Pour le mode "per_match", pas d'auto-stop
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [machine.status, machine.active_session?.start_time, autoStopTriggered, machine.name, onStop]);
+  }, [machine.status, machine.active_session?.start_time, machine.active_session?.pricing_mode, autoStopTriggered, machine.name, onStop]);
 
   const formatTime = (sec) => {
     const h = Math.floor(sec / 3600);
@@ -52,14 +56,21 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
 
   const getRemainingTime = () => {
     if (!machine.active_session) return 0;
+    const pricingMode = machine.active_session.pricing_mode || 'fixed';
+
+    // Pour le mode par match, pas de temps restant
+    if (pricingMode === 'per_match') return null;
+
     const durationMinutes = machine.active_session.duration_minutes || 6;
     const totalSeconds = durationMinutes * 60;
     return Math.max(0, totalSeconds - elapsed);
   };
 
+  const pricingMode = machine.active_session?.pricing_mode || 'fixed';
   const remainingSeconds = getRemainingTime();
-  const isExpired = remainingSeconds === 0 && machine.status === "in_session";
+  const isExpired = remainingSeconds === 0 && machine.status === "in_session" && pricingMode === 'fixed';
   const isInSession = machine.status === "in_session";
+  const isPerMatchMode = pricingMode === 'per_match';
 
   const handleExtend = () => {
     if (!selectedExtendPricing) {
@@ -152,7 +163,11 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
               fontWeight: "600",
               color: isExpired ? "#ef4444" : "#6b7280"
             }}>
-              {isExpired ? <><Clock size={16} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> TEMPS ÉCOULÉ !</> : <><Timer size={16} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> Reste: {formatTime(remainingSeconds)}</>}
+              {isPerMatchMode ? (
+                <><Gamepad2 size={16} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> Mode Par Match - Temps écoulé</>
+              ) : (
+                isExpired ? <><Clock size={16} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> TEMPS ÉCOULÉ !</> : <><Timer size={16} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> Reste: {formatTime(remainingSeconds)}</>
+              )}
             </div>
           </div>
 
@@ -179,7 +194,10 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
                 fontSize: "12px",
                 color: "#6b7280"
               }}>
-                {machine.active_session.duration_minutes} minutes
+                {isPerMatchMode
+                  ? `⚽ Par Match (${machine.active_session.matches_count || 1} match = ${machine.active_session.price || 6} DH)`
+                  : `${machine.active_session.duration_minutes} minutes`
+                }
               </div>
             </div>
           </div>
