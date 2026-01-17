@@ -103,7 +103,6 @@ function Dashboard({ user, onLogout }) {
         machine_id: selectedMachine.id,
         game_id: Number(selectedGame),
         game_pricing_id: Number(selectedPricing),
-        pricing_mode_id: 1,
         customer_id: null,
       });
 
