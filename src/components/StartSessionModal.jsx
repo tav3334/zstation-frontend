@@ -31,12 +31,12 @@ function StartSessionModal({
   return (
     <div className="session-modal-overlay" style={overlay}>
       <div className="session-modal-content" style={modal}>
-        <h3 style={{ margin: "0 0 20px 0", fontSize: "22px", fontWeight: "700", color: "#111827", textAlign: "center" }}>
+        <h3 style={{ margin: "0 0 16px 0", fontSize: "20px", fontWeight: "700", color: "#111827", textAlign: "center" }}>
           🎮 {machine.name}
         </h3>
 
         {/* Ligne avec 2 colonnes */}
-        <div style={{ display: "flex", gap: "16px", marginBottom: 20 }}>
+        <div style={{ display: "flex", gap: "12px", marginBottom: 16 }}>
           {/* Colonne 1: Sélection du jeu */}
           <div style={{ flex: 1 }}>
             <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "8px" }}>
@@ -47,10 +47,10 @@ function StartSessionModal({
               onChange={(e) => setSelectedGame(e.target.value)}
               style={{
                 width: "100%",
-                padding: "12px 14px",
-                fontSize: "15px",
+                padding: "10px 12px",
+                fontSize: "14px",
                 border: "2px solid #e5e7eb",
-                borderRadius: "10px",
+                borderRadius: "8px",
                 backgroundColor: "#f9fafb",
                 cursor: "pointer"
               }}
@@ -70,10 +70,10 @@ function StartSessionModal({
               Modes disponibles
             </label>
             <div style={{
-              padding: "12px 14px",
-              fontSize: "15px",
+              padding: "10px 12px",
+              fontSize: "14px",
               border: "2px solid #e5e7eb",
-              borderRadius: "10px",
+              borderRadius: "8px",
               backgroundColor: "#f0fdf4",
               textAlign: "center",
               fontWeight: "600",
@@ -88,12 +88,12 @@ function StartSessionModal({
 
         {/* Section modes de tarification */}
         {selectedGame && availablePricings.length > 0 && (
-          <div style={{ marginBottom: 20 }}>
-            <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "10px" }}>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "8px" }}>
               Mode de facturation
             </label>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
               {availablePricings.map((pricing) => {
                 const mode = pricing.pricing_mode?.code || 'fixed';
                 const isSelected = selectedPricing === String(pricing.id);
@@ -104,9 +104,9 @@ function StartSessionModal({
                     key={pricing.id}
                     onClick={() => setSelectedPricing(String(pricing.id))}
                     style={{
-                      padding: "14px",
-                      borderRadius: "10px",
-                      border: isSelected ? `3px solid ${isPerMatch ? '#10b981' : '#3b82f6'}` : "2px solid #e5e7eb",
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      border: isSelected ? `2px solid ${isPerMatch ? '#10b981' : '#3b82f6'}` : "2px solid #e5e7eb",
                       backgroundColor: isSelected
                         ? (isPerMatch ? '#f0fdf4' : '#eff6ff')
                         : '#f9fafb',
@@ -117,14 +117,14 @@ function StartSessionModal({
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <div style={{ flex: 1 }}>
                         <div style={{
-                          fontSize: "16px",
+                          fontSize: "14px",
                           fontWeight: "700",
                           color: isPerMatch ? '#059669' : '#1e40af',
                           marginBottom: "2px"
                         }}>
                           {isPerMatch ? '⚽ Par Match' : '⏱️ Par Temps'}
                         </div>
-                        <div style={{ fontSize: "13px", color: "#6b7280" }}>
+                        <div style={{ fontSize: "12px", color: "#6b7280" }}>
                           {isPerMatch
                             ? `${pricing.matches_count} match × ${pricing.price} DH`
                             : `${pricing.duration_minutes} min = ${pricing.price} DH`
@@ -133,15 +133,15 @@ function StartSessionModal({
                       </div>
                       {isSelected && (
                         <div style={{
-                          width: "22px",
-                          height: "22px",
+                          width: "20px",
+                          height: "20px",
                           borderRadius: "50%",
                           backgroundColor: isPerMatch ? '#10b981' : '#3b82f6',
                           color: "white",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          fontSize: "12px",
+                          fontSize: "11px",
                           fontWeight: "700"
                         }}>
                           ✓
@@ -157,34 +157,34 @@ function StartSessionModal({
 
         {!selectedGame && (
           <div style={{
-            padding: "14px",
+            padding: "12px",
             backgroundColor: "#fef3c7",
-            borderRadius: "10px",
+            borderRadius: "8px",
             border: "2px solid #fbbf24",
             textAlign: "center",
             color: "#92400e",
-            fontSize: "14px",
-            marginBottom: 20
+            fontSize: "13px",
+            marginBottom: 16
           }}>
             ⚠️ Sélectionnez un jeu pour voir les modes
           </div>
         )}
 
-        <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
+        <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
           <button
             onClick={onConfirm}
             disabled={!selectedGame || !selectedPricing}
             style={{
               flex: 1,
-              padding: "12px 20px",
+              padding: "10px 16px",
               background: !selectedGame || !selectedPricing
                 ? "#9ca3af"
                 : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
               color: "white",
               border: "none",
-              borderRadius: "10px",
+              borderRadius: "8px",
               cursor: !selectedGame || !selectedPricing ? "not-allowed" : "pointer",
-              fontSize: "15px",
+              fontSize: "14px",
               fontWeight: "600",
               transition: "all 0.2s ease",
               boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)"
@@ -196,13 +196,13 @@ function StartSessionModal({
             onClick={onClose}
             style={{
               flex: 1,
-              padding: "12px 20px",
+              padding: "10px 16px",
               backgroundColor: "#f9fafb",
               color: "#374151",
               border: "2px solid #e5e7eb",
-              borderRadius: "10px",
+              borderRadius: "8px",
               cursor: "pointer",
-              fontSize: "15px",
+              fontSize: "14px",
               fontWeight: "600",
               transition: "all 0.2s ease"
             }}
@@ -230,10 +230,12 @@ const overlay = {
 
 const modal = {
   background: "#fff",
-  padding: "28px",
-  width: "550px",
+  padding: "20px",
+  width: "480px",
   maxWidth: "90%",
-  borderRadius: "16px",
+  maxHeight: "85vh",
+  overflowY: "auto",
+  borderRadius: "12px",
   boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
   color: "#000",
 };
