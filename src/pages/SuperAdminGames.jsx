@@ -97,20 +97,17 @@ function SuperAdminGames({ onBack }) {
     }
   };
 
-  const handleUpdatePricing = async (gameId, pricingId, newPrice) => {
-    const pricing = games.find(g => g.id === gameId)?.pricings.find(p => p.id === pricingId);
-    if (!pricing) return;
-
+  const handleUpdatePricing = async (gameId, pricingId, data) => {
     try {
       await api.put(`/super-admin/games/${gameId}/pricings/${pricingId}`, {
-        price: newPrice,
-        duration_minutes: pricing.duration_minutes || null,
-        matches_count: pricing.matches_count || null
+        price: data.price,
+        duration_minutes: data.isPerMatch ? null : data.value,
+        matches_count: data.isPerMatch ? data.value : null
       });
-      showToast('Prix modifié avec succès');
+      showToast('Tarif modifié avec succès');
       loadGames();
     } catch (error) {
-      showToast('Erreur lors de la modification du prix', 'error');
+      showToast('Erreur lors de la modification du tarif', 'error');
     }
   };
 
@@ -309,6 +306,7 @@ function GameCard({ game, expanded, onToggle, onEdit, onDelete, onUpdatePricing,
   const [newPricingValue, setNewPricingValue] = useState('');
   const [newPricingPrice, setNewPricingPrice] = useState('');
   const [editingPricingId, setEditingPricingId] = useState(null);
+  const [editValue, setEditValue] = useState('');
   const [editPrice, setEditPrice] = useState('');
 
   const timePricings = game.pricings.filter(p => p.pricing_mode.code === 'fixed').sort((a, b) => a.duration_minutes - b.duration_minutes);
@@ -323,14 +321,22 @@ function GameCard({ game, expanded, onToggle, onEdit, onDelete, onUpdatePricing,
 
   const startEdit = (pricing) => {
     setEditingPricingId(pricing.id);
+    const isPerMatch = pricing.pricing_mode.code === 'per_match';
+    setEditValue(isPerMatch ? pricing.matches_count : pricing.duration_minutes);
     setEditPrice(pricing.price);
   };
 
-  const saveEdit = (pricingId) => {
-    if (editPrice && editPrice !== '') {
-      onUpdatePricing(game.id, pricingId, parseFloat(editPrice));
+  const saveEdit = (pricing) => {
+    if (editPrice && editPrice !== '' && editValue && editValue !== '') {
+      const isPerMatch = pricing.pricing_mode.code === 'per_match';
+      onUpdatePricing(game.id, pricing.id, {
+        value: parseInt(editValue),
+        price: parseFloat(editPrice),
+        isPerMatch
+      });
     }
     setEditingPricingId(null);
+    setEditValue('');
     setEditPrice('');
   };
 
@@ -410,10 +416,12 @@ function GameCard({ game, expanded, onToggle, onEdit, onDelete, onUpdatePricing,
                   key={pricing.id}
                   pricing={pricing}
                   isEditing={editingPricingId === pricing.id}
+                  editValue={editValue}
                   editPrice={editPrice}
+                  onEditValueChange={setEditValue}
                   onEditPriceChange={setEditPrice}
                   onStartEdit={() => startEdit(pricing)}
-                  onSaveEdit={() => saveEdit(pricing.id)}
+                  onSaveEdit={() => saveEdit(pricing)}
                   onCancelEdit={() => setEditingPricingId(null)}
                   onDelete={() => onDeletePricing(game.id, pricing.id)}
                   color="#3b82f6"
@@ -434,10 +442,12 @@ function GameCard({ game, expanded, onToggle, onEdit, onDelete, onUpdatePricing,
                   key={pricing.id}
                   pricing={pricing}
                   isEditing={editingPricingId === pricing.id}
+                  editValue={editValue}
                   editPrice={editPrice}
+                  onEditValueChange={setEditValue}
                   onEditPriceChange={setEditPrice}
                   onStartEdit={() => startEdit(pricing)}
-                  onSaveEdit={() => saveEdit(pricing.id)}
+                  onSaveEdit={() => saveEdit(pricing)}
                   onCancelEdit={() => setEditingPricingId(null)}
                   onDelete={() => onDeletePricing(game.id, pricing.id)}
                   color="#10b981"
@@ -535,7 +545,7 @@ function GameCard({ game, expanded, onToggle, onEdit, onDelete, onUpdatePricing,
 }
 
 // ========== PRICING ITEM COMPONENT ==========
-function PricingItem({ pricing, isEditing, editPrice, onEditPriceChange, onStartEdit, onSaveEdit, onCancelEdit, onDelete, color }) {
+function PricingItem({ pricing, isEditing, editValue, editPrice, onEditValueChange, onEditPriceChange, onStartEdit, onSaveEdit, onCancelEdit, onDelete, color }) {
   const isPerMatch = pricing.pricing_mode.code === 'per_match';
   const label = isPerMatch ? `${pricing.matches_count} match` : `${pricing.duration_minutes} min`;
 
@@ -546,35 +556,95 @@ function PricingItem({ pricing, isEditing, editPrice, onEditPriceChange, onStart
       border: `2px solid ${color}20`,
       background: `${color}10`
     }}>
-      <div style={{ fontSize: '13px', fontWeight: '600', color: '#6b7280', marginBottom: '4px' }}>
-        {label}
-      </div>
       {isEditing ? (
-        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-          <input
-            type="number"
-            step="0.01"
-            value={editPrice}
-            onChange={(e) => onEditPriceChange(e.target.value)}
-            style={{
-              flex: 1,
-              padding: '4px 8px',
-              fontSize: '14px',
-              border: '1px solid #e5e7eb',
-              borderRadius: '4px',
-              width: '60px'
-            }}
-            autoFocus
-          />
-          <button onClick={onSaveEdit} style={{ padding: '4px', background: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-            <Save size={14} />
-          </button>
-          <button onClick={onCancelEdit} style={{ padding: '4px', background: '#f3f4f6', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-            <X size={14} />
-          </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div>
+            <label style={{ fontSize: '11px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+              {isPerMatch ? 'Matchs' : 'Minutes'}
+            </label>
+            <input
+              type="number"
+              min="1"
+              value={editValue}
+              onChange={(e) => onEditValueChange(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                fontSize: '14px',
+                border: '1px solid #e5e7eb',
+                borderRadius: '4px',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: '11px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+              Prix (DH)
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={editPrice}
+              onChange={(e) => onEditPriceChange(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                fontSize: '14px',
+                border: '1px solid #e5e7eb',
+                borderRadius: '4px',
+                boxSizing: 'border-box'
+              }}
+              autoFocus
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <button
+              onClick={onSaveEdit}
+              style={{
+                flex: 1,
+                padding: '6px',
+                background: '#10b981',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '4px'
+              }}
+            >
+              <Save size={14} /> Sauver
+            </button>
+            <button
+              onClick={onCancelEdit}
+              style={{
+                flex: 1,
+                padding: '6px',
+                background: '#f3f4f6',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '4px'
+              }}
+            >
+              <X size={14} /> Annuler
+            </button>
+          </div>
         </div>
       ) : (
         <>
+          <div style={{ fontSize: '13px', fontWeight: '600', color: '#6b7280', marginBottom: '4px' }}>
+            {label}
+          </div>
           <div style={{ fontSize: '18px', fontWeight: '700', color, marginBottom: '8px' }}>
             {pricing.price} DH
           </div>
