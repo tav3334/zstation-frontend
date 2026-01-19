@@ -62,13 +62,13 @@ function PaymentModal({ session, onConfirm, onClose, zIndex = 2000 }) {
         </div>
 
         <div style={priceBox}>
-          <span style={{ fontSize: "14px", color: "#2e7d32" }}>Montant à payer</span>
-          <div style={{ fontSize: "32px", fontWeight: "bold", color: "#4CAF50" }}>
+          <span style={{ fontSize: "13px", color: "#2e7d32" }}>Montant à payer</span>
+          <div style={{ fontSize: "28px", fontWeight: "bold", color: "#4CAF50" }}>
             {price.toFixed(2)} DH
           </div>
         </div>
 
-        <div style={{ marginBottom: "16px" }}>
+        <div style={{ marginBottom: "12px" }}>
           <label style={labelStyle}>
             Montant donné par le client:
           </label>
@@ -82,7 +82,7 @@ function PaymentModal({ session, onConfirm, onClose, zIndex = 2000 }) {
           />
         </div>
 
-        <div style={{ marginBottom: "16px" }}>
+        <div style={{ marginBottom: "12px" }}>
           <label style={labelSmall}>Montants rapides:</label>
           <div style={quickAmountsGrid}>
             {quickAmounts.map((amount) => (
@@ -102,23 +102,23 @@ function PaymentModal({ session, onConfirm, onClose, zIndex = 2000 }) {
             ...changeBox,
             backgroundColor: isValid ? "#e8f5e9" : "#ffebee"
           }}>
-            <span style={{ fontSize: 14 }}>Monnaie à rendre:</span>
+            <span style={{ fontSize: 13 }}>Monnaie à rendre:</span>
             <div style={{
-              fontSize: 28,
+              fontSize: 24,
               fontWeight: "bold",
               color: isValid ? "#2e7d32" : "#c62828"
             }}>
               {parseFloat(change) >= 0 ? change : "0.00"} DH
             </div>
             {!isValid && (
-              <div style={{ fontSize: 12, color: "#c62828", marginTop: 5 }}>
+              <div style={{ fontSize: 11, color: "#c62828", marginTop: 4 }}>
                 Manque: {Math.abs(parseFloat(change)).toFixed(2)} DH
               </div>
             )}
           </div>
         )}
 
-        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+        <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
           <button
             onClick={handleConfirm}
             disabled={!isValid || isProcessing}
@@ -154,28 +154,28 @@ const overlay = {
 
 const modal = {
   backgroundColor: "white",
-  padding: "24px",
-  borderRadius: "16px",
+  padding: "20px",
+  borderRadius: "12px",
   width: "100%",
-  maxWidth: "420px",
+  maxWidth: "380px",
   boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
-  maxHeight: "90vh",
+  maxHeight: "85vh",
   overflowY: "auto"
 };
 
 const modalTitle = {
   marginTop: 0,
-  marginBottom: "20px",
+  marginBottom: "16px",
   color: "#1a1a1a",
-  fontSize: "22px",
+  fontSize: "20px",
   fontWeight: "700"
 };
 
 const infoBox = {
   backgroundColor: "#f9fafb",
-  padding: "12px",
-  borderRadius: "10px",
-  marginBottom: "16px",
+  padding: "10px",
+  borderRadius: "8px",
+  marginBottom: "12px",
   border: "1px solid #e5e7eb"
 };
 
@@ -183,8 +183,8 @@ const infoRow = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  padding: "8px 0",
-  fontSize: "14px"
+  padding: "6px 0",
+  fontSize: "13px"
 };
 
 const infoLabel = {
@@ -194,15 +194,15 @@ const infoLabel = {
 
 const infoValue = {
   color: "#111827",
-  fontSize: "14px"
+  fontSize: "13px"
 };
 
 const priceBox = {
   textAlign: "center",
   backgroundColor: "#f1f8e9",
-  padding: "16px",
-  borderRadius: "10px",
-  marginBottom: "16px",
+  padding: "12px",
+  borderRadius: "8px",
+  marginBottom: "12px",
   border: "2px solid #4CAF50"
 };
 
@@ -224,8 +224,8 @@ const labelSmall = {
 
 const inputStyle = {
   width: "100%",
-  padding: "12px",
-  fontSize: "20px",
+  padding: "10px",
+  fontSize: "18px",
   textAlign: "center",
   border: "2px solid #4CAF50",
   borderRadius: "8px",
@@ -240,13 +240,13 @@ const quickAmountsGrid = {
 };
 
 const quickButton = {
-  padding: "10px 16px",
+  padding: "8px 12px",
   backgroundColor: "#3b82f6",
   color: "white",
   border: "none",
   borderRadius: "8px",
   cursor: "pointer",
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: "600",
   transition: "all 0.2s ease",
   whiteSpace: "nowrap"
@@ -254,18 +254,18 @@ const quickButton = {
 
 const changeBox = {
   textAlign: "center",
-  padding: "12px",
+  padding: "10px",
   borderRadius: "8px",
-  marginTop: "12px"
+  marginTop: "10px"
 };
 
 const button = {
-  padding: "12px 20px",
+  padding: "10px 16px",
   color: "white",
   border: "none",
   borderRadius: "8px",
   cursor: "pointer",
-  fontSize: "15px",
+  fontSize: "14px",
   fontWeight: "600",
   transition: "all 0.2s ease"
 };
