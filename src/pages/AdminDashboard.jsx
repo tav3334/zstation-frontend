@@ -18,15 +18,17 @@ import {
   Clock,
   FileSpreadsheet,
   FileText,
-  User
+  User,
+  ChevronLeft,
+  ChevronRight,
+  LayoutDashboard,
+  History
 } from "lucide-react";
 import api from "../services/api";
 import Toast from "../components/Toast";
 import StockManagement from "./StockManagement";
 import ProductSalesHistory from "./ProductSalesHistory";
 import UserProfile from "../components/UserProfile";
-
-// Lazy load heavy libraries - loaded only when export is triggered
 
 function AdminDashboard({ user, onLogout }) {
   const [stats, setStats] = useState(null);
@@ -41,14 +43,22 @@ function AdminDashboard({ user, onLogout }) {
   const [showStockManagement, setShowStockManagement] = useState(false);
   const [showSalesHistory, setShowSalesHistory] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   const showToast = (message, type = "info", duration = 3000) => {
     setToast({ message, type, duration });
   };
 
+  // Horloge temps réel
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     loadData();
-    // Auto-refresh every 30 seconds
     const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
   }, [filter, customDateStart, customDateEnd]);
@@ -57,8 +67,6 @@ function AdminDashboard({ user, onLogout }) {
     setLoading(true);
     try {
       const params = {};
-
-      // Si custom, utiliser les dates personnalisées
       if (filter === "custom" && customDateStart && customDateEnd) {
         params.start_date = customDateStart;
         params.end_date = customDateEnd;
@@ -95,13 +103,9 @@ function AdminDashboard({ user, onLogout }) {
 
   const exportToExcel = async () => {
     try {
-      // Lazy load XLSX library only when needed
       const XLSX = await import('xlsx');
-
-      // Créer un nouveau workbook
       const wb = XLSX.utils.book_new();
 
-      // Feuille 1: Statistiques générales
       const statsData = [
         ['Statistiques Générales', ''],
         ['Période', filter === 'today' ? 'Aujourd\'hui' : filter === 'week' ? '7 Jours' : filter === 'month' ? '30 Jours' : 'Personnalisé'],
@@ -118,93 +122,28 @@ function AdminDashboard({ user, onLogout }) {
       const ws1 = XLSX.utils.aoa_to_sheet(statsData);
       XLSX.utils.book_append_sheet(wb, ws1, 'Statistiques');
 
-      // Feuille 2: Top Jeux
       const gamesData = [
         ['Top Jeux'],
         ['Rang', 'Nom du Jeu', 'Nombre de Sessions', 'Recettes (DH)'],
         ...(stats?.top_games || []).map((game, idx) => [
-          idx + 1,
-          game.game_name,
-          game.sessions_count,
-          game.total_revenue.toFixed(2)
+          idx + 1, game.game_name, game.sessions_count, game.total_revenue.toFixed(2)
         ])
       ];
       const ws2 = XLSX.utils.aoa_to_sheet(gamesData);
       XLSX.utils.book_append_sheet(wb, ws2, 'Top Jeux');
 
-      // Feuille 3: Top Produits
       const productsData = [
         ['Top Produits'],
         ['Rang', 'Nom du Produit', 'Quantité Vendue', 'Recettes (DH)'],
         ...(stats?.top_products || []).map((product, idx) => [
-          idx + 1,
-          product.product_name,
-          product.total_quantity,
-          product.total_revenue.toFixed(2)
+          idx + 1, product.product_name, product.total_quantity, product.total_revenue.toFixed(2)
         ])
       ];
       const ws3 = XLSX.utils.aoa_to_sheet(productsData);
       XLSX.utils.book_append_sheet(wb, ws3, 'Top Produits');
 
-      // Feuille 4: Paiements Sessions
-      const paymentsSessionData = [
-        ['Paiements Sessions'],
-        ['Méthode', 'Total (DH)'],
-        ...(stats?.revenue_by_method || []).map(item => [
-          item.method === 'cash' ? 'Espèces' : item.method === 'card' ? 'Carte' : 'Mobile',
-          item.total.toFixed(2)
-        ])
-      ];
-      const ws4 = XLSX.utils.aoa_to_sheet(paymentsSessionData);
-      XLSX.utils.book_append_sheet(wb, ws4, 'Paiements Sessions');
-
-      // Feuille 5: Paiements Produits
-      const paymentsProductData = [
-        ['Paiements Produits'],
-        ['Méthode', 'Total (DH)'],
-        ...(stats?.product_revenue_by_method || []).map(item => [
-          item.method === 'cash' ? 'Espèces' : item.method === 'card' ? 'Carte' : 'Mobile',
-          item.total.toFixed(2)
-        ])
-      ];
-      const ws5 = XLSX.utils.aoa_to_sheet(paymentsProductData);
-      XLSX.utils.book_append_sheet(wb, ws5, 'Paiements Produits');
-
-      // Feuille 6: Derniers Paiements
-      const recentPaymentsData = [
-        ['Derniers Paiements'],
-        ['Machine', 'Jeu', 'Méthode', 'Montant (DH)', 'Date'],
-        ...payments.slice(0, 20).map(payment => [
-          payment.machine_name || 'N/A',
-          payment.game_name || 'N/A',
-          payment.payment_method === 'cash' ? 'Espèces' : 'Carte',
-          payment.amount,
-          new Date(payment.payment_date).toLocaleString('fr-FR')
-        ])
-      ];
-      const ws6 = XLSX.utils.aoa_to_sheet(recentPaymentsData);
-      XLSX.utils.book_append_sheet(wb, ws6, 'Derniers Paiements');
-
-      // Feuille 7: Dernières Sessions
-      const recentSessionsData = [
-        ['Dernières Sessions'],
-        ['Machine', 'Jeu', 'Client', 'Statut', 'Date de début', 'Durée (min)'],
-        ...sessions.slice(0, 20).map(session => [
-          session.machine_name || 'N/A',
-          session.game_name || 'N/A',
-          session.customer_name || 'Invité',
-          session.is_active ? 'En cours' : 'Terminée',
-          new Date(session.start_time).toLocaleString('fr-FR'),
-          session.duration_minutes || '-'
-        ])
-      ];
-      const ws7 = XLSX.utils.aoa_to_sheet(recentSessionsData);
-      XLSX.utils.book_append_sheet(wb, ws7, 'Dernières Sessions');
-
-      // Générer le fichier Excel
       const fileName = `statistiques_zstation_${filter}_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(wb, fileName);
-
       showToast("Export Excel réussi!", "success");
     } catch (error) {
       showToast("Erreur lors de l'export Excel", "error");
@@ -213,177 +152,48 @@ function AdminDashboard({ user, onLogout }) {
 
   const exportToPDF = async () => {
     try {
-      // Lazy load jsPDF library only when needed
       const { jsPDF } = await import('jspdf');
       await import('jspdf-autotable');
 
       const doc = new jsPDF();
-
-      // Titre principal
       doc.setFontSize(20);
       doc.setTextColor(123, 92, 255);
       doc.text('Z-STATION - Rapport de Statistiques', 105, 20, { align: 'center' });
 
-      // Informations générales
       doc.setFontSize(12);
       doc.setTextColor(0, 0, 0);
       const periodText = filter === 'today' ? 'Aujourd\'hui' : filter === 'week' ? '7 Jours' : filter === 'month' ? '30 Jours' : 'Personnalisé';
       doc.text(`Période: ${periodText}`, 14, 35);
       doc.text(`Date d'export: ${new Date().toLocaleString('fr-FR')}`, 14, 42);
 
-      // Statistiques principales
-      doc.setFontSize(14);
-      doc.setTextColor(123, 92, 255);
-      doc.text('Statistiques Générales', 14, 55);
-
       doc.autoTable({
-        startY: 60,
+        startY: 55,
         head: [['Métrique', 'Valeur']],
         body: [
           ['Recettes Sessions', `${(stats?.stats?.total_revenue || 0).toFixed(2)} DH`],
           ['Recettes Produits', `${(stats?.stats?.product_revenue || 0).toFixed(2)} DH`],
           ['Total Sessions', `${stats?.stats?.total_sessions || 0}`],
           ['Total Ventes Produits', `${stats?.stats?.total_product_sales || 0}`],
-          ['Sessions Actives', `${stats?.stats?.active_sessions || 0}`],
-          ['Machines Disponibles', `${stats?.stats?.available_machines || 0}/${stats?.stats?.total_machines || 0}`],
         ],
         theme: 'grid',
         headStyles: { fillColor: [123, 92, 255] },
       });
 
-      // Top Jeux
-      doc.setFontSize(14);
-      doc.setTextColor(123, 92, 255);
-      doc.text('Top Jeux', 14, doc.lastAutoTable.finalY + 15);
-
-      doc.autoTable({
-        startY: doc.lastAutoTable.finalY + 20,
-        head: [['Rang', 'Nom du Jeu', 'Sessions', 'Recettes (DH)']],
-        body: (stats?.top_games || []).map((game, idx) => [
-          idx + 1,
-          game.game_name,
-          game.sessions_count,
-          game.total_revenue.toFixed(2)
-        ]),
-        theme: 'grid',
-        headStyles: { fillColor: [16, 185, 129] },
-      });
-
-      // Top Produits
-      doc.addPage();
-      doc.setFontSize(14);
-      doc.setTextColor(123, 92, 255);
-      doc.text('Top Produits', 14, 20);
-
-      doc.autoTable({
-        startY: 25,
-        head: [['Rang', 'Nom du Produit', 'Quantité', 'Recettes (DH)']],
-        body: (stats?.top_products || []).map((product, idx) => [
-          idx + 1,
-          product.product_name,
-          product.total_quantity,
-          product.total_revenue.toFixed(2)
-        ]),
-        theme: 'grid',
-        headStyles: { fillColor: [245, 158, 11] },
-      });
-
-      // Méthodes de paiement Sessions
-      doc.setFontSize(14);
-      doc.setTextColor(123, 92, 255);
-      doc.text('Paiements Sessions par Méthode', 14, doc.lastAutoTable.finalY + 15);
-
-      doc.autoTable({
-        startY: doc.lastAutoTable.finalY + 20,
-        head: [['Méthode', 'Total (DH)']],
-        body: (stats?.revenue_by_method || []).map(item => [
-          item.method === 'cash' ? 'Espèces' : item.method === 'card' ? 'Carte' : 'Mobile',
-          item.total.toFixed(2)
-        ]),
-        theme: 'grid',
-        headStyles: { fillColor: [59, 130, 246] },
-      });
-
-      // Méthodes de paiement Produits
-      doc.setFontSize(14);
-      doc.setTextColor(123, 92, 255);
-      doc.text('Paiements Produits par Méthode', 14, doc.lastAutoTable.finalY + 15);
-
-      doc.autoTable({
-        startY: doc.lastAutoTable.finalY + 20,
-        head: [['Méthode', 'Total (DH)']],
-        body: (stats?.product_revenue_by_method || []).map(item => [
-          item.method === 'cash' ? 'Espèces' : item.method === 'card' ? 'Carte' : 'Mobile',
-          item.total.toFixed(2)
-        ]),
-        theme: 'grid',
-        headStyles: { fillColor: [236, 72, 153] },
-      });
-
-      // Derniers paiements
-      doc.addPage();
-      doc.setFontSize(14);
-      doc.setTextColor(123, 92, 255);
-      doc.text('Derniers Paiements', 14, 20);
-
-      doc.autoTable({
-        startY: 25,
-        head: [['Machine', 'Jeu', 'Méthode', 'Montant', 'Date']],
-        body: payments.slice(0, 15).map(payment => [
-          payment.machine_name || 'N/A',
-          payment.game_name || 'N/A',
-          payment.payment_method === 'cash' ? 'Espèces' : 'Carte',
-          `${payment.amount} DH`,
-          new Date(payment.payment_date).toLocaleString('fr-FR', {
-            day: '2-digit',
-            month: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-          })
-        ]),
-        theme: 'grid',
-        headStyles: { fillColor: [16, 185, 129] },
-        styles: { fontSize: 8 },
-      });
-
-      // Dernières sessions
-      if (doc.lastAutoTable.finalY > 200) {
-        doc.addPage();
-      }
-
-      doc.setFontSize(14);
-      doc.setTextColor(123, 92, 255);
-      doc.text('Dernières Sessions', 14, doc.lastAutoTable.finalY > 200 ? 20 : doc.lastAutoTable.finalY + 15);
-
-      doc.autoTable({
-        startY: doc.lastAutoTable.finalY > 200 ? 25 : doc.lastAutoTable.finalY + 20,
-        head: [['Machine', 'Jeu', 'Client', 'Statut', 'Date']],
-        body: sessions.slice(0, 15).map(session => [
-          session.machine_name || 'N/A',
-          session.game_name || 'N/A',
-          session.customer_name || 'Invité',
-          session.is_active ? 'En cours' : 'Terminée',
-          new Date(session.start_time).toLocaleString('fr-FR', {
-            day: '2-digit',
-            month: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-          })
-        ]),
-        theme: 'grid',
-        headStyles: { fillColor: [59, 130, 246] },
-        styles: { fontSize: 8 },
-      });
-
-      // Sauvegarder le PDF
       const fileName = `statistiques_zstation_${filter}_${new Date().toISOString().split('T')[0]}.pdf`;
       doc.save(fileName);
-
       showToast("Export PDF réussi!", "success");
     } catch (error) {
       showToast("Erreur lors de l'export PDF", "error");
     }
   };
+
+  // Menu items
+  const menuItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'stock', label: 'Gestion Stocks', icon: Package },
+    { id: 'sales', label: 'Ventes Produits', icon: History },
+    { id: 'profile', label: 'Mon Profil', icon: User },
+  ];
 
   if (showStockManagement) {
     return <StockManagement onBack={() => setShowStockManagement(false)} />;
@@ -396,106 +206,156 @@ function AdminDashboard({ user, onLogout }) {
   if (loading && !stats) {
     return (
       <div style={styles.loadingContainer}>
-        <div style={styles.spinner}></div>
+        <RefreshCw size={32} color="#f59e0b" className="spin" />
         <p style={styles.loadingText}>Chargement du dashboard...</p>
       </div>
     );
   }
 
   return (
-    <div style={styles.container}>
-      {/* Background Elements */}
-      <div style={styles.bgGradient1} />
-      <div style={styles.bgGradient2} />
-      <div style={styles.bgGradient3} />
+    <div style={styles.appContainer}>
+      {/* Toast */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          duration={toast.duration}
+          onClose={() => setToast(null)}
+        />
+      )}
 
-      <div className="contentWrapper" style={styles.contentWrapper}>
-      {/* Header */}
-      <header className="header slide-down" style={styles.header}>
-        <div className="headerLeft" style={styles.headerLeft}>
-          <div style={styles.logoContainer}>
-            <div style={styles.logoIcon}><Crown size={24} /></div>
+      {/* Sidebar */}
+      <aside style={{
+        ...styles.sidebar,
+        width: sidebarCollapsed ? '70px' : '240px'
+      }}>
+        {/* Logo */}
+        <div style={styles.sidebarHeader}>
+          <div style={styles.logoBox}>
+            <Crown size={24} color="#fff" />
           </div>
-          <div>
-            <h1 className="headerTitle" style={styles.headerTitle}>Admin Dashboard</h1>
-            <p className="headerSubtitle" style={styles.headerSubtitle}>
-              <span style={styles.dot} />
-              Bienvenue, <strong>{user.name}</strong>
-            </p>
-          </div>
+          {!sidebarCollapsed && (
+            <div style={styles.logoText}>
+              <span style={styles.logoTitle}>Z-STATION</span>
+              <span style={styles.logoSubtitle}>Admin Panel</span>
+            </div>
+          )}
         </div>
-        <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
-          <button className="profileBtn" onClick={() => setShowProfile(true)} style={styles.profileBtn}>
-            <User size={18} />
-            <span>Profil</span>
-          </button>
-          <button className="salesHistoryBtn" onClick={() => setShowSalesHistory(true)} style={styles.salesHistoryBtn}>
-            <ShoppingBag size={18} />
-            <span>Ventes Produits</span>
-          </button>
-          <button className="stockBtn" onClick={() => setShowStockManagement(true)} style={styles.stockBtn}>
-            <Package size={18} />
-            <span>Gestion Stocks</span>
-          </button>
-          <button className="logoutBtn" onClick={onLogout} style={styles.logoutBtn}>
-            <LogOut size={18} />
-            <span>Déconnexion</span>
-          </button>
-        </div>
-      </header>
 
-      {/* Filter Bar */}
-      <div className="filterBar fade-in" style={styles.filterBar}>
-        <div className="filterGroup" style={styles.filterGroup}>
-          {[
-            { id: "today", icon: <Calendar size={16} />, label: "Aujourd'hui" },
-            { id: "week", icon: <BarChart3 size={16} />, label: "7 Jours" },
-            { id: "month", icon: <TrendingUp size={16} />, label: "30 Jours" }
-          ].map((filterItem) => (
+        {/* Menu Items */}
+        <nav style={styles.sidebarNav}>
+          {menuItems.map(item => (
             <button
-              key={filterItem.id}
-              className="filterBtn"
-              onClick={() => setFilter(filterItem.id)}
+              key={item.id}
               style={{
-                ...styles.filterBtn,
-                ...(filter === filterItem.id ? styles.filterBtnActive : {})
+                ...styles.menuItem,
+                ...(activeTab === item.id && styles.menuItemActive)
+              }}
+              onClick={() => {
+                if (item.id === 'stock') {
+                  setShowStockManagement(true);
+                } else if (item.id === 'sales') {
+                  setShowSalesHistory(true);
+                } else if (item.id === 'profile') {
+                  setShowProfile(true);
+                } else {
+                  setActiveTab(item.id);
+                }
               }}
             >
-              {filterItem.icon}
-              <span>{filterItem.label}</span>
+              <item.icon size={20} />
+              {!sidebarCollapsed && (
+                <span style={styles.menuLabel}>{item.label}</span>
+              )}
             </button>
           ))}
-          <button
-            onClick={() => setShowCustomDate(!showCustomDate)}
-            style={{
-              ...styles.filterBtn,
-              ...(filter === "custom" ? styles.filterBtnActive : {})
-            }}
-          >
-            <CalendarDays size={16} />
-            <span>Personnalisé</span>
-          </button>
-        </div>
-        <div className="filterGroup" style={styles.filterGroup}>
-          <button className="exportExcelBtn" onClick={exportToExcel} style={styles.exportExcelBtn} disabled={loading || !stats}>
-            <FileSpreadsheet size={16} />
-            <span>Excel</span>
-          </button>
-          <button className="exportPdfBtn" onClick={exportToPDF} style={styles.exportPdfBtn} disabled={loading || !stats}>
-            <FileText size={16} />
-            <span>PDF</span>
-          </button>
-          <button className="refreshBtn" onClick={loadData} style={styles.refreshBtn} disabled={loading}>
-            <RefreshCw size={16} style={loading ? styles.spinIcon : {}} />
-            <span>Actualiser</span>
-          </button>
-        </div>
-      </div>
+        </nav>
 
-      {/* Custom Date Picker */}
-      {showCustomDate && (
-        <div style={styles.customDatePicker} className="fade-in">
-          <div style={styles.datePickerContent}>
+        {/* Sidebar Footer */}
+        <div style={styles.sidebarFooter}>
+          <button
+            style={styles.collapseBtn}
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          >
+            {sidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Area */}
+      <div style={{...styles.mainArea, marginLeft: sidebarCollapsed ? '70px' : '240px'}}>
+        {/* Top Bar */}
+        <header style={styles.topBar}>
+          <div style={styles.topBarLeft}>
+            <h1 style={styles.pageTitle}>Dashboard Admin</h1>
+          </div>
+          <div style={styles.topBarRight}>
+            <div style={styles.clockDisplay}>
+              <Clock size={16} />
+              <span>{currentTime.toLocaleTimeString('fr-FR')}</span>
+            </div>
+            <div style={styles.userPill}>
+              <div style={styles.userAvatarSmall}>
+                {user.name?.charAt(0).toUpperCase()}
+              </div>
+              <Crown size={14} style={{color: '#f59e0b'}} />
+              <span style={styles.userNameSmall}>{user.name}</span>
+            </div>
+            <button style={styles.logoutBtnSmall} onClick={onLogout}>
+              <LogOut size={18} />
+            </button>
+          </div>
+        </header>
+
+        {/* Filter Bar */}
+        <div style={styles.filterBar}>
+          <div style={styles.filterGroup}>
+            {[
+              { id: "today", icon: <Calendar size={16} />, label: "Aujourd'hui" },
+              { id: "week", icon: <BarChart3 size={16} />, label: "7 Jours" },
+              { id: "month", icon: <TrendingUp size={16} />, label: "30 Jours" }
+            ].map((filterItem) => (
+              <button
+                key={filterItem.id}
+                onClick={() => setFilter(filterItem.id)}
+                style={{
+                  ...styles.filterBtn,
+                  ...(filter === filterItem.id ? styles.filterBtnActive : {})
+                }}
+              >
+                {filterItem.icon}
+                <span>{filterItem.label}</span>
+              </button>
+            ))}
+            <button
+              onClick={() => setShowCustomDate(!showCustomDate)}
+              style={{
+                ...styles.filterBtn,
+                ...(filter === "custom" ? styles.filterBtnActive : {})
+              }}
+            >
+              <CalendarDays size={16} />
+              <span>Personnalisé</span>
+            </button>
+          </div>
+          <div style={styles.filterGroup}>
+            <button onClick={exportToExcel} style={styles.exportExcelBtn} disabled={loading || !stats}>
+              <FileSpreadsheet size={16} />
+              <span>Excel</span>
+            </button>
+            <button onClick={exportToPDF} style={styles.exportPdfBtn} disabled={loading || !stats}>
+              <FileText size={16} />
+              <span>PDF</span>
+            </button>
+            <button onClick={loadData} style={styles.refreshBtn} disabled={loading}>
+              <RefreshCw size={16} className={loading ? 'spin' : ''} />
+            </button>
+          </div>
+        </div>
+
+        {/* Custom Date Picker */}
+        {showCustomDate && (
+          <div style={styles.customDatePicker}>
             <h4 style={styles.datePickerTitle}><Calendar size={20} /> Sélectionner une période</h4>
             <div style={styles.dateInputs}>
               <div style={styles.dateInputGroup}>
@@ -518,308 +378,257 @@ function AdminDashboard({ user, onLogout }) {
               </div>
             </div>
             <div style={styles.datePickerActions}>
-              <button onClick={applyCustomFilter} style={styles.applyBtn}>
-                ✓ Appliquer
-              </button>
-              <button onClick={() => setShowCustomDate(false)} style={styles.cancelBtn}>
-                ✕ Annuler
-              </button>
+              <button onClick={applyCustomFilter} style={styles.applyBtn}>Appliquer</button>
+              <button onClick={() => setShowCustomDate(false)} style={styles.cancelBtn}>Annuler</button>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Stats Grid */}
-      <div className="statsGrid" style={styles.statsGrid}>
-        <StatCard
-          icon={<DollarSign size={24} />}
-          label="Recettes Sessions"
-          value={(stats?.stats?.total_revenue || 0).toFixed(2) + " DH"}
-          gradient="linear-gradient(135deg, #10b981 0%, #059669 100%)"
-          delay="0.1s"
-        />
-        <StatCard
-          icon={<ShoppingBag size={24} />}
-          label="Recettes Produits"
-          value={(stats?.stats?.product_revenue || 0).toFixed(2) + " DH"}
-          gradient="linear-gradient(135deg, #f59e0b 0%, #f97316 100%)"
-          delay="0.2s"
-        />
-        <StatCard
-          icon={<Activity size={24} />}
-          label="Sessions"
-          value={stats?.stats?.total_sessions || 0}
-          gradient="linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)"
-          delay="0.3s"
-        />
-        <StatCard
-          icon={<ShoppingCart size={24} />}
-          label="Ventes Produits"
-          value={stats?.stats?.total_product_sales || 0}
-          gradient="linear-gradient(135deg, #ec4899 0%, #db2777 100%)"
-          delay="0.4s"
-        />
-        <StatCard
-          icon={<Zap size={24} />}
-          label="Sessions Actives"
-          value={stats?.stats?.active_sessions || 0}
-          gradient="linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)"
-          delay="0.5s"
-        />
-        <StatCard
-          icon={<Monitor size={24} />}
-          label="Machines"
-          value={`${stats?.stats?.available_machines || 0}/${stats?.stats?.total_machines || 0}`}
-          gradient="linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)"
-          delay="0.6s"
-        />
-      </div>
+        {/* Content */}
+        <main style={styles.content}>
+          {/* Stats Grid */}
+          <div style={styles.statsGrid}>
+            <StatCard
+              icon={<DollarSign size={22} />}
+              label="Recettes Sessions"
+              value={(stats?.stats?.total_revenue || 0).toFixed(2) + " DH"}
+              color="#10b981"
+              bgColor="rgba(16, 185, 129, 0.1)"
+            />
+            <StatCard
+              icon={<ShoppingBag size={22} />}
+              label="Recettes Produits"
+              value={(stats?.stats?.product_revenue || 0).toFixed(2) + " DH"}
+              color="#f59e0b"
+              bgColor="rgba(245, 158, 11, 0.1)"
+            />
+            <StatCard
+              icon={<Activity size={22} />}
+              label="Sessions"
+              value={stats?.stats?.total_sessions || 0}
+              color="#3b82f6"
+              bgColor="rgba(59, 130, 246, 0.1)"
+            />
+            <StatCard
+              icon={<ShoppingCart size={22} />}
+              label="Ventes Produits"
+              value={stats?.stats?.total_product_sales || 0}
+              color="#ec4899"
+              bgColor="rgba(236, 72, 153, 0.1)"
+            />
+            <StatCard
+              icon={<Zap size={22} />}
+              label="Sessions Actives"
+              value={stats?.stats?.active_sessions || 0}
+              color="#14b8a6"
+              bgColor="rgba(20, 184, 166, 0.1)"
+            />
+            <StatCard
+              icon={<Monitor size={22} />}
+              label="Machines"
+              value={`${stats?.stats?.available_machines || 0}/${stats?.stats?.total_machines || 0}`}
+              color="#8b5cf6"
+              bgColor="rgba(139, 92, 246, 0.1)"
+            />
+          </div>
 
-      {/* Details Grid */}
-      <div className="detailsGrid" style={styles.detailsGrid}>
-        {/* Top Games */}
-        <div className="card fade-in" style={styles.card}>
-          <div className="cardHeader" style={styles.cardHeader}>
-            <h3 className="cardTitle" style={styles.cardTitle}>
-              <span style={styles.cardIcon}><Gamepad2 size={20} /></span>
-              Top Jeux
-            </h3>
-          </div>
-          <div style={styles.cardBody}>
-            {(stats?.top_games || []).map((game, idx) => (
-              <div key={game.game_id} className="listItem list-item" style={styles.listItem}>
-                <div style={styles.listItemLeft}>
-                  <div style={styles.listItemRank}>{idx + 1}</div>
-                  <div>
-                    <div style={styles.listItemTitle}>{game.game_name}</div>
-                    <div style={styles.listItemSubtitle}>{game.sessions_count} sessions</div>
+          {/* Details Grid */}
+          <div style={styles.detailsGrid}>
+            {/* Top Games */}
+            <div style={styles.card}>
+              <div style={styles.cardHeader}>
+                <h3 style={styles.cardTitle}>
+                  <Gamepad2 size={18} /> Top Jeux
+                </h3>
+              </div>
+              <div style={styles.cardBody}>
+                {(stats?.top_games || []).map((game, idx) => (
+                  <div key={game.game_id} style={styles.listItem}>
+                    <div style={styles.listItemLeft}>
+                      <div style={styles.listItemRank}>{idx + 1}</div>
+                      <div>
+                        <div style={styles.listItemTitle}>{game.game_name}</div>
+                        <div style={styles.listItemSubtitle}>{game.sessions_count} sessions</div>
+                      </div>
+                    </div>
+                    <div style={styles.listItemAmount}>{game.total_revenue.toFixed(2)} DH</div>
                   </div>
-                </div>
-                <div className="listItemAmount" style={styles.listItemAmount}>{game.total_revenue.toFixed(2)} DH</div>
+                ))}
+                {(!stats?.top_games || stats.top_games.length === 0) && (
+                  <div style={styles.emptyState}>Aucune donnée disponible</div>
+                )}
               </div>
-            ))}
-            {(!stats?.top_games || stats.top_games.length === 0) && (
-              <div style={styles.emptyState}>
-                <div style={styles.emptyIcon}><Gamepad2 size={48} color="#666" /></div>
-                <div>Aucune donnée disponible</div>
-              </div>
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* Top Products */}
-        <div style={styles.card} className="fade-in">
-          <div style={styles.cardHeader}>
-            <h3 style={styles.cardTitle}>
-              <span style={styles.cardIcon}><ShoppingBag size={20} /></span>
-              Top Produits
-            </h3>
-          </div>
-          <div style={styles.cardBody}>
-            {(stats?.top_products || []).map((product, idx) => (
-              <div key={product.product_id} style={styles.listItem} className="list-item">
-                <div style={styles.listItemLeft}>
-                  <div style={styles.listItemRank}>{idx + 1}</div>
-                  <div>
-                    <div style={styles.listItemTitle}>{product.product_name}</div>
-                    <div style={styles.listItemSubtitle}>{product.total_quantity} vendus</div>
+            {/* Top Products */}
+            <div style={styles.card}>
+              <div style={styles.cardHeader}>
+                <h3 style={styles.cardTitle}>
+                  <ShoppingBag size={18} /> Top Produits
+                </h3>
+              </div>
+              <div style={styles.cardBody}>
+                {(stats?.top_products || []).map((product, idx) => (
+                  <div key={product.product_id} style={styles.listItem}>
+                    <div style={styles.listItemLeft}>
+                      <div style={{...styles.listItemRank, background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b'}}>{idx + 1}</div>
+                      <div>
+                        <div style={styles.listItemTitle}>{product.product_name}</div>
+                        <div style={styles.listItemSubtitle}>{product.total_quantity} vendus</div>
+                      </div>
+                    </div>
+                    <div style={{...styles.listItemAmount, color: '#f59e0b'}}>{product.total_revenue.toFixed(2)} DH</div>
                   </div>
-                </div>
-                <div style={styles.listItemAmount}>{product.total_revenue.toFixed(2)} DH</div>
+                ))}
+                {(!stats?.top_products || stats.top_products.length === 0) && (
+                  <div style={styles.emptyState}>Aucune donnée disponible</div>
+                )}
               </div>
-            ))}
-            {(!stats?.top_products || stats.top_products.length === 0) && (
-              <div style={styles.emptyState}>
-                <div style={styles.emptyIcon}><ShoppingBag size={48} color="#666" /></div>
-                <div>Aucune donnée disponible</div>
-              </div>
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* Revenue by Method */}
-        <div style={styles.card} className="fade-in">
-          <div style={styles.cardHeader}>
-            <h3 style={styles.cardTitle}>
-              <span style={styles.cardIcon}>💳</span>
-              Paiements Sessions
-            </h3>
-          </div>
-          <div style={styles.cardBody}>
-            {(stats?.revenue_by_method || []).map((item, idx) => (
-              <div key={idx} style={styles.listItem} className="list-item">
-                <div style={styles.listItemLeft}>
-                  <div style={{
-                    ...styles.methodIcon,
-                    background: item.method === 'cash'
-                      ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                      : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
-                  }}>
-                    {item.method === 'cash' ? '💵' : '💳'}
-                  </div>
-                  <div style={styles.listItemTitle}>
-                    {item.method === 'cash' ? 'Espèces' : item.method === 'card' ? 'Carte' : 'Mobile'}
-                  </div>
-                </div>
-                <div style={styles.listItemAmount}>{item.total.toFixed(2)} DH</div>
+            {/* Revenue by Method */}
+            <div style={styles.card}>
+              <div style={styles.cardHeader}>
+                <h3 style={styles.cardTitle}>
+                  <DollarSign size={18} /> Paiements Sessions
+                </h3>
               </div>
-            ))}
-            {(!stats?.revenue_by_method || stats.revenue_by_method.length === 0) && (
-              <div style={styles.emptyState}>
-                <div style={styles.emptyIcon}>💳</div>
-                <div>Aucune donnée disponible</div>
+              <div style={styles.cardBody}>
+                {(stats?.revenue_by_method || []).map((item, idx) => (
+                  <div key={idx} style={styles.listItem}>
+                    <div style={styles.listItemLeft}>
+                      <div style={{
+                        ...styles.methodIcon,
+                        background: item.method === 'cash' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(59, 130, 246, 0.1)'
+                      }}>
+                        {item.method === 'cash' ? '💵' : '💳'}
+                      </div>
+                      <div style={styles.listItemTitle}>
+                        {item.method === 'cash' ? 'Espèces' : item.method === 'card' ? 'Carte' : 'Mobile'}
+                      </div>
+                    </div>
+                    <div style={styles.listItemAmount}>{item.total.toFixed(2)} DH</div>
+                  </div>
+                ))}
+                {(!stats?.revenue_by_method || stats.revenue_by_method.length === 0) && (
+                  <div style={styles.emptyState}>Aucune donnée disponible</div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* Product Revenue by Method */}
-        <div style={styles.card} className="fade-in">
-          <div style={styles.cardHeader}>
-            <h3 style={styles.cardTitle}>
-              <span style={styles.cardIcon}><ShoppingCart size={20} /></span>
-              Paiements Produits
-            </h3>
-          </div>
-          <div style={styles.cardBody}>
-            {(stats?.product_revenue_by_method || []).map((item, idx) => (
-              <div key={idx} style={styles.listItem} className="list-item">
-                <div style={styles.listItemLeft}>
-                  <div style={{
-                    ...styles.methodIcon,
-                    background: item.method === 'cash'
-                      ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                      : item.method === 'card'
-                        ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
-                        : 'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)'
-                  }}>
-                    {item.method === 'cash' ? '💵' : item.method === 'card' ? '💳' : '📱'}
-                  </div>
-                  <div style={styles.listItemTitle}>
-                    {item.method === 'cash' ? 'Espèces' : item.method === 'card' ? 'Carte' : 'Mobile'}
-                  </div>
-                </div>
-                <div style={styles.listItemAmount}>{item.total.toFixed(2)} DH</div>
+            {/* Product Revenue by Method */}
+            <div style={styles.card}>
+              <div style={styles.cardHeader}>
+                <h3 style={styles.cardTitle}>
+                  <ShoppingCart size={18} /> Paiements Produits
+                </h3>
               </div>
-            ))}
-            {(!stats?.product_revenue_by_method || stats.product_revenue_by_method.length === 0) && (
-              <div style={styles.emptyState}>
-                <div style={styles.emptyIcon}><ShoppingCart size={48} color="#666" /></div>
-                <div>Aucune donnée disponible</div>
+              <div style={styles.cardBody}>
+                {(stats?.product_revenue_by_method || []).map((item, idx) => (
+                  <div key={idx} style={styles.listItem}>
+                    <div style={styles.listItemLeft}>
+                      <div style={{
+                        ...styles.methodIcon,
+                        background: item.method === 'cash' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(59, 130, 246, 0.1)'
+                      }}>
+                        {item.method === 'cash' ? '💵' : '💳'}
+                      </div>
+                      <div style={styles.listItemTitle}>
+                        {item.method === 'cash' ? 'Espèces' : item.method === 'card' ? 'Carte' : 'Mobile'}
+                      </div>
+                    </div>
+                    <div style={{...styles.listItemAmount, color: '#f59e0b'}}>{item.total.toFixed(2)} DH</div>
+                  </div>
+                ))}
+                {(!stats?.product_revenue_by_method || stats.product_revenue_by_method.length === 0) && (
+                  <div style={styles.emptyState}>Aucune donnée disponible</div>
+                )}
               </div>
-            )}
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Recent Payments */}
-      <div style={styles.card} className="fade-in">
-        <div style={styles.cardHeader}>
-          <h3 style={styles.cardTitle}>
-            <span style={styles.cardIcon}><DollarSign size={20} /></span>
-            Derniers Paiements
-          </h3>
-          <div style={styles.badge}>{payments.length} total</div>
-        </div>
-        <div style={styles.cardBody}>
-          <div style={styles.tableContainer}>
-            {payments.slice(0, 10).map((payment, idx) => (
-              <div key={payment.id} style={styles.tableRow} className="table-row">
-                <div style={styles.tableCell}>
-                  <div style={styles.tableCellTitle}>{payment.machine_name || "N/A"}</div>
-                  <div style={styles.tableCellSubtitle}>
-                    <Gamepad2 size={14} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> {payment.game_name || "N/A"}
+          {/* Recent Payments */}
+          <div style={styles.card}>
+            <div style={styles.cardHeader}>
+              <h3 style={styles.cardTitle}>
+                <Clock size={18} /> Derniers Paiements
+              </h3>
+              <div style={styles.badge}>{payments.length} total</div>
+            </div>
+            <div style={styles.cardBody}>
+              {payments.slice(0, 10).map((payment) => (
+                <div key={payment.id} style={styles.paymentRow}>
+                  <div style={styles.paymentInfo}>
+                    <div style={styles.paymentMachine}>{payment.machine_name || "N/A"}</div>
+                    <div style={styles.paymentGame}>
+                      <Gamepad2 size={12} /> {payment.game_name || "N/A"}
+                    </div>
                   </div>
-                </div>
-                <div style={styles.tableCell}>
                   <div style={{
                     ...styles.paymentMethod,
-                    background: payment.payment_method === 'cash'
-                      ? 'rgba(16, 185, 129, 0.1)'
-                      : 'rgba(59, 130, 246, 0.1)',
-                    color: payment.payment_method === 'cash'
-                      ? '#10b981'
-                      : '#3b82f6'
+                    background: payment.payment_method === 'cash' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+                    color: payment.payment_method === 'cash' ? '#10b981' : '#3b82f6'
                   }}>
                     {payment.payment_method === 'cash' ? '💵 Espèces' : '💳 Carte'}
                   </div>
-                </div>
-                <div style={styles.tableCell}>
-                  <div style={styles.tableCellAmount}>{payment.amount} DH</div>
-                  <div style={styles.tableCellDate}>
-                    {new Date(payment.payment_date).toLocaleString('fr-FR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                  <div style={styles.paymentAmountCol}>
+                    <div style={styles.paymentAmount}>{payment.amount} DH</div>
+                    <div style={styles.paymentDate}>
+                      {new Date(payment.payment_date).toLocaleString('fr-FR', {
+                        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-            {payments.length === 0 && (
-              <div style={styles.emptyState}>
-                <div style={styles.emptyIcon}><DollarSign size={48} color="#666" /></div>
-                <div>Aucun paiement enregistré</div>
-              </div>
-            )}
+              ))}
+              {payments.length === 0 && (
+                <div style={styles.emptyState}>Aucun paiement enregistré</div>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Recent Sessions */}
-      <div style={styles.card} className="fade-in">
-        <div style={styles.cardHeader}>
-          <h3 style={styles.cardTitle}>
-            <span style={styles.cardIcon}><Clock size={20} /></span>
-            Dernières Sessions
-          </h3>
-          <div style={styles.badge}>{sessions.length} total</div>
-        </div>
-        <div style={styles.cardBody}>
-          <div style={styles.tableContainer}>
-            {sessions.slice(0, 10).map((session) => (
-              <div key={session.id} style={styles.tableRow} className="table-row">
-                <div style={styles.tableCell}>
-                  <div style={styles.tableCellTitle}>{session.machine_name || "N/A"}</div>
-                  <div style={styles.tableCellSubtitle}>
-                    <Gamepad2 size={14} style={{display: 'inline', verticalAlign: 'middle', marginRight: '4px'}} /> {session.game_name || "N/A"} • {session.customer_name || "Invité"}
+          {/* Recent Sessions */}
+          <div style={{...styles.card, marginTop: '20px'}}>
+            <div style={styles.cardHeader}>
+              <h3 style={styles.cardTitle}>
+                <Activity size={18} /> Dernières Sessions
+              </h3>
+              <div style={styles.badge}>{sessions.length} total</div>
+            </div>
+            <div style={styles.cardBody}>
+              {sessions.slice(0, 10).map((session) => (
+                <div key={session.id} style={styles.paymentRow}>
+                  <div style={styles.paymentInfo}>
+                    <div style={styles.paymentMachine}>{session.machine_name || "N/A"}</div>
+                    <div style={styles.paymentGame}>
+                      <Gamepad2 size={12} /> {session.game_name || "N/A"} • {session.customer_name || "Invité"}
+                    </div>
                   </div>
-                </div>
-                <div style={styles.tableCell}>
                   <div style={{
                     ...styles.sessionStatus,
-                    background: session.is_active
-                      ? 'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)'
-                      : 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                    background: session.is_active ? 'rgba(245, 158, 11, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                    color: session.is_active ? '#f59e0b' : '#10b981'
                   }}>
                     {session.is_active ? '⏳ En cours' : '✅ Terminée'}
                   </div>
-                </div>
-                <div style={styles.tableCell}>
-                  <div style={styles.tableCellDate}>
-                    {new Date(session.start_time).toLocaleString('fr-FR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                  <div style={styles.paymentAmountCol}>
+                    <div style={styles.paymentDate}>
+                      {new Date(session.start_time).toLocaleString('fr-FR', {
+                        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+                      })}
+                    </div>
+                    {session.duration_minutes && (
+                      <div style={styles.paymentGame}>{session.duration_minutes} min</div>
+                    )}
                   </div>
-                  {session.duration_minutes && (
-                    <div style={styles.tableCellSubtitle}>{session.duration_minutes} minutes</div>
-                  )}
                 </div>
-              </div>
-            ))}
-            {sessions.length === 0 && (
-              <div style={styles.emptyState}>
-                <div style={styles.emptyIcon}><Gamepad2 size={48} color="#666" /></div>
-                <div>Aucune session enregistrée</div>
-              </div>
-            )}
+              ))}
+              {sessions.length === 0 && (
+                <div style={styles.emptyState}>Aucune session enregistrée</div>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
+        </main>
       </div>
 
       {/* User Profile Modal */}
@@ -830,945 +639,615 @@ function AdminDashboard({ user, onLogout }) {
           showToast={showToast}
         />
       )}
-
-      {/* Toast Notification */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          duration={toast.duration}
-          onClose={() => setToast(null)}
-        />
-      )}
     </div>
   );
 }
 
-function StatCard({ icon, label, value, gradient, delay }) {
+// Stat Card Component
+function StatCard({ icon, label, value, color, bgColor }) {
   return (
-    <div className="statCard stat-card" style={{ ...styles.statCard, animationDelay: delay }}>
-      <div style={{ ...styles.statCardBg, background: gradient }} />
-      <div style={styles.statCardContent}>
-        <div style={styles.statCardIcon}>{icon}</div>
-        <div style={styles.statCardLabel}>{label}</div>
-        <div className="statCardValue" style={styles.statCardValue}>{value}</div>
+    <div style={styles.statCard}>
+      <div style={{...styles.statIconBox, background: bgColor}}>
+        <span style={{color}}>{icon}</span>
+      </div>
+      <div style={styles.statInfo}>
+        <span style={styles.statLabel}>{label}</span>
+        <span style={{...styles.statValue, color}}>{value}</span>
       </div>
     </div>
   );
 }
 
+// Styles
 const styles = {
-  container: {
-    minHeight: "100vh",
-    height: "100%",
-    width: "100vw",
-    background: "var(--bg-primary)",
-    padding: "0",
-    margin: "0",
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    overflow: "auto",
-  },
-
-  contentWrapper: {
-    padding: "24px",
-    position: "relative",
-    zIndex: 10,
-    minHeight: "100vh",
-  },
-
-  bgGradient1: {
-    position: "fixed",
-    top: "-20%",
-    right: "-10%",
-    width: "600px",
-    height: "600px",
-    background: "radial-gradient(circle, rgba(123,92,255,0.08) 0%, transparent 70%)",
-    borderRadius: "50%",
-    filter: "blur(80px)",
-    pointerEvents: "none",
-  },
-
-  bgGradient2: {
-    position: "fixed",
-    bottom: "-15%",
-    left: "-10%",
-    width: "500px",
-    height: "500px",
-    background: "radial-gradient(circle, rgba(0,230,255,0.06) 0%, transparent 70%)",
-    borderRadius: "50%",
-    filter: "blur(80px)",
-    pointerEvents: "none",
-  },
-
-  bgGradient3: {
-    position: "fixed",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    width: "800px",
-    height: "800px",
-    background: "radial-gradient(circle, rgba(139,92,246,0.04) 0%, transparent 70%)",
-    borderRadius: "50%",
-    filter: "blur(100px)",
-    pointerEvents: "none",
+  appContainer: {
+    display: 'flex',
+    minHeight: '100vh',
+    background: '#0f172a',
+    width: '100%'
   },
 
   loadingContainer: {
-    minHeight: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "var(--bg-primary)",
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: '#0f172a',
+    gap: '16px'
   },
-
-  spinner: {
-    width: "56px",
-    height: "56px",
-    border: "4px solid rgba(255,255,255,0.1)",
-    borderTop: "4px solid #7b5cff",
-    borderRadius: "50%",
-    animation: "spin 0.8s linear infinite",
-  },
-
   loadingText: {
-    marginTop: "20px",
-    color: "#98a6b3",
-    fontSize: "16px",
-    fontWeight: "600",
+    color: '#64748b',
+    fontSize: '14px'
   },
 
-  header: {
-    background: "var(--bg-elevated)",
-    backdropFilter: "blur(20px)",
-    border: "1px solid var(--border-primary)",
-    borderRadius: "20px",
-    padding: "24px 32px",
-    marginBottom: "24px",
-    boxShadow: "var(--shadow-xl)",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    position: "relative",
+  // Sidebar
+  sidebar: {
+    background: '#1e293b',
+    borderRight: '1px solid #334155',
+    display: 'flex',
+    flexDirection: 'column',
+    transition: 'width 0.3s ease',
+    position: 'fixed',
+    height: '100vh',
+    zIndex: 100
+  },
+  sidebarHeader: {
+    padding: '20px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    borderBottom: '1px solid #334155'
+  },
+  logoBox: {
+    width: '40px',
+    height: '40px',
+    background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+    borderRadius: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0
+  },
+  logoText: {
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  logoTitle: {
+    color: '#f1f5f9',
+    fontWeight: '800',
+    fontSize: '16px'
+  },
+  logoSubtitle: {
+    color: '#64748b',
+    fontSize: '11px',
+    fontWeight: '500'
+  },
+  sidebarNav: {
+    flex: 1,
+    padding: '12px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px'
+  },
+  menuItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '12px 14px',
+    borderRadius: '10px',
+    border: 'none',
+    background: 'transparent',
+    color: '#94a3b8',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    width: '100%',
+    textAlign: 'left',
+    fontSize: '14px',
+    fontWeight: '500'
+  },
+  menuItemActive: {
+    background: '#f59e0b',
+    color: '#fff'
+  },
+  menuLabel: {
+    flex: 1
+  },
+  sidebarFooter: {
+    padding: '12px',
+    borderTop: '1px solid #334155'
+  },
+  collapseBtn: {
+    width: '100%',
+    padding: '10px',
+    background: '#334155',
+    border: 'none',
+    borderRadius: '8px',
+    color: '#94a3b8',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s'
   },
 
-  headerLeft: {
-    display: "flex",
-    alignItems: "center",
-    gap: "20px",
+  // Main Area
+  mainArea: {
+    flex: 1,
+    marginLeft: '240px',
+    transition: 'margin-left 0.3s ease',
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: '100vh'
   },
 
-  logoContainer: {
-    width: "60px",
-    height: "60px",
-    borderRadius: "16px",
-    background: "linear-gradient(135deg, rgba(123,92,255,0.1) 0%, rgba(0,230,255,0.05) 100%)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxShadow: "0 8px 24px rgba(123,92,255,0.2)",
-  },
-
-  logoIcon: {
-    fontSize: "32px",
-  },
-
-  headerTitle: {
-    margin: 0,
-    fontSize: "28px",
-    fontWeight: "900",
-    color: "var(--text-primary)",
-    letterSpacing: "-0.5px",
-  },
-
-  headerSubtitle: {
-    margin: "6px 0 0 0",
-    fontSize: "14px",
-    color: "var(--text-secondary)",
-    fontWeight: "500",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-  },
-
-  dot: {
-    width: "8px",
-    height: "8px",
-    borderRadius: "50%",
-    background: "#10b981",
-    boxShadow: "0 0 12px #10b981",
-    animation: "pulse-dot 2s ease-in-out infinite",
-  },
-
-  profileBtn: {
-    padding: "12px 24px",
-    background: "linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(37,99,235,0.05) 100%)",
-    border: "1px solid rgba(59,130,246,0.2)",
-    borderRadius: "12px",
-    color: "#3b82f6",
-    fontWeight: "700",
-    fontSize: "14px",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    transition: "all 0.2s ease",
-  },
-
-  stockBtn: {
-    padding: "12px 24px",
-    background: "linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(5,150,105,0.05) 100%)",
-    border: "1px solid rgba(16,185,129,0.2)",
-    borderRadius: "12px",
-    color: "#10b981",
-    fontWeight: "700",
-    fontSize: "14px",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    transition: "all 0.2s ease",
-  },
-
-  salesHistoryBtn: {
-    padding: "12px 24px",
-    background: "linear-gradient(135deg, rgba(245,158,11,0.1) 0%, rgba(249,115,22,0.05) 100%)",
-    border: "1px solid rgba(245,158,11,0.2)",
-    borderRadius: "12px",
-    color: "#f59e0b",
-    fontWeight: "700",
-    fontSize: "14px",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    transition: "all 0.2s ease",
-  },
-
-  logoutBtn: {
-    padding: "12px 24px",
-    background: "linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(220,38,38,0.05) 100%)",
-    border: "1px solid rgba(239,68,68,0.2)",
-    borderRadius: "12px",
-    color: "#ef4444",
-    fontWeight: "700",
-    fontSize: "14px",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    transition: "all 0.2s ease",
-  },
-
-  filterBar: {
-    background: "var(--bg-elevated)",
-    backdropFilter: "blur(20px)",
-    border: "1px solid var(--border-primary)",
-    borderRadius: "20px",
-    padding: "20px",
-    marginBottom: "24px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: "16px",
-    flexWrap: "wrap",
-    position: "relative",
-  },
-
-  filterGroup: {
-    display: "flex",
-    gap: "12px",
-    flexWrap: "wrap",
-  },
-
-  filterBtn: {
-    padding: "10px 20px",
-    background: "var(--bg-secondary)",
-    border: "1px solid var(--border-primary)",
-    borderRadius: "10px",
-    color: "var(--text-secondary)",
-    fontWeight: "700",
-    fontSize: "14px",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    transition: "all 0.2s ease",
-  },
-
-  filterBtnActive: {
-    background: "linear-gradient(135deg, #7b5cff 0%, #00e6ff 100%)",
-    color: "#fff",
-    borderColor: "transparent",
-    boxShadow: "0 8px 24px rgba(123,92,255,0.3)",
-  },
-
-  exportExcelBtn: {
-    padding: "10px 20px",
-    background: "linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(5,150,105,0.05) 100%)",
-    border: "1px solid rgba(16,185,129,0.2)",
-    borderRadius: "10px",
-    color: "#10b981",
-    fontWeight: "700",
-    fontSize: "14px",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    transition: "all 0.2s ease",
-  },
-
-  exportPdfBtn: {
-    padding: "10px 20px",
-    background: "linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(220,38,38,0.05) 100%)",
-    border: "1px solid rgba(239,68,68,0.2)",
-    borderRadius: "10px",
-    color: "#ef4444",
-    fontWeight: "700",
-    fontSize: "14px",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    transition: "all 0.2s ease",
-  },
-
-  refreshBtn: {
-    padding: "10px 20px",
-    background: "linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(37,99,235,0.05) 100%)",
-    border: "1px solid rgba(59,130,246,0.2)",
-    borderRadius: "10px",
-    color: "#3b82f6",
-    fontWeight: "700",
-    fontSize: "14px",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    transition: "all 0.2s ease",
-  },
-
-  spinIcon: {
-    animation: "spin 1s linear infinite",
-  },
-
-  statsGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-    gap: "20px",
-    marginBottom: "24px",
-    position: "relative",
-  },
-
-  statCard: {
-    position: "relative",
-    background: "var(--bg-elevated)",
-    backdropFilter: "blur(20px)",
-    border: "1px solid var(--border-primary)",
-    borderRadius: "20px",
-    padding: "28px",
-    overflow: "hidden",
-    transition: "all 0.3s ease",
-    animation: "fadeInUp 0.6s ease-out both",
-  },
-
-  statCardBg: {
-    position: "absolute",
+  // Top Bar
+  topBar: {
+    background: '#1e293b',
+    padding: '16px 24px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottom: '1px solid #334155',
+    position: 'sticky',
     top: 0,
-    right: 0,
-    width: "120px",
-    height: "120px",
-    borderRadius: "50%",
-    opacity: 0.1,
-    filter: "blur(40px)",
+    zIndex: 50
+  },
+  topBarLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px'
+  },
+  pageTitle: {
+    margin: 0,
+    fontSize: '20px',
+    fontWeight: '700',
+    color: '#f1f5f9'
+  },
+  topBarRight: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px'
+  },
+  clockDisplay: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    color: '#64748b',
+    fontSize: '14px',
+    fontWeight: '500'
+  },
+  userPill: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: '#334155',
+    padding: '6px 12px 6px 6px',
+    borderRadius: '20px'
+  },
+  userAvatarSmall: {
+    width: '28px',
+    height: '28px',
+    borderRadius: '50%',
+    background: '#f59e0b',
+    color: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '12px',
+    fontWeight: '700'
+  },
+  userNameSmall: {
+    color: '#f1f5f9',
+    fontSize: '13px',
+    fontWeight: '500'
+  },
+  logoutBtnSmall: {
+    padding: '8px',
+    background: '#ef4444',
+    border: 'none',
+    borderRadius: '8px',
+    color: '#fff',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s'
   },
 
-  statCardContent: {
-    position: "relative",
-    zIndex: 1,
+  // Filter Bar
+  filterBar: {
+    background: '#1e293b',
+    padding: '16px 24px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '16px',
+    flexWrap: 'wrap',
+    borderBottom: '1px solid #334155'
+  },
+  filterGroup: {
+    display: 'flex',
+    gap: '10px',
+    flexWrap: 'wrap'
+  },
+  filterBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '8px 16px',
+    background: '#334155',
+    border: '1px solid #475569',
+    borderRadius: '8px',
+    color: '#94a3b8',
+    fontSize: '13px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'all 0.2s'
+  },
+  filterBtnActive: {
+    background: '#f59e0b',
+    borderColor: '#f59e0b',
+    color: '#fff'
+  },
+  exportExcelBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '8px 16px',
+    background: 'rgba(16, 185, 129, 0.1)',
+    border: '1px solid rgba(16, 185, 129, 0.3)',
+    borderRadius: '8px',
+    color: '#10b981',
+    fontSize: '13px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'all 0.2s'
+  },
+  exportPdfBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '8px 16px',
+    background: 'rgba(239, 68, 68, 0.1)',
+    border: '1px solid rgba(239, 68, 68, 0.3)',
+    borderRadius: '8px',
+    color: '#ef4444',
+    fontSize: '13px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'all 0.2s'
+  },
+  refreshBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '8px',
+    background: 'rgba(59, 130, 246, 0.1)',
+    border: '1px solid rgba(59, 130, 246, 0.3)',
+    borderRadius: '8px',
+    color: '#3b82f6',
+    cursor: 'pointer',
+    transition: 'all 0.2s'
   },
 
-  statCardIcon: {
-    width: "64px",
-    height: "64px",
-    borderRadius: "16px",
-    background: "var(--bg-secondary)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "32px",
-    marginBottom: "16px",
-    boxShadow: "var(--shadow-md)",
+  // Custom Date Picker
+  customDatePicker: {
+    background: '#1e293b',
+    padding: '20px 24px',
+    borderBottom: '1px solid #334155'
+  },
+  datePickerTitle: {
+    margin: '0 0 16px 0',
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#f1f5f9',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
+  },
+  dateInputs: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: '16px',
+    marginBottom: '16px'
+  },
+  dateInputGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px'
+  },
+  dateLabel: {
+    fontSize: '12px',
+    color: '#64748b',
+    fontWeight: '500'
+  },
+  dateInput: {
+    padding: '10px 12px',
+    background: '#334155',
+    border: '1px solid #475569',
+    borderRadius: '8px',
+    color: '#f1f5f9',
+    fontSize: '14px'
+  },
+  datePickerActions: {
+    display: 'flex',
+    gap: '12px'
+  },
+  applyBtn: {
+    flex: 1,
+    padding: '10px',
+    background: '#10b981',
+    border: 'none',
+    borderRadius: '8px',
+    color: '#fff',
+    fontWeight: '600',
+    cursor: 'pointer'
+  },
+  cancelBtn: {
+    flex: 1,
+    padding: '10px',
+    background: '#334155',
+    border: '1px solid #475569',
+    borderRadius: '8px',
+    color: '#94a3b8',
+    fontWeight: '600',
+    cursor: 'pointer'
   },
 
-  statCardLabel: {
-    fontSize: "13px",
-    color: "var(--text-secondary)",
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-    marginBottom: "8px",
+  // Content
+  content: {
+    flex: 1,
+    padding: '24px',
+    overflowY: 'auto',
+    background: '#0f172a'
   },
 
-  statCardValue: {
-    fontSize: "36px",
-    fontWeight: "900",
-    color: "var(--text-primary)",
-    lineHeight: 1,
-    letterSpacing: "-1px",
+  // Stats Grid
+  statsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '16px',
+    marginBottom: '24px'
+  },
+  statCard: {
+    background: '#1e293b',
+    borderRadius: '12px',
+    padding: '18px',
+    border: '1px solid #334155',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px'
+  },
+  statIconBox: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  statInfo: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px'
+  },
+  statLabel: {
+    fontSize: '12px',
+    color: '#64748b',
+    fontWeight: '500'
+  },
+  statValue: {
+    fontSize: '20px',
+    fontWeight: '700'
   },
 
+  // Details Grid
   detailsGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
-    gap: "20px",
-    marginBottom: "24px",
-    position: "relative",
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: '20px',
+    marginBottom: '24px'
   },
 
+  // Cards
   card: {
-    background: "var(--bg-elevated)",
-    backdropFilter: "blur(20px)",
-    border: "1px solid var(--border-primary)",
-    borderRadius: "20px",
-    padding: "0",
-    overflow: "hidden",
-    position: "relative",
+    background: '#1e293b',
+    borderRadius: '12px',
+    border: '1px solid #334155',
+    overflow: 'hidden'
   },
-
   cardHeader: {
-    padding: "24px 28px",
-    borderBottom: "1px solid var(--border-primary)",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
+    padding: '16px 20px',
+    borderBottom: '1px solid #334155',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
   },
-
   cardTitle: {
     margin: 0,
-    fontSize: "18px",
-    fontWeight: "800",
-    color: "var(--text-primary)",
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
+    fontSize: '15px',
+    fontWeight: '600',
+    color: '#f1f5f9',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
   },
-
-  cardIcon: {
-    fontSize: "24px",
-  },
-
   badge: {
-    padding: "6px 12px",
-    background: "rgba(123,92,255,0.1)",
-    border: "1px solid rgba(123,92,255,0.2)",
-    borderRadius: "8px",
-    fontSize: "12px",
-    fontWeight: "700",
-    color: "#7b5cff",
+    padding: '4px 10px',
+    background: 'rgba(245, 158, 11, 0.1)',
+    borderRadius: '6px',
+    fontSize: '12px',
+    fontWeight: '600',
+    color: '#f59e0b'
   },
-
   cardBody: {
-    padding: "0",
+    padding: '0'
   },
 
+  // List Items
   listItem: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "20px 28px",
-    borderBottom: "1px solid var(--border-primary)",
-    transition: "all 0.2s ease",
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '14px 20px',
+    borderBottom: '1px solid #334155',
+    transition: 'background 0.2s'
   },
-
   listItemLeft: {
-    display: "flex",
-    alignItems: "center",
-    gap: "16px",
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px'
   },
-
   listItemRank: {
-    width: "32px",
-    height: "32px",
-    borderRadius: "10px",
-    background: "linear-gradient(135deg, rgba(123,92,255,0.1) 0%, rgba(0,230,255,0.05) 100%)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "14px",
-    fontWeight: "900",
-    color: "#7b5cff",
+    width: '28px',
+    height: '28px',
+    borderRadius: '8px',
+    background: 'rgba(99, 102, 241, 0.1)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '12px',
+    fontWeight: '700',
+    color: '#6366f1'
   },
-
   listItemTitle: {
-    fontSize: "15px",
-    fontWeight: "700",
-    color: "var(--text-primary)",
-    marginBottom: "4px",
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#f1f5f9'
   },
-
   listItemSubtitle: {
-    fontSize: "13px",
-    color: "var(--text-secondary)",
+    fontSize: '12px',
+    color: '#64748b'
   },
-
   listItemAmount: {
-    fontSize: "18px",
-    fontWeight: "900",
-    color: "#10b981",
+    fontSize: '16px',
+    fontWeight: '700',
+    color: '#10b981'
   },
-
   methodIcon: {
-    width: "44px",
-    height: "44px",
-    borderRadius: "12px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "20px",
+    width: '36px',
+    height: '36px',
+    borderRadius: '8px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '16px'
   },
 
-  tableContainer: {
-    padding: "0",
+  // Payment Row
+  paymentRow: {
+    display: 'grid',
+    gridTemplateColumns: '2fr 1fr 1fr',
+    gap: '16px',
+    alignItems: 'center',
+    padding: '14px 20px',
+    borderBottom: '1px solid #334155'
   },
-
-  tableRow: {
-    display: "grid",
-    gridTemplateColumns: "2fr 1.5fr 1.5fr",
-    gap: "16px",
-    alignItems: "center",
-    padding: "20px 28px",
-    borderBottom: "1px solid var(--border-primary)",
-    transition: "all 0.2s ease",
+  paymentInfo: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px'
   },
-
-  tableCell: {
-    display: "flex",
-    flexDirection: "column",
+  paymentMachine: {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#f1f5f9'
   },
-
-  tableCellTitle: {
-    fontSize: "15px",
-    fontWeight: "700",
-    color: "var(--text-primary)",
-    marginBottom: "4px",
+  paymentGame: {
+    fontSize: '12px',
+    color: '#64748b',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px'
   },
-
-  tableCellSubtitle: {
-    fontSize: "13px",
-    color: "var(--text-secondary)",
-  },
-
-  tableCellAmount: {
-    fontSize: "18px",
-    fontWeight: "900",
-    color: "#10b981",
-    marginBottom: "4px",
-  },
-
-  tableCellDate: {
-    fontSize: "13px",
-    color: "var(--text-secondary)",
-  },
-
   paymentMethod: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "6px",
-    padding: "8px 14px",
-    borderRadius: "10px",
-    fontSize: "13px",
-    fontWeight: "700",
-    width: "fit-content",
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '6px 12px',
+    borderRadius: '6px',
+    fontSize: '12px',
+    fontWeight: '600',
+    width: 'fit-content'
   },
-
   sessionStatus: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "6px",
-    padding: "8px 14px",
-    borderRadius: "10px",
-    fontSize: "13px",
-    fontWeight: "700",
-    color: "#ffffff",
-    width: "fit-content",
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '6px 12px',
+    borderRadius: '6px',
+    fontSize: '12px',
+    fontWeight: '600',
+    width: 'fit-content'
+  },
+  paymentAmountCol: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: '4px'
+  },
+  paymentAmount: {
+    fontSize: '16px',
+    fontWeight: '700',
+    color: '#10b981'
+  },
+  paymentDate: {
+    fontSize: '12px',
+    color: '#64748b'
   },
 
   emptyState: {
-    textAlign: "center",
-    padding: "60px 20px",
-    color: "var(--text-secondary)",
-  },
-
-  emptyIcon: {
-    fontSize: "48px",
-    marginBottom: "12px",
-    opacity: 0.3,
-  },
-
-  customDatePicker: {
-    background: "var(--bg-elevated)",
-    backdropFilter: "blur(20px)",
-    border: "1px solid var(--border-primary)",
-    borderRadius: "20px",
-    padding: "24px",
-    marginBottom: "24px",
-  },
-
-  datePickerContent: {
-    position: "relative",
-  },
-
-  datePickerTitle: {
-    margin: "0 0 20px 0",
-    fontSize: "18px",
-    fontWeight: "800",
-    color: "var(--text-primary)",
-  },
-
-  dateInputs: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: "16px",
-    marginBottom: "20px",
-  },
-
-  dateInputGroup: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-  },
-
-  dateLabel: {
-    fontSize: "13px",
-    fontWeight: "600",
-    color: "var(--text-secondary)",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-  },
-
-  dateInput: {
-    padding: "12px 16px",
-    background: "var(--bg-secondary)",
-    border: "1px solid var(--border-primary)",
-    borderRadius: "10px",
-    color: "var(--text-primary)",
-    fontSize: "14px",
-    fontWeight: "600",
-    transition: "all 0.2s ease",
-    outline: "none",
-  },
-
-  datePickerActions: {
-    display: "flex",
-    gap: "12px",
-  },
-
-  applyBtn: {
-    flex: 1,
-    padding: "12px 20px",
-    background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-    border: "none",
-    borderRadius: "10px",
-    color: "#ffffff",
-    fontWeight: "700",
-    fontSize: "14px",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "8px",
-    transition: "all 0.2s ease",
-  },
-
-  cancelBtn: {
-    flex: 1,
-    padding: "12px 20px",
-    background: "var(--bg-secondary)",
-    border: "1px solid var(--border-primary)",
-    borderRadius: "10px",
-    color: "var(--text-secondary)",
-    fontWeight: "700",
-    fontSize: "14px",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "8px",
-    transition: "all 0.2s ease",
-  },
+    textAlign: 'center',
+    padding: '40px 20px',
+    color: '#64748b',
+    fontSize: '14px'
+  }
 };
 
-// Add animations and global styles
-const styleSheet = document.createElement("style");
-styleSheet.textContent = `
-  body, html {
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow-x: hidden;
-    background: var(--bg-primary) !important;
-  }
-
-  #root {
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
+// Responsive styles
+const adminStyleSheet = document.createElement("style");
+adminStyleSheet.textContent = `
   @keyframes spin {
+    from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
   }
-
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  @keyframes slideDown {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes pulse-dot {
-    0%, 100% {
-      opacity: 1;
-      transform: scale(1);
-    }
-    50% {
-      opacity: 0.6;
-      transform: scale(1.1);
-    }
-  }
-
-  .slide-down {
-    animation: slideDown 0.6s ease-out;
-  }
-
-  .fade-in {
-    animation: fadeIn 0.6s ease-out;
-  }
-
-  .stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 60px rgba(123,92,255,0.2);
-    border-color: rgba(123,92,255,0.3);
-  }
-
-  .list-item:hover {
-    background: var(--bg-secondary);
-  }
-
-  .table-row:hover {
-    background: var(--bg-secondary);
-  }
-
-  button:hover:not([disabled]) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-  }
-
-  button:active:not([disabled]) {
-    transform: translateY(0);
-  }
-
-  button[disabled] {
-    opacity: 0.5;
-    cursor: not-allowed;
+  .spin {
+    animation: spin 1s linear infinite;
   }
 
   @media (max-width: 1024px) {
-    .detailsGrid {
+    div[style*="gridTemplateColumns: repeat(3"] {
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+    div[style*="gridTemplateColumns: repeat(2"] {
       grid-template-columns: 1fr !important;
     }
   }
 
   @media (max-width: 768px) {
-    /* Container and layout */
-    body, html {
-      overflow-x: hidden !important;
-    }
-
-    .contentWrapper {
-      padding: 16px !important;
-    }
-
-    /* Header responsive */
-    .header {
-      flex-direction: column !important;
-      gap: 16px !important;
-      padding: 20px 16px !important;
-    }
-
-    .headerLeft {
-      flex-direction: row !important;
-      width: 100% !important;
-    }
-
-    .logoContainer {
-      width: 48px !important;
-      height: 48px !important;
-    }
-
-    .headerTitle {
-      font-size: 22px !important;
-    }
-
-    .headerSubtitle {
-      font-size: 12px !important;
-    }
-
-    .stockBtn, .logoutBtn {
-      padding: 10px 16px !important;
-      font-size: 13px !important;
-    }
-
-    /* Filter bar responsive */
-    .filterBar {
-      flex-direction: column !important;
-      gap: 12px !important;
-      padding: 16px !important;
-    }
-
-    .filterGroup {
-      width: 100% !important;
-      justify-content: center !important;
-    }
-
-    .filterBtn, .exportExcelBtn, .exportPdfBtn, .refreshBtn {
-      padding: 10px 16px !important;
-      font-size: 13px !important;
-      flex: 1 !important;
-      min-width: 0 !important;
-    }
-
-    .filterBtn span, .exportExcelBtn span, .exportPdfBtn span, .refreshBtn span {
+    aside {
       display: none !important;
     }
-
-    /* Stats grid responsive */
-    .statsGrid {
-      grid-template-columns: 1fr !important;
-      gap: 16px !important;
+    div[style*="marginLeft"] {
+      margin-left: 0 !important;
     }
-
-    .statCard {
-      padding: 20px !important;
-    }
-
-    .statCardValue {
-      font-size: 28px !important;
-    }
-
-    /* Details grid */
-    .detailsGrid {
+    div[style*="gridTemplateColumns: repeat(3"] {
       grid-template-columns: 1fr !important;
     }
-
-    /* Cards */
-    .card {
-      border-radius: 16px !important;
-    }
-
-    .cardHeader {
-      padding: 16px 20px !important;
-      flex-direction: column !important;
-      align-items: flex-start !important;
-      gap: 8px !important;
-    }
-
-    .cardTitle {
-      font-size: 16px !important;
-    }
-
-    /* List items */
-    .listItem {
-      padding: 16px 20px !important;
-      flex-direction: column !important;
-      align-items: flex-start !important;
-      gap: 12px !important;
-    }
-
-    .listItemAmount {
-      font-size: 20px !important;
-      align-self: flex-end !important;
-    }
-
-    /* Tables */
-    .tableRow {
-      grid-template-columns: 1fr !important;
-      gap: 12px !important;
-      padding: 16px 20px !important;
-    }
-
-    .tableCellTitle {
-      font-size: 14px !important;
-    }
-
-    .tableCellAmount {
-      font-size: 16px !important;
-    }
-
-    /* Custom date picker */
-    .dateInputs {
+    div[style*="gridTemplateColumns: repeat(2, 1fr)"][style*="gap: 16px"] {
       grid-template-columns: 1fr !important;
     }
-
-    .datePickerActions {
-      flex-direction: column !important;
-    }
-
-    .applyBtn, .cancelBtn {
-      width: 100% !important;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .contentWrapper {
-      padding: 12px !important;
-    }
-
-    .headerTitle {
-      font-size: 18px !important;
-    }
-
-    .filterGroup {
-      flex-wrap: wrap !important;
-    }
-
-    .statCardValue {
-      font-size: 24px !important;
-    }
-
-    .cardTitle {
-      font-size: 14px !important;
-    }
-
-    .badge {
-      font-size: 10px !important;
-      padding: 4px 8px !important;
+    div[style*="gridTemplateColumns: 2fr 1fr 1fr"] {
+      grid-template-columns: 1fr !important;
+      gap: 10px !important;
     }
   }
 `;
-document.head.appendChild(styleSheet);
+
+if (!document.getElementById('admin-dashboard-responsive-styles')) {
+  adminStyleSheet.id = 'admin-dashboard-responsive-styles';
+  document.head.appendChild(adminStyleSheet);
+}
 
 export default AdminDashboard;
