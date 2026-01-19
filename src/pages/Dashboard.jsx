@@ -7,7 +7,14 @@ import {
   BarChart3,
   LogOut,
   Check,
-  Monitor
+  Monitor,
+  Zap,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+  LayoutDashboard,
+  Play,
+  Square
 } from "lucide-react";
 import api from "../services/api";
 import MachineCard from "../components/MachineCard";
@@ -26,16 +33,24 @@ function Dashboard({ user, onLogout }) {
   const [selectedGame, setSelectedGame] = useState("");
   const [selectedPricing, setSelectedPricing] = useState("");
   const [paymentSessions, setPaymentSessions] = useState([]);
-  const [showStats, setShowStats] = useState(false);
+  const [activeTab, setActiveTab] = useState('machines');
   const [showProducts, setShowProducts] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [toast, setToast] = useState(null);
   const [matchCountSession, setMatchCountSession] = useState(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   // Helper pour afficher un toast
   const showToast = (message, type = "info", duration = 3000) => {
     setToast({ message, type, duration });
   };
+
+  // Horloge temps réel
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Set default theme on mount
   useEffect(() => {
@@ -216,9 +231,17 @@ function Dashboard({ user, onLogout }) {
   const activeSessions = machines.filter(m => m.status === 'in_session').length;
   const availableMachines = machines.filter(m => m.status === 'available').length;
 
+  // Menu items
+  const menuItems = [
+    { id: 'machines', label: 'Machines', icon: Monitor, count: machines.length },
+    { id: 'stats', label: 'Statistiques', icon: BarChart3 },
+    { id: 'products', label: 'Produits', icon: ShoppingBag },
+    { id: 'profile', label: 'Mon Profil', icon: User },
+  ];
+
   // ================= RENDER =================
   return (
-    <div style={container}>
+    <div style={styles.appContainer}>
       {/* Toast Notification */}
       {toast && (
         <Toast
@@ -229,414 +252,519 @@ function Dashboard({ user, onLogout }) {
         />
       )}
 
-      {/* Background Gradients */}
-      <div style={bgGradient1} />
-      <div style={bgGradient2} />
-      <div style={bgGradient3} />
-
-      <div className="dashboard-content-wrapper" style={contentWrapper}>
-        {/* Header */}
-        <div className="dashboard-header" style={header}>
-          <div className="dashboard-header-left">
-            <h1 className="dashboard-header-title" style={headerTitle}>
-              <Gamepad2 size={32} />
-              Point de Vente ZSTATION
-            </h1>
-            <p className="dashboard-header-subtitle" style={headerSubtitle}>
-              {user.role === "agent" ? <User size={16} /> : <Crown size={16} />} {user.role === "agent" ? "Agent" : "Admin"} - {user.name}
-            </p>
+      {/* Sidebar */}
+      <aside style={{
+        ...styles.sidebar,
+        width: sidebarCollapsed ? '70px' : '240px'
+      }}>
+        {/* Logo */}
+        <div style={styles.sidebarHeader}>
+          <div style={styles.logoBox}>
+            <Zap size={24} color="#fff" />
           </div>
-          <div className="dashboard-header-buttons" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          {!sidebarCollapsed && (
+            <div style={styles.logoText}>
+              <span style={styles.logoTitle}>Z-STATION</span>
+              <span style={styles.logoSubtitle}>Point de Vente</span>
+            </div>
+          )}
+        </div>
+
+        {/* Menu Items */}
+        <nav style={styles.sidebarNav}>
+          {menuItems.map(item => (
             <button
-              onClick={() => setShowProfile(true)}
-              style={buttonInfo}
-              onMouseOver={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
-              onMouseOut={(e) => e.currentTarget.style.transform = "translateY(0)"}
+              key={item.id}
+              style={{
+                ...styles.menuItem,
+                ...(activeTab === item.id && styles.menuItemActive)
+              }}
+              onClick={() => {
+                if (item.id === 'products') {
+                  setShowProducts(true);
+                } else if (item.id === 'profile') {
+                  setShowProfile(true);
+                } else {
+                  setActiveTab(item.id);
+                }
+              }}
             >
-              <User size={18} />
-              Profil
+              <item.icon size={20} />
+              {!sidebarCollapsed && (
+                <>
+                  <span style={styles.menuLabel}>{item.label}</span>
+                  {item.count !== undefined && (
+                    <span style={styles.menuBadge}>{item.count}</span>
+                  )}
+                </>
+              )}
             </button>
-            <button
-              onClick={() => setShowProducts(true)}
-              style={buttonSuccess}
-              onMouseOver={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
-              onMouseOut={(e) => e.currentTarget.style.transform = "translateY(0)"}
-            >
-              <ShoppingBag size={18} />
-              Produits
-            </button>
-            <button
-              onClick={() => setShowStats(!showStats)}
-              style={buttonPrimary}
-              onMouseOver={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
-              onMouseOut={(e) => e.currentTarget.style.transform = "translateY(0)"}
-            >
-              {showStats ? <Gamepad2 size={18} /> : <BarChart3 size={18} />}
-              {showStats ? "Machines" : "Statistiques"}
-            </button>
-            <button
-              onClick={onLogout}
-              style={buttonDanger}
-              onMouseOver={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
-              onMouseOut={(e) => e.currentTarget.style.transform = "translateY(0)"}
-            >
+          ))}
+        </nav>
+
+        {/* Sidebar Footer */}
+        <div style={styles.sidebarFooter}>
+          <button
+            style={styles.collapseBtn}
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          >
+            {sidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Area */}
+      <div style={{...styles.mainArea, marginLeft: sidebarCollapsed ? '70px' : '240px'}}>
+        {/* Top Bar */}
+        <header style={styles.topBar}>
+          <div style={styles.topBarLeft}>
+            <h1 style={styles.pageTitle}>
+              {activeTab === 'machines' ? 'Gestion des Machines' : 'Statistiques de Vente'}
+            </h1>
+          </div>
+          <div style={styles.topBarRight}>
+            <div style={styles.clockDisplay}>
+              <Clock size={16} />
+              <span>{currentTime.toLocaleTimeString('fr-FR')}</span>
+            </div>
+            <div style={styles.userPill}>
+              <div style={styles.userAvatarSmall}>
+                {user.name?.charAt(0).toUpperCase()}
+              </div>
+              {user.role === "agent" ? <User size={14} style={{color: '#94a3b8'}} /> : <Crown size={14} style={{color: '#f59e0b'}} />}
+              <span style={styles.userNameSmall}>{user.name}</span>
+            </div>
+            <button style={styles.logoutBtnSmall} onClick={onLogout}>
               <LogOut size={18} />
-              Déconnexion
             </button>
+          </div>
+        </header>
+
+        {/* Quick Stats Bar */}
+        <div style={styles.statsRow}>
+          <div style={{...styles.miniStatCard, borderLeft: '4px solid #10b981'}}>
+            <div style={{...styles.miniStatIcon, background: 'rgba(16, 185, 129, 0.15)'}}>
+              <Check size={20} color="#10b981" />
+            </div>
+            <div style={styles.miniStatInfo}>
+              <div style={styles.miniStatValue}>{availableMachines}</div>
+              <div style={styles.miniStatLabel}>Disponibles</div>
+            </div>
+          </div>
+
+          <div style={{...styles.miniStatCard, borderLeft: '4px solid #f59e0b'}}>
+            <div style={{...styles.miniStatIcon, background: 'rgba(245, 158, 11, 0.15)'}}>
+              <Play size={20} color="#f59e0b" />
+            </div>
+            <div style={styles.miniStatInfo}>
+              <div style={styles.miniStatValue}>{activeSessions}</div>
+              <div style={styles.miniStatLabel}>Sessions actives</div>
+            </div>
+          </div>
+
+          <div style={{...styles.miniStatCard, borderLeft: '4px solid #6366f1'}}>
+            <div style={{...styles.miniStatIcon, background: 'rgba(99, 102, 241, 0.15)'}}>
+              <Monitor size={20} color="#6366f1" />
+            </div>
+            <div style={styles.miniStatInfo}>
+              <div style={styles.miniStatValue}>{machines.length}</div>
+              <div style={styles.miniStatLabel}>Total machines</div>
+            </div>
+          </div>
+
+          <div style={{...styles.miniStatCard, borderLeft: '4px solid #8b5cf6'}}>
+            <div style={{...styles.miniStatIcon, background: 'rgba(139, 92, 246, 0.15)'}}>
+              <Gamepad2 size={20} color="#8b5cf6" />
+            </div>
+            <div style={styles.miniStatInfo}>
+              <div style={styles.miniStatValue}>{games.length}</div>
+              <div style={styles.miniStatLabel}>Jeux disponibles</div>
+            </div>
           </div>
         </div>
 
-        {/* Quick Stats Bar */}
-        {!showStats && (
-          <div className="dashboard-stats-grid" style={statsGrid}>
-            <div style={{...statCard, ...statCardGreen}}>
-              <div style={statIcon}>
-                <Check size={32} color="#10b981" />
+        {/* Content */}
+        <main style={styles.content}>
+          {activeTab === 'stats' ? (
+            <div style={styles.dashboardCard}>
+              <div style={styles.cardHeader}>
+                <h3 style={styles.cardTitle}>
+                  <BarChart3 size={18} /> Statistiques de vente
+                </h3>
               </div>
-              <div style={statLabel}>Machines disponibles</div>
-              <div style={statValue}>{availableMachines}</div>
-            </div>
-
-            <div style={{...statCard, ...statCardOrange}}>
-              <div style={statIcon}>
-                <Gamepad2 size={32} color="#f59e0b" />
+              <div style={styles.cardBody}>
+                <StatsCard />
               </div>
-              <div style={statLabel}>Sessions actives</div>
-              <div style={statValue}>{activeSessions}</div>
             </div>
-
-            <div style={{...statCard, ...statCardBlue}}>
-              <div style={statIcon}>
-                <Monitor size={32} color="#3b82f6" />
-              </div>
-              <div style={statLabel}>Total machines</div>
-              <div style={statValue}>{machines.length}</div>
-            </div>
-          </div>
-        )}
-
-        {/* Main Content */}
-        {showStats ? (
-          <div style={card}>
-            <h2 style={cardTitle}>
-              <BarChart3 size={28} />
-              Statistiques de vente
-            </h2>
-            <StatsCard />
-          </div>
-        ) : (
-          <>
-            {machines.length === 0 ? (
-              <div style={card}>
-                <div style={emptyState}>
-                  Chargement des machines...
+          ) : (
+            <>
+              {machines.length === 0 ? (
+                <div style={styles.emptyState}>
+                  <Monitor size={64} color="#64748b" />
+                  <p>Chargement des machines...</p>
                 </div>
-              </div>
-            ) : (
-              <div className="dashboard-machines-grid">
-                {machines.map((machine) => (
-                  <MachineCard
-                    key={machine.id}
-                    machine={machine}
-                    onStart={() => setSelectedMachine(machine)}
-                    onStop={stopSession}
-                    onExtend={extendSession}
-                    games={games}
-                  />
-                ))}
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Modals */}
-        {selectedMachine && (
-          <StartSessionModal
-            machine={selectedMachine}
-            games={games}
-            selectedGame={selectedGame}
-            setSelectedGame={setSelectedGame}
-            selectedPricing={selectedPricing}
-            setSelectedPricing={setSelectedPricing}
-            onConfirm={startSession}
-            onClose={() => {
-              setSelectedMachine(null);
-              setSelectedGame("");
-              setSelectedPricing("");
-            }}
-          />
-        )}
-
-        {matchCountSession && (
-          <MatchCountModal
-            session={matchCountSession}
-            onConfirm={stopSessionWithMatchCount}
-            onClose={() => setMatchCountSession(null)}
-          />
-        )}
-
-        {paymentSessions.map((paymentSession, index) => (
-          <PaymentModal
-            key={paymentSession.session.id}
-            session={paymentSession}
-            onConfirm={processPayment}
-            onClose={() => setPaymentSessions(prev => prev.filter(ps => ps.session.id !== paymentSession.session.id))}
-            zIndex={2000 + index * 10}
-          />
-        ))}
-
-        {showProducts && (
-          <ProductsModal
-            onClose={() => setShowProducts(false)}
-            onSale={(message) => {
-              showToast(message, "success");
-              loadMachines();
-            }}
-          />
-        )}
-
-        {showProfile && (
-          <UserProfile
-            user={user}
-            onClose={() => setShowProfile(false)}
-            showToast={showToast}
-          />
-        )}
+              ) : (
+                <div className="agent-machines-grid" style={styles.machinesGrid}>
+                  {machines.map((machine) => (
+                    <MachineCard
+                      key={machine.id}
+                      machine={machine}
+                      onStart={() => setSelectedMachine(machine)}
+                      onStop={stopSession}
+                      onExtend={extendSession}
+                      games={games}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </main>
       </div>
+
+      {/* Modals */}
+      {selectedMachine && (
+        <StartSessionModal
+          machine={selectedMachine}
+          games={games}
+          selectedGame={selectedGame}
+          setSelectedGame={setSelectedGame}
+          selectedPricing={selectedPricing}
+          setSelectedPricing={setSelectedPricing}
+          onConfirm={startSession}
+          onClose={() => {
+            setSelectedMachine(null);
+            setSelectedGame("");
+            setSelectedPricing("");
+          }}
+        />
+      )}
+
+      {matchCountSession && (
+        <MatchCountModal
+          session={matchCountSession}
+          onConfirm={stopSessionWithMatchCount}
+          onClose={() => setMatchCountSession(null)}
+        />
+      )}
+
+      {paymentSessions.map((paymentSession, index) => (
+        <PaymentModal
+          key={paymentSession.session.id}
+          session={paymentSession}
+          onConfirm={processPayment}
+          onClose={() => setPaymentSessions(prev => prev.filter(ps => ps.session.id !== paymentSession.session.id))}
+          zIndex={2000 + index * 10}
+        />
+      ))}
+
+      {showProducts && (
+        <ProductsModal
+          onClose={() => setShowProducts(false)}
+          onSale={(message) => {
+            showToast(message, "success");
+            loadMachines();
+          }}
+        />
+      )}
+
+      {showProfile && (
+        <UserProfile
+          user={user}
+          onClose={() => setShowProfile(false)}
+          showToast={showToast}
+        />
+      )}
     </div>
   );
 }
 
 // ================= STYLES =================
-const container = {
-  minHeight: "100vh",
-  height: "100%",
-  width: "100vw",
-  background: "var(--bg-primary)",
-  padding: "0",
-  margin: "0",
-  position: "fixed",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  overflow: "auto",
-};
+const styles = {
+  // App Layout
+  appContainer: {
+    display: 'flex',
+    minHeight: '100vh',
+    background: '#0f172a',
+    width: '100%'
+  },
 
-const bgGradient1 = {
-  position: "fixed",
-  top: "-20%",
-  right: "-10%",
-  width: "600px",
-  height: "600px",
-  background: "radial-gradient(circle, rgba(123,92,255,0.08) 0%, transparent 70%)",
-  borderRadius: "50%",
-  filter: "blur(80px)",
-  pointerEvents: "none",
-  zIndex: 1,
-};
+  // Sidebar
+  sidebar: {
+    background: '#1e293b',
+    borderRight: '1px solid #334155',
+    display: 'flex',
+    flexDirection: 'column',
+    transition: 'width 0.3s ease',
+    position: 'fixed',
+    height: '100vh',
+    zIndex: 100
+  },
+  sidebarHeader: {
+    padding: '20px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    borderBottom: '1px solid #334155'
+  },
+  logoBox: {
+    width: '40px',
+    height: '40px',
+    background: 'linear-gradient(135deg, #10b981, #059669)',
+    borderRadius: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0
+  },
+  logoText: {
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  logoTitle: {
+    color: '#f1f5f9',
+    fontWeight: '800',
+    fontSize: '16px'
+  },
+  logoSubtitle: {
+    color: '#64748b',
+    fontSize: '11px',
+    fontWeight: '500'
+  },
+  sidebarNav: {
+    flex: 1,
+    padding: '12px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px'
+  },
+  menuItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '12px 14px',
+    borderRadius: '10px',
+    border: 'none',
+    background: 'transparent',
+    color: '#94a3b8',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    width: '100%',
+    textAlign: 'left',
+    fontSize: '14px',
+    fontWeight: '500'
+  },
+  menuItemActive: {
+    background: '#10b981',
+    color: '#fff'
+  },
+  menuLabel: {
+    flex: 1
+  },
+  menuBadge: {
+    background: '#334155',
+    color: '#94a3b8',
+    padding: '2px 8px',
+    borderRadius: '10px',
+    fontSize: '12px',
+    fontWeight: '600'
+  },
+  sidebarFooter: {
+    padding: '12px',
+    borderTop: '1px solid #334155'
+  },
+  collapseBtn: {
+    width: '100%',
+    padding: '10px',
+    background: '#334155',
+    border: 'none',
+    borderRadius: '8px',
+    color: '#94a3b8',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s'
+  },
 
-const bgGradient2 = {
-  position: "fixed",
-  bottom: "-20%",
-  left: "-10%",
-  width: "600px",
-  height: "600px",
-  background: "radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)",
-  borderRadius: "50%",
-  filter: "blur(80px)",
-  pointerEvents: "none",
-  zIndex: 1,
-};
+  // Main Area
+  mainArea: {
+    flex: 1,
+    marginLeft: '240px',
+    transition: 'margin-left 0.3s ease',
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: '100vh'
+  },
 
-const bgGradient3 = {
-  position: "fixed",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: "800px",
-  height: "800px",
-  background: "radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%)",
-  borderRadius: "50%",
-  filter: "blur(100px)",
-  pointerEvents: "none",
-  zIndex: 1,
-};
+  // Top Bar
+  topBar: {
+    background: '#1e293b',
+    padding: '16px 24px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottom: '1px solid #334155',
+    position: 'sticky',
+    top: 0,
+    zIndex: 50
+  },
+  topBarLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px'
+  },
+  pageTitle: {
+    margin: 0,
+    fontSize: '20px',
+    fontWeight: '700',
+    color: '#f1f5f9'
+  },
+  topBarRight: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px'
+  },
+  clockDisplay: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    color: '#64748b',
+    fontSize: '14px',
+    fontWeight: '500'
+  },
+  userPill: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: '#334155',
+    padding: '6px 12px 6px 6px',
+    borderRadius: '20px'
+  },
+  userAvatarSmall: {
+    width: '28px',
+    height: '28px',
+    borderRadius: '50%',
+    background: '#10b981',
+    color: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '12px',
+    fontWeight: '700'
+  },
+  userNameSmall: {
+    color: '#f1f5f9',
+    fontSize: '13px',
+    fontWeight: '500'
+  },
+  logoutBtnSmall: {
+    padding: '8px',
+    background: '#ef4444',
+    border: 'none',
+    borderRadius: '8px',
+    color: '#fff',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s'
+  },
 
-const contentWrapper = {
-  padding: "24px",
-  position: "relative",
-  zIndex: 10,
-  minHeight: "100vh",
-};
+  // Stats Row
+  statsRow: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: '16px',
+    padding: '20px 24px',
+    background: '#0f172a'
+  },
+  miniStatCard: {
+    background: '#1e293b',
+    borderRadius: '12px',
+    padding: '16px',
+    border: '1px solid #334155',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px',
+    transition: 'all 0.3s ease'
+  },
+  miniStatIcon: {
+    width: '44px',
+    height: '44px',
+    borderRadius: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  miniStatInfo: {
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  miniStatValue: {
+    fontSize: '24px',
+    fontWeight: '800',
+    color: '#f1f5f9'
+  },
+  miniStatLabel: {
+    fontSize: '12px',
+    color: '#64748b',
+    fontWeight: '500'
+  },
 
-const header = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: "32px",
-  padding: "24px",
-  background: "rgba(255, 255, 255, 0.03)",
-  backdropFilter: "blur(20px)",
-  borderRadius: "16px",
-  border: "1px solid rgba(255, 255, 255, 0.05)",
-  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
-};
+  // Content
+  content: {
+    flex: 1,
+    padding: '24px',
+    overflowY: 'auto',
+    background: '#0f172a'
+  },
 
-const headerTitle = {
-  margin: "0",
-  fontSize: "28px",
-  fontWeight: "700",
-  color: "var(--text-primary)",
-  display: "flex",
-  alignItems: "center",
-  gap: "12px",
-};
+  // Dashboard Cards
+  dashboardCard: {
+    background: '#1e293b',
+    borderRadius: '16px',
+    border: '1px solid #334155',
+    overflow: 'hidden'
+  },
+  cardHeader: {
+    padding: '16px 20px',
+    borderBottom: '1px solid #334155',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  cardTitle: {
+    margin: 0,
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#f1f5f9',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
+  },
+  cardBody: {
+    padding: '20px'
+  },
 
-const headerSubtitle = {
-  margin: "8px 0 0 0",
-  fontSize: "14px",
-  color: "var(--text-secondary)",
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
-};
+  // Machines Grid
+  machinesGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+    gap: '20px'
+  },
 
-const buttonPrimary = {
-  padding: "12px 24px",
-  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-  color: "white",
-  border: "none",
-  borderRadius: "12px",
-  cursor: "pointer",
-  fontSize: "15px",
-  fontWeight: "600",
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
-  transition: "all 0.2s ease",
-  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
-};
-
-const buttonDanger = {
-  padding: "12px 24px",
-  background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-  color: "white",
-  border: "none",
-  borderRadius: "12px",
-  cursor: "pointer",
-  fontSize: "15px",
-  fontWeight: "600",
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
-  transition: "all 0.2s ease",
-  boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)",
-};
-
-const buttonSuccess = {
-  padding: "12px 24px",
-  background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-  color: "white",
-  border: "none",
-  borderRadius: "12px",
-  cursor: "pointer",
-  fontSize: "15px",
-  fontWeight: "600",
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
-  transition: "all 0.2s ease",
-  boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)",
-};
-
-const buttonInfo = {
-  padding: "12px 24px",
-  background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-  color: "white",
-  border: "none",
-  borderRadius: "12px",
-  cursor: "pointer",
-  fontSize: "15px",
-  fontWeight: "600",
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
-  transition: "all 0.2s ease",
-  boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)",
-};
-
-const statsGrid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-  gap: "20px",
-  marginBottom: "32px",
-};
-
-const statCard = {
-  background: "rgba(255, 255, 255, 0.03)",
-  backdropFilter: "blur(20px)",
-  borderRadius: "16px",
-  padding: "24px",
-  border: "1px solid rgba(255, 255, 255, 0.05)",
-  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
-  transition: "all 0.3s ease",
-};
-
-const statCardGreen = {
-  borderLeft: "4px solid #10b981",
-};
-
-const statCardOrange = {
-  borderLeft: "4px solid #f59e0b",
-};
-
-const statCardBlue = {
-  borderLeft: "4px solid #3b82f6",
-};
-
-const statIcon = {
-  fontSize: "32px",
-  marginBottom: "12px",
-};
-
-const statLabel = {
-  fontSize: "14px",
-  color: "rgba(255, 255, 255, 0.6)",
-  marginBottom: "8px",
-  fontWeight: "500",
-};
-
-const statValue = {
-  fontSize: "32px",
-  fontWeight: "700",
-  color: "var(--text-primary)",
-};
-
-const card = {
-  background: "var(--bg-elevated)",
-  backdropFilter: "blur(20px)",
-  borderRadius: "16px",
-  padding: "32px",
-  border: "1px solid var(--border-primary)",
-  boxShadow: "var(--shadow-lg)",
-};
-
-const cardTitle = {
-  margin: "0 0 24px 0",
-  fontSize: "24px",
-  fontWeight: "700",
-  color: "var(--text-primary)",
-  display: "flex",
-  alignItems: "center",
-  gap: "12px",
-};
-
-const emptyState = {
-  textAlign: "center",
-  padding: "48px 24px",
-  color: "var(--text-secondary)",
-  fontSize: "16px",
+  // Empty State
+  emptyState: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '16px',
+    padding: '60px 24px',
+    color: '#64748b',
+    fontSize: '16px'
+  }
 };
 
 // Add comprehensive responsive styles
@@ -648,25 +776,10 @@ styleSheet.textContent = `
     max-width: 100vw !important;
   }
 
-  /* Dashboard content wrapper */
-  .dashboard-content-wrapper {
-    max-width: 100vw;
-    overflow-x: hidden;
-  }
-
   /* Machines grid */
-  .dashboard-machines-grid {
+  .agent-machines-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 20px;
-    width: 100%;
-    max-width: 100%;
-  }
-
-  /* Stats grid */
-  .dashboard-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 20px;
     width: 100%;
     max-width: 100%;
@@ -674,127 +787,91 @@ styleSheet.textContent = `
 
   /* ========== TABLET (1024px and below) ========== */
   @media (max-width: 1024px) {
-    .dashboard-machines-grid {
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+    .agent-machines-grid {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
     }
   }
 
   /* ========== MOBILE (768px and below) ========== */
   @media (max-width: 768px) {
-    /* Prevent horizontal overflow */
-    body, html, #root {
-      overflow-x: hidden !important;
-      max-width: 100vw !important;
+    /* Hide sidebar on mobile */
+    aside {
+      display: none !important;
     }
 
-    /* Content wrapper */
-    .dashboard-content-wrapper {
+    /* Full width main area */
+    div[style*="marginLeft"] {
+      margin-left: 0 !important;
+    }
+
+    /* Stats row */
+    div[style*="gridTemplateColumns: repeat(4"] {
+      grid-template-columns: repeat(2, 1fr) !important;
       padding: 16px !important;
+      gap: 12px !important;
     }
 
-    /* Header */
-    .dashboard-header {
-      flex-direction: column !important;
-      gap: 16px !important;
-      padding: 20px 16px !important;
-      align-items: stretch !important;
-    }
-
-    .dashboard-header-left {
-      width: 100% !important;
-      text-align: center !important;
-    }
-
-    .dashboard-header-title {
-      font-size: 22px !important;
-      justify-content: center !important;
-    }
-
-    .dashboard-header-subtitle {
-      font-size: 12px !important;
-      justify-content: center !important;
-    }
-
-    .dashboard-header-buttons {
-      width: 100% !important;
-      flex-direction: column !important;
-      gap: 10px !important;
-    }
-
-    .dashboard-header-buttons button {
-      width: 100% !important;
-      justify-content: center !important;
+    /* Top bar */
+    header[style*="topBar"] {
+      flex-wrap: wrap !important;
+      gap: 12px !important;
       padding: 12px 16px !important;
-      font-size: 14px !important;
     }
 
-    /* Stats grid - single column */
-    .dashboard-stats-grid {
-      grid-template-columns: 1fr !important;
-      gap: 16px !important;
-    }
-
-    .dashboard-stats-grid > div {
-      padding: 20px !important;
-    }
-
-    /* Stat values */
-    .dashboard-stats-grid div[style*="fontSize: 32px"] {
-      font-size: 28px !important;
+    /* Page title */
+    h1 {
+      font-size: 18px !important;
     }
 
     /* Machines grid - single column */
-    .dashboard-machines-grid {
+    .agent-machines-grid {
       grid-template-columns: 1fr !important;
       gap: 16px !important;
     }
 
-    /* Card titles */
-    h2 {
-      font-size: 20px !important;
+    /* Content padding */
+    main {
+      padding: 16px !important;
     }
   }
 
   /* ========== SMALL MOBILE (480px and below) ========== */
   @media (max-width: 480px) {
-    .dashboard-content-wrapper {
+    /* Stats row - 2 columns */
+    div[style*="gridTemplateColumns: repeat(4"] {
+      grid-template-columns: repeat(2, 1fr) !important;
+      padding: 12px !important;
+      gap: 10px !important;
+    }
+
+    /* Stat cards smaller */
+    div[style*="miniStatCard"] {
       padding: 12px !important;
     }
 
-    .dashboard-header {
-      padding: 16px 12px !important;
+    div[style*="miniStatValue"] {
+      font-size: 20px !important;
     }
 
-    .dashboard-header-title {
-      font-size: 18px !important;
+    /* Top bar */
+    header {
+      padding: 10px 12px !important;
     }
 
-    .dashboard-header-subtitle {
-      font-size: 11px !important;
+    h1 {
+      font-size: 16px !important;
     }
 
-    .dashboard-header-buttons button {
-      font-size: 13px !important;
-      padding: 10px 14px !important;
-    }
-
-    .dashboard-stats-grid > div {
-      padding: 16px !important;
-    }
-
-    .dashboard-stats-grid div[style*="fontSize: 32px"] {
-      font-size: 24px !important;
-    }
-
-    h2 {
-      font-size: 18px !important;
+    /* Content */
+    main {
+      padding: 12px !important;
     }
   }
 `;
 
 // Only append once
-if (!document.getElementById('dashboard-responsive-styles')) {
-  styleSheet.id = 'dashboard-responsive-styles';
+if (!document.getElementById('agent-dashboard-responsive-styles')) {
+  styleSheet.id = 'agent-dashboard-responsive-styles';
   document.head.appendChild(styleSheet);
 }
 
