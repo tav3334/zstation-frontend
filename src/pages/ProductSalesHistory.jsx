@@ -127,53 +127,100 @@ function ProductSalesHistory({ onBack }) {
     });
   };
 
-  const exportToCSV = () => {
-    // Headers avec uniquement les champs essentiels
-    const headers = ["Date", "Heure", "Produit", "Taille", "Qté", "Prix Unit.", "Total", "Paiement", "Agent"];
+  const exportToPDF = async () => {
+    try {
+      const { jsPDF } = await import('jspdf');
+      const autoTable = (await import('jspdf-autotable')).default;
 
-    const rows = filteredSales.map(sale => {
-      const saleDate = new Date(sale.sale_date);
-      return [
-        saleDate.toLocaleDateString('fr-FR'),
-        saleDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-        `"${sale.product_name}"`,
-        sale.product_size || "-",
-        sale.quantity,
-        `${sale.unit_price.toFixed(2)} DH`,
-        `${sale.total_price.toFixed(2)} DH`,
-        sale.payment_method === 'cash' ? 'Espèces' : sale.payment_method === 'card' ? 'Carte' : 'Mobile',
-        `"${sale.staff_name}"`
-      ];
-    });
+      const doc = new jsPDF();
 
-    // Ajouter un résumé en bas
-    const summary = [
-      [],
-      ["RÉSUMÉ"],
-      ["Total Ventes", stats.totalSales],
-      ["Revenu Total", `${stats.totalRevenue.toFixed(2)} DH`],
-      ["Vente Moyenne", `${stats.averageSale.toFixed(2)} DH`],
-      ["Meilleur Produit", stats.topProduct?.name || "N/A"]
-    ];
+      // Header
+      doc.setFontSize(20);
+      doc.setTextColor(245, 158, 11); // Orange Admin
+      doc.text('Z-STATION', 105, 18, { align: 'center' });
+      doc.setFontSize(12);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Historique des Ventes de Produits', 105, 26, { align: 'center' });
 
-    const csv = [
-      headers.join(","),
-      ...rows.map(row => row.join(",")),
-      ...summary.map(row => row.join(","))
-    ].join("\n");
+      // Date d'export
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Date: ${new Date().toLocaleString('fr-FR')}`, 14, 38);
 
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    const dateStr = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-');
-    link.download = `Ventes_Produits_${dateStr}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+      // Periode filtree
+      let periodeText = 'Toutes les ventes';
+      if (filters.startDate || filters.endDate) {
+        periodeText = `Du ${filters.startDate || '...'} au ${filters.endDate || '...'}`;
+      }
+      doc.text(`Periode: ${periodeText}`, 14, 44);
 
-    showToast("Export CSV réussi!", "success");
+      // Tableau Resume
+      let lastY = 52;
+      autoTable(doc, {
+        startY: lastY,
+        head: [['RESUME', 'Valeur']],
+        body: [
+          ['Total Ventes', `${stats.totalSales}`],
+          ['Revenu Total', `${stats.totalRevenue.toFixed(2)} DH`],
+          ['Vente Moyenne', `${stats.averageSale.toFixed(2)} DH`],
+          ['Meilleur Produit', stats.topProduct?.name || 'N/A'],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [245, 158, 11] },
+        styles: { fontSize: 10 },
+        columnStyles: { 1: { halign: 'right' } },
+      });
+      lastY = doc.lastAutoTable.finalY + 10;
+
+      // Tableau des ventes (limité aux 50 premiers pour le PDF)
+      const salesToExport = filteredSales.slice(0, 50);
+
+      if (salesToExport.length > 0) {
+        autoTable(doc, {
+          startY: lastY,
+          head: [['Date', 'Produit', 'Qte', 'Prix Unit.', 'Total', 'Paiement', 'Agent']],
+          body: salesToExport.map(sale => {
+            const saleDate = new Date(sale.sale_date);
+            return [
+              saleDate.toLocaleDateString('fr-FR'),
+              sale.product_name,
+              sale.quantity,
+              `${sale.unit_price.toFixed(2)} DH`,
+              `${sale.total_price.toFixed(2)} DH`,
+              sale.payment_method === 'cash' ? 'Especes' : sale.payment_method === 'card' ? 'Carte' : 'Mobile',
+              sale.staff_name
+            ];
+          }),
+          theme: 'striped',
+          headStyles: { fillColor: [59, 130, 246] },
+          styles: { fontSize: 8 },
+          columnStyles: {
+            0: { cellWidth: 22 },
+            1: { cellWidth: 40 },
+            2: { cellWidth: 12, halign: 'center' },
+            3: { cellWidth: 22, halign: 'right' },
+            4: { cellWidth: 22, halign: 'right' },
+            5: { cellWidth: 20 },
+            6: { cellWidth: 30 }
+          },
+        });
+
+        // Note si plus de 50 ventes
+        if (filteredSales.length > 50) {
+          doc.setFontSize(9);
+          doc.setTextColor(150, 150, 150);
+          doc.text(`... et ${filteredSales.length - 50} autres ventes (${filteredSales.length} total)`, 14, doc.lastAutoTable.finalY + 8);
+        }
+      }
+
+      const dateStr = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-');
+      const fileName = `Ventes_Produits_${dateStr}.pdf`;
+      doc.save(fileName);
+      showToast("Export PDF reussi!", "success");
+    } catch (error) {
+      console.error('PDF Export Error:', error);
+      showToast("Erreur lors de l'export PDF", "error");
+    }
   };
 
   if (loading) {
@@ -197,8 +244,8 @@ function ProductSalesHistory({ onBack }) {
           </button>
           <h1 style={styles.title}>Historique des Ventes de Produits</h1>
         </div>
-        <button onClick={exportToCSV} style={styles.exportBtn}>
-          📥 Exporter CSV
+        <button onClick={exportToPDF} style={styles.exportBtn}>
+          📄 Exporter PDF
         </button>
       </div>
 
