@@ -22,7 +22,8 @@ import {
   ChevronLeft,
   ChevronRight,
   LayoutDashboard,
-  History
+  History,
+  Wallet
 } from "lucide-react";
 import api from "../services/api";
 import Toast from "../components/Toast";
@@ -46,6 +47,7 @@ function AdminDashboard({ user, onLogout }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [cashRegister, setCashRegister] = useState(null);
 
   const showToast = (message, type = "info", duration = 3000) => {
     setToast({ message, type, duration });
@@ -74,15 +76,17 @@ function AdminDashboard({ user, onLogout }) {
         params.period = filter;
       }
 
-      const [statsRes, paymentsRes, sessionsRes] = await Promise.all([
+      const [statsRes, paymentsRes, sessionsRes, cashRes] = await Promise.all([
         api.get("/dashboard/stats", { params }),
         api.get("/dashboard/payments", { params: { ...params, limit: 20 } }),
-        api.get("/dashboard/sessions", { params: { ...params, limit: 20 } })
+        api.get("/dashboard/sessions", { params: { ...params, limit: 20 } }),
+        api.get("/cash-register/today").catch(() => ({ data: { register: null } }))
       ]);
 
       setStats(statsRes.data);
       setPayments(paymentsRes.data.payments || []);
       setSessions(sessionsRes.data.sessions || []);
+      setCashRegister(cashRes.data.register || null);
       setLoading(false);
     } catch (e) {
       showToast("Erreur de chargement: " + (e.response?.data?.message || e.message), "error");
@@ -511,6 +515,14 @@ function AdminDashboard({ user, onLogout }) {
               color="#8b5cf6"
               bgColor="rgba(139, 92, 246, 0.1)"
             />
+            <StatCard
+              icon={<Wallet size={22} />}
+              label="Solde en Caisse"
+              value={(cashRegister?.current_balance || 0).toFixed(2) + " DH"}
+              color="#f59e0b"
+              bgColor="rgba(245, 158, 11, 0.15)"
+              highlight={true}
+            />
           </div>
 
           {/* Details Grid */}
@@ -725,15 +737,21 @@ function AdminDashboard({ user, onLogout }) {
 }
 
 // Stat Card Component
-function StatCard({ icon, label, value, color, bgColor }) {
+function StatCard({ icon, label, value, color, bgColor, highlight }) {
   return (
-    <div style={styles.statCard}>
+    <div style={{
+      ...styles.statCard,
+      ...(highlight && {
+        border: `2px solid ${color}`,
+        background: 'linear-gradient(135deg, #1e293b 0%, rgba(245, 158, 11, 0.05) 100%)'
+      })
+    }}>
       <div style={{...styles.statIconBox, background: bgColor}}>
         <span style={{color}}>{icon}</span>
       </div>
       <div style={styles.statInfo}>
         <span style={styles.statLabel}>{label}</span>
-        <span style={{...styles.statValue, color}}>{value}</span>
+        <span style={{...styles.statValue, color, ...(highlight && { fontSize: '24px' })}}>{value}</span>
       </div>
     </div>
   );
