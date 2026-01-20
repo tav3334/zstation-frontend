@@ -13,7 +13,6 @@ function ProductSalesHistory({ onBack }) {
     startDate: "",
     endDate: "",
     productName: "",
-    paymentMethod: "all",
     staffName: ""
   });
 
@@ -74,11 +73,6 @@ function ProductSalesHistory({ onBack }) {
       );
     }
 
-    // Filtre par méthode de paiement
-    if (filters.paymentMethod !== "all") {
-      filtered = filtered.filter(sale => sale.payment_method === filters.paymentMethod);
-    }
-
     // Filtre par nom de staff
     if (filters.staffName) {
       filtered = filtered.filter(sale =>
@@ -122,7 +116,6 @@ function ProductSalesHistory({ onBack }) {
       startDate: "",
       endDate: "",
       productName: "",
-      paymentMethod: "all",
       staffName: ""
     });
   };
@@ -304,19 +297,6 @@ function ProductSalesHistory({ onBack }) {
               placeholder="Rechercher..."
               style={styles.filterInput}
             />
-          </div>
-          <div style={styles.filterGroup}>
-            <label style={styles.filterLabel}>Méthode de paiement</label>
-            <select
-              value={filters.paymentMethod}
-              onChange={(e) => setFilters({...filters, paymentMethod: e.target.value})}
-              style={styles.filterInput}
-            >
-              <option value="all">Toutes</option>
-              <option value="cash">Espèces</option>
-              <option value="card">Carte</option>
-              <option value="mobile">Mobile</option>
-            </select>
           </div>
           <div style={styles.filterGroup}>
             <label style={styles.filterLabel}>Agent</label>
