@@ -169,7 +169,7 @@ function AdminDashboard({ user, onLogout }) {
   const exportToPDF = async () => {
     try {
       const { jsPDF } = await import('jspdf');
-      await import('jspdf-autotable');
+      const autoTable = (await import('jspdf-autotable')).default;
 
       const doc = new jsPDF();
       const periodText = filter === 'today' ? 'Aujourd\'hui' : filter === 'week' ? '7 Jours' : filter === 'month' ? '30 Jours' : 'Personnalisé';
@@ -186,12 +186,13 @@ function AdminDashboard({ user, onLogout }) {
       // Infos période
       doc.setFontSize(11);
       doc.setTextColor(0, 0, 0);
-      doc.text(`Période: ${periodText}`, 14, 40);
+      doc.text(`Periode: ${periodText}`, 14, 40);
       doc.text(`Date: ${new Date().toLocaleString('fr-FR')}`, 14, 47);
 
       // Tableau Recettes
-      doc.autoTable({
-        startY: 55,
+      let lastY = 55;
+      autoTable(doc, {
+        startY: lastY,
         head: [['RECETTES', 'Montant']],
         body: [
           ['Sessions', `${(stats?.stats?.total_revenue || 0).toFixed(2)} DH`],
@@ -203,11 +204,12 @@ function AdminDashboard({ user, onLogout }) {
         styles: { fontSize: 11 },
         columnStyles: { 1: { halign: 'right' } },
       });
+      lastY = doc.lastAutoTable.finalY + 10;
 
       // Tableau Activité
-      doc.autoTable({
-        startY: doc.lastAutoTable.finalY + 10,
-        head: [['ACTIVITÉ', 'Valeur']],
+      autoTable(doc, {
+        startY: lastY,
+        head: [['ACTIVITE', 'Valeur']],
         body: [
           ['Sessions', `${stats?.stats?.total_sessions || 0}`],
           ['Ventes Produits', `${stats?.stats?.total_product_sales || 0}`],
@@ -219,11 +221,12 @@ function AdminDashboard({ user, onLogout }) {
         styles: { fontSize: 11 },
         columnStyles: { 1: { halign: 'right' } },
       });
+      lastY = doc.lastAutoTable.finalY + 10;
 
       // Top Jeux si disponible
       if (stats?.top_games?.length > 0) {
-        doc.autoTable({
-          startY: doc.lastAutoTable.finalY + 10,
+        autoTable(doc, {
+          startY: lastY,
           head: [['#', 'Top Jeux', 'Sessions', 'Recettes']],
           body: stats.top_games.slice(0, 5).map((game, idx) => [
             idx + 1,
@@ -235,13 +238,14 @@ function AdminDashboard({ user, onLogout }) {
           headStyles: { fillColor: [59, 130, 246] },
           styles: { fontSize: 10 },
         });
+        lastY = doc.lastAutoTable.finalY + 10;
       }
 
       // Top Produits si disponible
       if (stats?.top_products?.length > 0) {
-        doc.autoTable({
-          startY: doc.lastAutoTable.finalY + 10,
-          head: [['#', 'Top Produits', 'Qté', 'Recettes']],
+        autoTable(doc, {
+          startY: lastY,
+          head: [['#', 'Top Produits', 'Qte', 'Recettes']],
           body: stats.top_products.slice(0, 5).map((product, idx) => [
             idx + 1,
             product.product_name,
@@ -257,8 +261,9 @@ function AdminDashboard({ user, onLogout }) {
       const dateStr = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-');
       const fileName = `ZStation_Stats_${periodText.replace(/\s/g, '_')}_${dateStr}.pdf`;
       doc.save(fileName);
-      showToast("Export PDF réussi!", "success");
+      showToast("Export PDF reussi!", "success");
     } catch (error) {
+      console.error('PDF Export Error:', error);
       showToast("Erreur lors de l'export PDF", "error");
     }
   };
