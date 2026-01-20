@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { User, Lock, Eye, EyeOff, Save, X, Gamepad2 } from "lucide-react";
+import { User, Lock, Eye, EyeOff, Save, X, Gamepad2, Wallet } from "lucide-react";
 import api from "../services/api";
 import useSanitize from "../hooks/useSanitize";
+import CashRegister from "./CashRegister";
 
 function UserProfile({ user, onClose, showToast }) {
   const { sanitize } = useSanitize();
@@ -14,6 +15,9 @@ function UserProfile({ user, onClose, showToast }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("profile"); // "profile" or "cash"
+
+  const isAdmin = user.role === 'admin';
 
   // Load active sessions count for agent
   useEffect(() => {
@@ -91,37 +95,57 @@ function UserProfile({ user, onClose, showToast }) {
           </button>
         </div>
 
-        <div className="profile-info">
-          <div className="info-row">
-            <span className="info-label">Nom:</span>
-            <span className="info-value">{sanitize(user.name)}</span>
-          </div>
-          <div className="info-row">
-            <span className="info-label">Email:</span>
-            <span className="info-value">{sanitize(user.email)}</span>
-          </div>
-          <div className="info-row">
-            <span className="info-label">Rôle:</span>
-            <span className={`role-badge ${sanitize(user.role)}`}>
-              {user.role === "admin" ? "Administrateur" : "Agent"}
-            </span>
-          </div>
-          {user.role === 'agent' && (
-            <div className="info-row">
-              <span className="info-label">
-                <Gamepad2 size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
-                Sessions actives:
-              </span>
-              <span className="info-value" style={{ fontSize: '18px', fontWeight: '700', color: '#f59e0b' }}>
-                {activeSessions}
-              </span>
-            </div>
-          )}
+        {/* Tabs */}
+        <div className="profile-tabs">
+          <button
+            className={`tab-btn ${activeTab === 'profile' ? 'active' : ''}`}
+            onClick={() => setActiveTab('profile')}
+          >
+            <User size={16} />
+            Profil
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'cash' ? 'active' : ''}`}
+            onClick={() => setActiveTab('cash')}
+          >
+            <Wallet size={16} />
+            Caisse
+          </button>
         </div>
 
-        <div className="divider"></div>
+        {activeTab === 'profile' ? (
+          <>
+            <div className="profile-info">
+              <div className="info-row">
+                <span className="info-label">Nom:</span>
+                <span className="info-value">{sanitize(user.name)}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Email:</span>
+                <span className="info-value">{sanitize(user.email)}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Role:</span>
+                <span className={`role-badge ${sanitize(user.role)}`}>
+                  {user.role === "admin" ? "Administrateur" : "Agent"}
+                </span>
+              </div>
+              {user.role === 'agent' && (
+                <div className="info-row">
+                  <span className="info-label">
+                    <Gamepad2 size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
+                    Sessions actives:
+                  </span>
+                  <span className="info-value" style={{ fontSize: '18px', fontWeight: '700', color: '#f59e0b' }}>
+                    {activeSessions}
+                  </span>
+                </div>
+              )}
+            </div>
 
-        <form onSubmit={handleChangePassword} className="password-form">
+            <div className="divider"></div>
+
+            <form onSubmit={handleChangePassword} className="password-form">
           <h3>
             <Lock size={20} />
             Changer le mot de passe
@@ -211,6 +235,15 @@ function UserProfile({ user, onClose, showToast }) {
             </button>
           </div>
         </form>
+          </>
+        ) : (
+          <div className="cash-register-section">
+            <CashRegister
+              isAdmin={isAdmin}
+              accentColor={isAdmin ? "#f59e0b" : "#10b981"}
+            />
+          </div>
+        )}
 
         <style>{`
           .modal-overlay {
@@ -276,6 +309,57 @@ function UserProfile({ user, onClose, showToast }) {
           .close-btn:hover {
             background: var(--hover-bg, #f3f4f6);
             color: var(--text-primary, #111827);
+          }
+
+          .profile-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color, #e5e7eb);
+          }
+
+          .tab-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary, #6b7280);
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+          }
+
+          .tab-btn:hover {
+            color: var(--text-primary, #111827);
+            background: var(--hover-bg, #f9fafb);
+          }
+
+          .tab-btn.active {
+            color: var(--primary-color, #3b82f6);
+            border-bottom-color: var(--primary-color, #3b82f6);
+          }
+
+          .cash-register-section {
+            padding: 20px;
+          }
+
+          /* Dark theme tabs */
+          [data-theme="dark"] .profile-tabs {
+            border-bottom-color: #374151;
+          }
+
+          [data-theme="dark"] .tab-btn:hover {
+            color: #f9fafb;
+            background: #374151;
+          }
+
+          [data-theme="dark"] .tab-btn.active {
+            color: #60a5fa;
+            border-bottom-color: #60a5fa;
           }
 
           .profile-info {
