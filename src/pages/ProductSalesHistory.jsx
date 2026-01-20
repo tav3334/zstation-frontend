@@ -128,28 +128,46 @@ function ProductSalesHistory({ onBack }) {
   };
 
   const exportToCSV = () => {
-    const headers = ["Date", "Produit", "Taille", "Quantité", "Prix Unitaire", "Total", "Méthode", "Agent"];
-    const rows = filteredSales.map(sale => [
-      new Date(sale.sale_date).toLocaleString('fr-FR'),
-      sale.product_name,
-      sale.product_size || "-",
-      sale.quantity,
-      sale.unit_price,
-      sale.total_price,
-      sale.payment_method,
-      sale.staff_name
-    ]);
+    // Headers avec uniquement les champs essentiels
+    const headers = ["Date", "Heure", "Produit", "Taille", "Qté", "Prix Unit.", "Total", "Paiement", "Agent"];
+
+    const rows = filteredSales.map(sale => {
+      const saleDate = new Date(sale.sale_date);
+      return [
+        saleDate.toLocaleDateString('fr-FR'),
+        saleDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        `"${sale.product_name}"`,
+        sale.product_size || "-",
+        sale.quantity,
+        `${sale.unit_price.toFixed(2)} DH`,
+        `${sale.total_price.toFixed(2)} DH`,
+        sale.payment_method === 'cash' ? 'Espèces' : sale.payment_method === 'card' ? 'Carte' : 'Mobile',
+        `"${sale.staff_name}"`
+      ];
+    });
+
+    // Ajouter un résumé en bas
+    const summary = [
+      [],
+      ["RÉSUMÉ"],
+      ["Total Ventes", stats.totalSales],
+      ["Revenu Total", `${stats.totalRevenue.toFixed(2)} DH`],
+      ["Vente Moyenne", `${stats.averageSale.toFixed(2)} DH`],
+      ["Meilleur Produit", stats.topProduct?.name || "N/A"]
+    ];
 
     const csv = [
       headers.join(","),
-      ...rows.map(row => row.join(","))
+      ...rows.map(row => row.join(",")),
+      ...summary.map(row => row.join(","))
     ].join("\n");
 
-    const blob = new Blob([csv], { type: "text/csv" });
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `Ventes_Produits_${new Date().getTime()}.csv`;
+    const dateStr = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-');
+    link.download = `Ventes_Produits_${dateStr}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

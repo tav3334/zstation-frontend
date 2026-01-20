@@ -175,21 +175,58 @@ function SuperAdminDashboard({ user, onLogout }) {
     return [];
   };
 
-  // Export CSV
+  // Export CSV - uniquement les champs essentiels
   const exportToCSV = (data, filename) => {
     if (!data || data.length === 0) {
       showToast('Aucune donnée à exporter', 'error');
       return;
     }
-    const headers = Object.keys(data[0]).join(',');
-    const rows = data.map(item => Object.values(item).map(v => `"${v || ''}"`).join(',')).join('\n');
-    const csv = `${headers}\n${rows}`;
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+    let headers, rows;
+
+    if (filename === 'users') {
+      // Export utilisateurs: nom, email, rôle, statut
+      headers = ['Nom', 'Email', 'Rôle', 'Statut'];
+      rows = data.map(item => [
+        `"${item.name || ''}"`,
+        `"${item.email || ''}"`,
+        item.role === 'admin' ? 'Admin' : item.role === 'agent' ? 'Agent' : item.role,
+        item.is_active ? 'Actif' : 'Inactif'
+      ]);
+    } else if (filename === 'machines') {
+      // Export machines: nom, type, statut, jeu actuel
+      headers = ['Nom', 'Type', 'Statut', 'Jeu Actuel'];
+      rows = data.map(item => [
+        `"${item.name || ''}"`,
+        item.type === 'ps5' ? 'PS5' : item.type === 'ps4' ? 'PS4' : item.type === 'pc' ? 'PC' : item.type,
+        item.status === 'available' ? 'Disponible' : item.status === 'occupied' ? 'Occupée' : item.status === 'maintenance' ? 'Maintenance' : item.status,
+        `"${item.current_game || '-'}"`
+      ]);
+    } else if (filename === 'games') {
+      // Export jeux: nom, genre, prix/heure, statut
+      headers = ['Nom', 'Genre', 'Prix/Heure (DH)', 'Statut'];
+      rows = data.map(item => [
+        `"${item.name || ''}"`,
+        `"${item.genre || '-'}"`,
+        item.price_per_hour ? `${parseFloat(item.price_per_hour).toFixed(2)}` : '-',
+        item.is_active ? 'Actif' : 'Inactif'
+      ]);
+    } else {
+      // Fallback: exporter tout sauf created_at, updated_at, id
+      const excludeKeys = ['id', 'created_at', 'updated_at', 'deleted_at', 'password', 'remember_token'];
+      const keys = Object.keys(data[0]).filter(k => !excludeKeys.includes(k));
+      headers = keys;
+      rows = data.map(item => keys.map(k => `"${item[k] || ''}"`));
+    }
+
+    const csv = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
+    const dateStr = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-');
+    link.download = `${filename}_${dateStr}.csv`;
     link.click();
-    showToast(`${filename} exporté avec succès`, 'success');
+    showToast(`Export ${filename} réussi!`, 'success');
   };
 
   const menuItems = [

@@ -106,43 +106,59 @@ function AdminDashboard({ user, onLogout }) {
       const XLSX = await import('xlsx');
       const wb = XLSX.utils.book_new();
 
+      const periodText = filter === 'today' ? 'Aujourd\'hui' : filter === 'week' ? '7 Jours' : filter === 'month' ? '30 Jours' : 'Personnalisé';
+      const totalRevenue = (stats?.stats?.total_revenue || 0) + (stats?.stats?.product_revenue || 0);
+
+      // Feuille 1: Résumé
       const statsData = [
-        ['Statistiques Générales', ''],
-        ['Période', filter === 'today' ? 'Aujourd\'hui' : filter === 'week' ? '7 Jours' : filter === 'month' ? '30 Jours' : 'Personnalisé'],
+        ['Z-STATION - RAPPORT STATISTIQUES'],
+        [''],
+        ['Période', periodText],
         ['Date d\'export', new Date().toLocaleString('fr-FR')],
-        ['', ''],
-        ['Métriques', 'Valeurs'],
-        ['Recettes Sessions', `${(stats?.stats?.total_revenue || 0).toFixed(2)} DH`],
-        ['Recettes Produits', `${(stats?.stats?.product_revenue || 0).toFixed(2)} DH`],
-        ['Total Sessions', stats?.stats?.total_sessions || 0],
-        ['Total Ventes Produits', stats?.stats?.total_product_sales || 0],
+        [''],
+        ['RECETTES'],
+        ['Sessions', `${(stats?.stats?.total_revenue || 0).toFixed(2)} DH`],
+        ['Produits', `${(stats?.stats?.product_revenue || 0).toFixed(2)} DH`],
+        ['TOTAL', `${totalRevenue.toFixed(2)} DH`],
+        [''],
+        ['ACTIVITÉ'],
+        ['Nombre de Sessions', stats?.stats?.total_sessions || 0],
+        ['Ventes Produits', stats?.stats?.total_product_sales || 0],
         ['Sessions Actives', stats?.stats?.active_sessions || 0],
         ['Machines Disponibles', `${stats?.stats?.available_machines || 0}/${stats?.stats?.total_machines || 0}`],
       ];
       const ws1 = XLSX.utils.aoa_to_sheet(statsData);
-      XLSX.utils.book_append_sheet(wb, ws1, 'Statistiques');
+      ws1['!cols'] = [{ wch: 25 }, { wch: 20 }];
+      XLSX.utils.book_append_sheet(wb, ws1, 'Résumé');
 
+      // Feuille 2: Top Jeux
       const gamesData = [
-        ['Top Jeux'],
-        ['Rang', 'Nom du Jeu', 'Nombre de Sessions', 'Recettes (DH)'],
+        ['TOP JEUX'],
+        [''],
+        ['#', 'Jeu', 'Sessions', 'Recettes (DH)'],
         ...(stats?.top_games || []).map((game, idx) => [
-          idx + 1, game.game_name, game.sessions_count, game.total_revenue.toFixed(2)
+          idx + 1, game.game_name, game.sessions_count, `${game.total_revenue.toFixed(2)}`
         ])
       ];
       const ws2 = XLSX.utils.aoa_to_sheet(gamesData);
+      ws2['!cols'] = [{ wch: 5 }, { wch: 30 }, { wch: 12 }, { wch: 15 }];
       XLSX.utils.book_append_sheet(wb, ws2, 'Top Jeux');
 
+      // Feuille 3: Top Produits
       const productsData = [
-        ['Top Produits'],
-        ['Rang', 'Nom du Produit', 'Quantité Vendue', 'Recettes (DH)'],
+        ['TOP PRODUITS'],
+        [''],
+        ['#', 'Produit', 'Qté Vendue', 'Recettes (DH)'],
         ...(stats?.top_products || []).map((product, idx) => [
-          idx + 1, product.product_name, product.total_quantity, product.total_revenue.toFixed(2)
+          idx + 1, product.product_name, product.total_quantity, `${product.total_revenue.toFixed(2)}`
         ])
       ];
       const ws3 = XLSX.utils.aoa_to_sheet(productsData);
+      ws3['!cols'] = [{ wch: 5 }, { wch: 30 }, { wch: 12 }, { wch: 15 }];
       XLSX.utils.book_append_sheet(wb, ws3, 'Top Produits');
 
-      const fileName = `statistiques_zstation_${filter}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const dateStr = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-');
+      const fileName = `ZStation_Stats_${periodText.replace(/\s/g, '_')}_${dateStr}.xlsx`;
       XLSX.writeFile(wb, fileName);
       showToast("Export Excel réussi!", "success");
     } catch (error) {
@@ -156,30 +172,90 @@ function AdminDashboard({ user, onLogout }) {
       await import('jspdf-autotable');
 
       const doc = new jsPDF();
-      doc.setFontSize(20);
-      doc.setTextColor(123, 92, 255);
-      doc.text('Z-STATION - Rapport de Statistiques', 105, 20, { align: 'center' });
-
-      doc.setFontSize(12);
-      doc.setTextColor(0, 0, 0);
       const periodText = filter === 'today' ? 'Aujourd\'hui' : filter === 'week' ? '7 Jours' : filter === 'month' ? '30 Jours' : 'Personnalisé';
-      doc.text(`Période: ${periodText}`, 14, 35);
-      doc.text(`Date d'export: ${new Date().toLocaleString('fr-FR')}`, 14, 42);
+      const totalRevenue = (stats?.stats?.total_revenue || 0) + (stats?.stats?.product_revenue || 0);
 
+      // Header avec couleur orange (Admin)
+      doc.setFontSize(22);
+      doc.setTextColor(245, 158, 11); // Orange
+      doc.text('Z-STATION', 105, 18, { align: 'center' });
+      doc.setFontSize(14);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Rapport de Statistiques', 105, 26, { align: 'center' });
+
+      // Infos période
+      doc.setFontSize(11);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Période: ${periodText}`, 14, 40);
+      doc.text(`Date: ${new Date().toLocaleString('fr-FR')}`, 14, 47);
+
+      // Tableau Recettes
       doc.autoTable({
         startY: 55,
-        head: [['Métrique', 'Valeur']],
+        head: [['RECETTES', 'Montant']],
         body: [
-          ['Recettes Sessions', `${(stats?.stats?.total_revenue || 0).toFixed(2)} DH`],
-          ['Recettes Produits', `${(stats?.stats?.product_revenue || 0).toFixed(2)} DH`],
-          ['Total Sessions', `${stats?.stats?.total_sessions || 0}`],
-          ['Total Ventes Produits', `${stats?.stats?.total_product_sales || 0}`],
+          ['Sessions', `${(stats?.stats?.total_revenue || 0).toFixed(2)} DH`],
+          ['Produits', `${(stats?.stats?.product_revenue || 0).toFixed(2)} DH`],
+          ['TOTAL', `${totalRevenue.toFixed(2)} DH`],
         ],
         theme: 'grid',
-        headStyles: { fillColor: [123, 92, 255] },
+        headStyles: { fillColor: [245, 158, 11] },
+        styles: { fontSize: 11 },
+        columnStyles: { 1: { halign: 'right' } },
       });
 
-      const fileName = `statistiques_zstation_${filter}_${new Date().toISOString().split('T')[0]}.pdf`;
+      // Tableau Activité
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 10,
+        head: [['ACTIVITÉ', 'Valeur']],
+        body: [
+          ['Sessions', `${stats?.stats?.total_sessions || 0}`],
+          ['Ventes Produits', `${stats?.stats?.total_product_sales || 0}`],
+          ['Sessions Actives', `${stats?.stats?.active_sessions || 0}`],
+          ['Machines Dispo.', `${stats?.stats?.available_machines || 0}/${stats?.stats?.total_machines || 0}`],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [245, 158, 11] },
+        styles: { fontSize: 11 },
+        columnStyles: { 1: { halign: 'right' } },
+      });
+
+      // Top Jeux si disponible
+      if (stats?.top_games?.length > 0) {
+        doc.autoTable({
+          startY: doc.lastAutoTable.finalY + 10,
+          head: [['#', 'Top Jeux', 'Sessions', 'Recettes']],
+          body: stats.top_games.slice(0, 5).map((game, idx) => [
+            idx + 1,
+            game.game_name,
+            game.sessions_count,
+            `${game.total_revenue.toFixed(2)} DH`
+          ]),
+          theme: 'grid',
+          headStyles: { fillColor: [59, 130, 246] },
+          styles: { fontSize: 10 },
+        });
+      }
+
+      // Top Produits si disponible
+      if (stats?.top_products?.length > 0) {
+        doc.autoTable({
+          startY: doc.lastAutoTable.finalY + 10,
+          head: [['#', 'Top Produits', 'Qté', 'Recettes']],
+          body: stats.top_products.slice(0, 5).map((product, idx) => [
+            idx + 1,
+            product.product_name,
+            product.total_quantity,
+            `${product.total_revenue.toFixed(2)} DH`
+          ]),
+          theme: 'grid',
+          headStyles: { fillColor: [139, 92, 246] },
+          styles: { fontSize: 10 },
+        });
+      }
+
+      const dateStr = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-');
+      const fileName = `ZStation_Stats_${periodText.replace(/\s/g, '_')}_${dateStr}.pdf`;
       doc.save(fileName);
       showToast("Export PDF réussi!", "success");
     } catch (error) {
