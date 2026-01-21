@@ -66,7 +66,9 @@ function SuperAdminGames({ onBack }) {
       setGameName('');
       loadGames();
     } catch (error) {
-      showToast('Erreur lors de la création du jeu', 'error');
+      console.error('Create game error:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Erreur lors de la création du jeu';
+      showToast(errorMsg, 'error');
     }
   };
 
@@ -107,7 +109,9 @@ function SuperAdminGames({ onBack }) {
       showToast('Tarif modifié avec succès');
       loadGames();
     } catch (error) {
-      showToast('Erreur lors de la modification du tarif', 'error');
+      console.error('Update pricing error:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Erreur lors de la modification du tarif';
+      showToast(errorMsg, 'error');
     }
   };
 
@@ -119,7 +123,9 @@ function SuperAdminGames({ onBack }) {
       showToast('Tarif supprimé');
       loadGames();
     } catch (error) {
-      showToast('Erreur lors de la suppression', 'error');
+      console.error('Delete pricing error:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Erreur lors de la suppression';
+      showToast(errorMsg, 'error');
     }
   };
 
@@ -140,7 +146,9 @@ function SuperAdminGames({ onBack }) {
       showToast('Tarif ajouté avec succès');
       loadGames();
     } catch (error) {
-      showToast('Erreur lors de l\'ajout du tarif', 'error');
+      console.error('Add pricing error:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Erreur lors de l\'ajout du tarif';
+      showToast(errorMsg, 'error');
     }
   };
 

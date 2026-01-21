@@ -41,7 +41,6 @@ function SuperAdminDashboard({ user, onLogout }) {
   // États pour les modals
   const [showUserModal, setShowUserModal] = useState(false);
   const [showMachineModal, setShowMachineModal] = useState(false);
-  const [showGameModal, setShowGameModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [deletingItem, setDeletingItem] = useState(null);
@@ -365,22 +364,13 @@ function SuperAdminDashboard({ user, onLogout }) {
                   <button style={styles.refreshBtn} onClick={loadAllData} disabled={loading}>
                     <RefreshCw size={16} className={loading ? 'spin' : ''} />
                   </button>
-                  {activeTab === 'games' && (
-                    <button
-                      style={{...styles.createBtn, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}
-                      onClick={() => setShowGamesManagement(true)}
-                    >
-                      <Gamepad2 size={16} />
-                      <span>Gestion Avancée</span>
-                    </button>
-                  )}
                   <button
                     style={styles.createBtn}
                     onClick={() => {
                       setEditingItem(null);
                       if (activeTab === 'users') setShowUserModal(true);
                       else if (activeTab === 'machines') setShowMachineModal(true);
-                      else if (activeTab === 'games') setShowGameModal(true);
+                      else if (activeTab === 'games') setShowGamesManagement(true);
                     }}
                   >
                     <Plus size={16} />
@@ -412,11 +402,12 @@ function SuperAdminDashboard({ user, onLogout }) {
                 <GamesTable
                   games={getFilteredData()}
                   loading={loading}
-                  onEdit={(game) => { setEditingItem(game); setShowGameModal(true); }}
+                  onEdit={() => setShowGamesManagement(true)}
                   onDelete={(game) => {
                     setDeletingItem({ type: 'game', data: game });
                     setShowDeleteConfirm(true);
                   }}
+                  onManageAll={() => setShowGamesManagement(true)}
                 />
               )}
             </>
@@ -449,17 +440,6 @@ function SuperAdminDashboard({ user, onLogout }) {
         />
       )}
 
-      {showGameModal && (
-        <GameModal
-          game={editingItem}
-          onClose={() => setShowGameModal(false)}
-          onSuccess={() => {
-            setShowGameModal(false);
-            fetchGames();
-            showToast(editingItem ? 'Jeu modifié avec succès' : 'Jeu créé avec succès');
-          }}
-        />
-      )}
 
       {showDeleteConfirm && (
         <DeleteConfirmModal
@@ -835,7 +815,7 @@ function MachinesTable({ machines, loading, onEdit, onDelete }) {
 }
 
 // ========== GAMES TABLE ==========
-function GamesTable({ games, loading, onEdit, onDelete }) {
+function GamesTable({ games, loading, onEdit, onDelete, onManageAll }) {
   if (loading) {
     return <SkeletonTable rows={5} columns={3} />;
   }
@@ -845,50 +825,104 @@ function GamesTable({ games, loading, onEdit, onDelete }) {
       <div style={styles.emptyState}>
         <Gamepad2 size={64} color="#64748b" />
         <p>Aucun jeu trouvé</p>
+        <button
+          onClick={onManageAll}
+          style={{
+            marginTop: '16px',
+            padding: '12px 24px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '10px',
+            cursor: 'pointer',
+            fontWeight: '700',
+            fontSize: '14px'
+          }}
+        >
+          <Plus size={16} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+          Créer un jeu
+        </button>
       </div>
     );
   }
 
   return (
-    <div style={styles.tableWrapper}>
-      <table style={styles.table}>
-        <thead>
-          <tr>
-            <th style={styles.th}>Jeu</th>
-            <th style={styles.th}>Tarifs</th>
-            <th style={styles.th}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {games.map((game) => (
-            <TableRow key={game.id}>
-              <td style={styles.td}>
-                <div style={styles.userCell}>
-                  <div style={{...styles.miniAvatar, background: '#10b981'}}>
-                    <Gamepad2 size={16} />
+    <div>
+      {/* Info banner */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
+        border: '1px solid rgba(102, 126, 234, 0.3)',
+        borderRadius: '12px',
+        padding: '16px 20px',
+        marginBottom: '20px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <div style={{ color: '#94a3b8', fontSize: '14px' }}>
+          Pour gérer les tarifs par temps ou par match, utilisez la gestion avancée
+        </div>
+        <button
+          onClick={onManageAll}
+          style={{
+            padding: '10px 20px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontWeight: '600',
+            fontSize: '13px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          <Gamepad2 size={16} />
+          Gestion des Tarifs
+        </button>
+      </div>
+
+      <div style={styles.tableWrapper}>
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              <th style={styles.th}>Jeu</th>
+              <th style={styles.th}>Tarifs</th>
+              <th style={styles.th}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {games.map((game) => (
+              <TableRow key={game.id}>
+                <td style={styles.td}>
+                  <div style={styles.userCell}>
+                    <div style={{...styles.miniAvatar, background: '#10b981'}}>
+                      <Gamepad2 size={16} />
+                    </div>
+                    <strong style={{color: '#f1f5f9'}}>{game.name}</strong>
                   </div>
-                  <strong style={{color: '#f1f5f9'}}>{game.name}</strong>
-                </div>
-              </td>
-              <td style={styles.td}>
-                <div style={styles.pricingGrid}>
-                  <PricingBadge duration="6 min" price={game.price_6min} />
-                  <PricingBadge duration="30 min" price={game.price_30min} />
-                  <PricingBadge duration="60 min" price={game.price_1h} />
-                  <PricingBadge duration="120 min" price={game.price_2h} />
-                  <PricingBadge duration="180 min" price={game.price_3h} />
-                </div>
-              </td>
-              <td style={styles.td}>
-                <div style={styles.actionBtns}>
-                  <ActionButton type="edit" onClick={() => onEdit(game)} title="Modifier" />
-                  <ActionButton type="delete" onClick={() => onDelete(game)} title="Supprimer" />
-                </div>
-              </td>
-            </TableRow>
-          ))}
-        </tbody>
-      </table>
+                </td>
+                <td style={styles.td}>
+                  <div style={styles.pricingGrid}>
+                    <PricingBadge duration="6 min" price={game.price_6min} />
+                    <PricingBadge duration="30 min" price={game.price_30min} />
+                    <PricingBadge duration="60 min" price={game.price_1h} />
+                    <PricingBadge duration="120 min" price={game.price_2h} />
+                    <PricingBadge duration="180 min" price={game.price_3h} />
+                  </div>
+                </td>
+                <td style={styles.td}>
+                  <div style={styles.actionBtns}>
+                    <ActionButton type="edit" onClick={() => onEdit(game)} title="Gérer les tarifs" />
+                    <ActionButton type="delete" onClick={() => onDelete(game)} title="Supprimer" />
+                  </div>
+                </td>
+              </TableRow>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -1166,111 +1200,6 @@ function MachineModal({ machine, onClose, onSuccess }) {
   );
 }
 
-// ========== GAME MODAL ==========
-function GameModal({ game, onClose, onSuccess }) {
-  const [formData, setFormData] = useState({
-    name: game?.name || '',
-    price_6min: game?.price_6min || '',
-    price_30min: game?.price_30min || '',
-    price_1h: game?.price_1h || '',
-    price_2h: game?.price_2h || '',
-    price_3h: game?.price_3h || ''
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    try {
-      setLoading(true);
-      if (game) {
-        await api.put(`/super-admin/games/${game.id}`, formData);
-      } else {
-        await api.post('/super-admin/games', formData);
-      }
-      onSuccess();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Erreur lors de la sauvegarde');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const pricingFields = [
-    { key: 'price_6min', label: '6 min', placeholder: '6' },
-    { key: 'price_30min', label: '30 min', placeholder: '10' },
-    { key: 'price_1h', label: '60 min', placeholder: '20' },
-    { key: 'price_2h', label: '120 min', placeholder: '45' },
-    { key: 'price_3h', label: '180 min', placeholder: '60' }
-  ];
-
-  return (
-    <div style={styles.modalOverlay} onClick={onClose}>
-      <div style={{...styles.modalContent, maxWidth: '500px'}} onClick={(e) => e.stopPropagation()}>
-        <div style={styles.modalHeader}>
-          <h3 style={styles.modalTitle}>
-            <Gamepad2 size={20} style={{marginRight: '8px'}} />
-            {game ? 'Modifier Jeu' : 'Nouveau Jeu'}
-          </h3>
-          <button style={styles.closeBtn} onClick={onClose}>
-            <X size={20} />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} style={styles.formCompact}>
-          <div style={styles.formGroup}>
-            <label style={styles.labelSmall}>Nom du Jeu</label>
-            <input
-              type="text"
-              style={styles.inputSmall}
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Ex: FIFA 25, Call of Duty"
-              required
-            />
-          </div>
-
-          <div style={{marginTop: '8px'}}>
-            <label style={{...styles.labelSmall, marginBottom: '10px', display: 'block'}}>
-              Tarification (DH)
-            </label>
-            <div style={styles.pricingFieldsGrid}>
-              {pricingFields.map((field) => (
-                <div key={field.key} style={styles.pricingFieldItem}>
-                  <span style={styles.pricingFieldLabel}>{field.label}</span>
-                  <input
-                    type="number"
-                    style={styles.pricingFieldInput}
-                    value={formData[field.key]}
-                    onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
-                    placeholder={field.placeholder}
-                    required
-                    min="0"
-                    step="0.01"
-                  />
-                  <span style={styles.pricingFieldUnit}>DH</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {error && <div style={styles.errorSmall}>{error}</div>}
-
-          <div style={styles.modalActionsCompact}>
-            <button type="button" style={styles.cancelBtnSmall} onClick={onClose}>
-              Annuler
-            </button>
-            <button type="submit" style={styles.submitBtnSmall} disabled={loading}>
-              {loading ? '...' : game ? 'Modifier' : 'Créer'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
 
 // ========== HELPER FUNCTIONS ==========
 function getRoleLabel(role) {
