@@ -269,7 +269,13 @@ function SuperAdminDashboard({ user, onLogout }) {
                 ...styles.menuItem,
                 ...(activeTab === item.id && styles.menuItemActive)
               }}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => {
+                if (item.id === 'games') {
+                  setShowGamesManagement(true);
+                } else {
+                  setActiveTab(item.id);
+                }
+              }}
             >
               <item.icon size={20} />
               {!sidebarCollapsed && (
@@ -337,7 +343,7 @@ function SuperAdminDashboard({ user, onLogout }) {
           )}
 
           {/* Data Tables with Toolbar */}
-          {(activeTab === 'users' || activeTab === 'machines' || activeTab === 'games') && (
+          {(activeTab === 'users' || activeTab === 'machines') && (
             <>
               <div style={styles.toolbar}>
                 <div style={styles.searchContainer}>
@@ -354,7 +360,7 @@ function SuperAdminDashboard({ user, onLogout }) {
                   <button
                     style={styles.exportBtn}
                     onClick={() => exportToCSV(
-                      activeTab === 'users' ? users : activeTab === 'machines' ? machines : games,
+                      activeTab === 'users' ? users : machines,
                       activeTab
                     )}
                   >
@@ -370,7 +376,6 @@ function SuperAdminDashboard({ user, onLogout }) {
                       setEditingItem(null);
                       if (activeTab === 'users') setShowUserModal(true);
                       else if (activeTab === 'machines') setShowMachineModal(true);
-                      else if (activeTab === 'games') setShowGamesManagement(true);
                     }}
                   >
                     <Plus size={16} />
@@ -396,18 +401,6 @@ function SuperAdminDashboard({ user, onLogout }) {
                     setDeletingItem({ type: 'machine', data: machine });
                     setShowDeleteConfirm(true);
                   }}
-                />
-              )}
-              {activeTab === 'games' && (
-                <GamesTable
-                  games={getFilteredData()}
-                  loading={loading}
-                  onEdit={() => setShowGamesManagement(true)}
-                  onDelete={(game) => {
-                    setDeletingItem({ type: 'game', data: game });
-                    setShowDeleteConfirm(true);
-                  }}
-                  onManageAll={() => setShowGamesManagement(true)}
                 />
               )}
             </>
@@ -814,128 +807,6 @@ function MachinesTable({ machines, loading, onEdit, onDelete }) {
   );
 }
 
-// ========== GAMES TABLE ==========
-function GamesTable({ games, loading, onEdit, onDelete, onManageAll }) {
-  if (loading) {
-    return <SkeletonTable rows={5} columns={3} />;
-  }
-
-  if (games.length === 0) {
-    return (
-      <div style={styles.emptyState}>
-        <Gamepad2 size={64} color="#64748b" />
-        <p>Aucun jeu trouvé</p>
-        <button
-          onClick={onManageAll}
-          style={{
-            marginTop: '16px',
-            padding: '12px 24px',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '10px',
-            cursor: 'pointer',
-            fontWeight: '700',
-            fontSize: '14px'
-          }}
-        >
-          <Plus size={16} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-          Créer un jeu
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      {/* Info banner */}
-      <div style={{
-        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
-        border: '1px solid rgba(102, 126, 234, 0.3)',
-        borderRadius: '12px',
-        padding: '16px 20px',
-        marginBottom: '20px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <div style={{ color: '#94a3b8', fontSize: '14px' }}>
-          Pour gérer les tarifs par temps ou par match, utilisez la gestion avancée
-        </div>
-        <button
-          onClick={onManageAll}
-          style={{
-            padding: '10px 20px',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontWeight: '600',
-            fontSize: '13px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          <Gamepad2 size={16} />
-          Gestion des Tarifs
-        </button>
-      </div>
-
-      <div style={styles.tableWrapper}>
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              <th style={styles.th}>Jeu</th>
-              <th style={styles.th}>Tarifs</th>
-              <th style={styles.th}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {games.map((game) => (
-              <TableRow key={game.id}>
-                <td style={styles.td}>
-                  <div style={styles.userCell}>
-                    <div style={{...styles.miniAvatar, background: '#10b981'}}>
-                      <Gamepad2 size={16} />
-                    </div>
-                    <strong style={{color: '#f1f5f9'}}>{game.name}</strong>
-                  </div>
-                </td>
-                <td style={styles.td}>
-                  <div style={styles.pricingGrid}>
-                    <PricingBadge duration="6 min" price={game.price_6min} />
-                    <PricingBadge duration="30 min" price={game.price_30min} />
-                    <PricingBadge duration="60 min" price={game.price_1h} />
-                    <PricingBadge duration="120 min" price={game.price_2h} />
-                    <PricingBadge duration="180 min" price={game.price_3h} />
-                  </div>
-                </td>
-                <td style={styles.td}>
-                  <div style={styles.actionBtns}>
-                    <ActionButton type="edit" onClick={() => onEdit(game)} title="Gérer les tarifs" />
-                    <ActionButton type="delete" onClick={() => onDelete(game)} title="Supprimer" />
-                  </div>
-                </td>
-              </TableRow>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-// ========== PRICING BADGE ==========
-function PricingBadge({ duration, price, label }) {
-  return (
-    <div style={styles.pricingBadge}>
-      <span style={styles.pricingDuration}>{label || duration}</span>
-      <span style={styles.pricingPrice}>{price} DH</span>
-    </div>
-  );
-}
 
 // ========== DELETE CONFIRM MODAL ==========
 function DeleteConfirmModal({ item, onConfirm, onCancel }) {
