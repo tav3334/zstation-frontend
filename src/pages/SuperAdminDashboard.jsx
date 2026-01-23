@@ -473,6 +473,8 @@ function SuperAdminDashboard({ user, onLogout }) {
 function DashboardView({ stats, dashboardStats, machines, users, games, onNavigate, onGamesClick }) {
   const availableMachines = dashboardStats.machines_available || machines.filter(m => m.status === 'available').length;
   const occupiedMachines = dashboardStats.machines_occupied || machines.filter(m => m.status !== 'available').length;
+  const totalMachines = availableMachines + occupiedMachines;
+  const availablePercent = totalMachines > 0 ? Math.round((availableMachines / totalMachines) * 100) : 0;
 
   // Helper pour formater les prix des jeux
   const getGamePrice = (game) => {
@@ -488,119 +490,163 @@ function DashboardView({ stats, dashboardStats, machines, users, games, onNaviga
 
   return (
     <div style={styles.dashboardGrid}>
-      {/* Stats Row - Statistiques principales */}
+      {/* Stats Row - Statistiques principales avec gradients */}
       <div style={styles.statsRow}>
-        <MiniStatCard
-          icon={<PlayCircle size={20} />}
+        <StatCardEnhanced
+          icon={<PlayCircle size={24} />}
           label="Sessions Actives"
           value={dashboardStats.active_sessions}
-          color="#10b981"
+          gradient="linear-gradient(135deg, #10b981 0%, #059669 100%)"
+          iconBg="rgba(16, 185, 129, 0.2)"
         />
-        <MiniStatCard
-          icon={<Calendar size={20} />}
+        <StatCardEnhanced
+          icon={<Calendar size={24} />}
           label="Sessions Aujourd'hui"
           value={dashboardStats.sessions_today}
-          color="#6366f1"
+          gradient="linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)"
+          iconBg="rgba(99, 102, 241, 0.2)"
         />
-        <MiniStatCard
-          icon={<DollarSign size={20} />}
+        <StatCardEnhanced
+          icon={<DollarSign size={24} />}
           label="Revenu Aujourd'hui"
           value={`${dashboardStats.revenue_today} DH`}
-          color="#f59e0b"
+          gradient="linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
+          iconBg="rgba(245, 158, 11, 0.2)"
           isPrice
         />
-        <MiniStatCard
-          icon={<TrendingUp size={20} />}
+        <StatCardEnhanced
+          icon={<TrendingUp size={24} />}
           label="Revenu du Mois"
           value={`${dashboardStats.revenue_month} DH`}
-          color="#8b5cf6"
+          gradient="linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)"
+          iconBg="rgba(139, 92, 246, 0.2)"
           isPrice
         />
       </div>
 
-      {/* Stats Row 2 - Ressources */}
+      {/* Stats Row 2 - Ressources cliquables */}
       <div style={styles.statsRow}>
-        <MiniStatCard
-          icon={<Users size={20} />}
+        <StatCardEnhanced
+          icon={<Users size={24} />}
           label="Utilisateurs"
           value={stats.totalUsers}
-          color="#3b82f6"
+          gradient="linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)"
+          iconBg="rgba(59, 130, 246, 0.2)"
           onClick={() => onNavigate('users')}
+          clickable
         />
-        <MiniStatCard
-          icon={<Monitor size={20} />}
+        <StatCardEnhanced
+          icon={<Monitor size={24} />}
           label="Machines"
           value={stats.totalMachines}
-          color="#ec4899"
+          gradient="linear-gradient(135deg, #ec4899 0%, #db2777 100%)"
+          iconBg="rgba(236, 72, 153, 0.2)"
           onClick={() => onNavigate('machines')}
+          clickable
         />
-        <MiniStatCard
-          icon={<Gamepad2 size={20} />}
+        <StatCardEnhanced
+          icon={<Gamepad2 size={24} />}
           label="Jeux"
           value={stats.totalGames}
-          color="#14b8a6"
+          gradient="linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)"
+          iconBg="rgba(20, 184, 166, 0.2)"
           onClick={onGamesClick}
+          clickable
         />
-        <MiniStatCard
-          icon={<Activity size={20} />}
+        <StatCardEnhanced
+          icon={<Activity size={24} />}
           label="Sessions Terminées"
           value={dashboardStats.total_completed_sessions}
-          color="#64748b"
+          gradient="linear-gradient(135deg, #64748b 0%, #475569 100%)"
+          iconBg="rgba(100, 116, 139, 0.2)"
         />
       </div>
 
-      {/* Machines Map */}
-      <div style={styles.dashboardCard}>
-        <div style={styles.cardHeader}>
-          <h3 style={styles.cardTitle}>
-            <Monitor size={18} /> Carte des Machines
-          </h3>
-          <div style={styles.machineStats}>
-            <span style={styles.availableTag}>
-              <Wifi size={14} /> {availableMachines} Libres
-            </span>
-            <span style={styles.occupiedTag}>
-              <WifiOff size={14} /> {occupiedMachines} Occupées
-            </span>
+      {/* Machines Map - Design amélioré */}
+      <div style={styles.machineMapCard}>
+        <div style={styles.machineMapHeader}>
+          <div style={styles.machineMapTitleSection}>
+            <div style={styles.machineMapIcon}>
+              <Monitor size={20} />
+            </div>
+            <div>
+              <h3 style={styles.machineMapTitle}>Carte des Machines</h3>
+              <p style={styles.machineMapSubtitle}>{totalMachines} machines au total</p>
+            </div>
+          </div>
+          <div style={styles.machineStatusBadges}>
+            <div style={styles.statusBadgeGreen}>
+              <div style={styles.statusDot} />
+              <span>{availableMachines} Libres</span>
+            </div>
+            <div style={styles.statusBadgeRed}>
+              <div style={{...styles.statusDot, background: '#ef4444'}} />
+              <span>{occupiedMachines} Occupées</span>
+            </div>
           </div>
         </div>
-        <div style={styles.machinesGrid}>
+
+        {/* Barre de progression */}
+        <div style={styles.progressBarContainer}>
+          <div style={styles.progressBarBg}>
+            <div style={{
+              ...styles.progressBarFill,
+              width: `${availablePercent}%`
+            }} />
+          </div>
+          <span style={styles.progressLabel}>{availablePercent}% disponible</span>
+        </div>
+
+        <div style={styles.machinesGridEnhanced}>
           {machines.length === 0 ? (
-            <div style={styles.emptyMachines}>
-              <Monitor size={40} color="#64748b" />
-              <p>Aucune machine configurée</p>
+            <div style={styles.emptyMachinesEnhanced}>
+              <div style={styles.emptyIcon}>
+                <Monitor size={48} />
+              </div>
+              <p style={styles.emptyText}>Aucune machine configurée</p>
+              <p style={styles.emptySubtext}>Ajoutez des machines pour commencer</p>
             </div>
           ) : (
             machines.map(machine => (
-              <MachineCard key={machine.id} machine={machine} />
+              <MachineCardEnhanced key={machine.id} machine={machine} />
             ))
           )}
         </div>
       </div>
 
-      {/* Bottom Row */}
+      {/* Bottom Row - Design amélioré */}
       <div style={styles.bottomRow}>
         {/* Recent Users */}
-        <div style={styles.dashboardCardSmall}>
-          <div style={styles.cardHeader}>
-            <h3 style={styles.cardTitle}>
-              <Users size={18} /> Derniers Utilisateurs
-            </h3>
+        <div style={styles.listCard}>
+          <div style={styles.listCardHeader}>
+            <div style={styles.listCardTitleSection}>
+              <div style={{...styles.listCardIcon, background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)'}}>
+                <Users size={18} />
+              </div>
+              <h3 style={styles.listCardTitle}>Derniers Utilisateurs</h3>
+            </div>
+            <span style={styles.listCardCount}>{users.length}</span>
           </div>
-          <div style={styles.recentList}>
+          <div style={styles.listCardContent}>
             {users.length === 0 ? (
-              <div style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>
-                Aucun utilisateur
+              <div style={styles.emptyList}>
+                <Users size={32} color="#475569" />
+                <p>Aucun utilisateur</p>
               </div>
             ) : (
-              users.slice(0, 5).map(u => (
-                <div key={u.id} style={styles.recentItem}>
-                  <div style={styles.recentAvatar}>{u.name?.charAt(0)}</div>
-                  <div style={styles.recentInfo}>
-                    <span style={styles.recentName}>{u.name}</span>
-                    <span style={styles.recentMeta}>{u.email}</span>
+              users.slice(0, 5).map((u, index) => (
+                <div key={u.id} style={{
+                  ...styles.listItem,
+                  animationDelay: `${index * 0.1}s`
+                }}>
+                  <div style={styles.listItemAvatar}>
+                    {u.name?.charAt(0).toUpperCase()}
                   </div>
-                  <span style={getRoleBadgeStyle(u.role)}>{getRoleLabel(u.role)}</span>
+                  <div style={styles.listItemInfo}>
+                    <span style={styles.listItemName}>{u.name}</span>
+                    <span style={styles.listItemMeta}>{u.email}</span>
+                  </div>
+                  <span style={getRoleBadgeStyleEnhanced(u.role)}>{getRoleLabel(u.role)}</span>
                 </div>
               ))
             )}
@@ -608,35 +654,36 @@ function DashboardView({ stats, dashboardStats, machines, users, games, onNaviga
         </div>
 
         {/* Games List */}
-        <div style={styles.dashboardCardSmall}>
-          <div style={styles.cardHeader}>
-            <h3 style={styles.cardTitle}>
-              <Gamepad2 size={18} /> Catalogue Jeux
-            </h3>
+        <div style={styles.listCard}>
+          <div style={styles.listCardHeader}>
+            <div style={styles.listCardTitleSection}>
+              <div style={{...styles.listCardIcon, background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'}}>
+                <Gamepad2 size={18} />
+              </div>
+              <h3 style={styles.listCardTitle}>Catalogue Jeux</h3>
+            </div>
+            <span style={styles.listCardCount}>{games.length}</span>
           </div>
-          <div style={styles.recentList}>
+          <div style={styles.listCardContent}>
             {games.length === 0 ? (
-              <div style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>
-                Aucun jeu configuré
+              <div style={styles.emptyList}>
+                <Gamepad2 size={32} color="#475569" />
+                <p>Aucun jeu configuré</p>
               </div>
             ) : (
-              games.slice(0, 5).map(g => (
-                <div key={g.id} style={styles.recentItem}>
-                  <div style={{...styles.recentAvatar, background: '#10b981'}}>
-                    <Gamepad2 size={14} />
+              games.slice(0, 5).map((g, index) => (
+                <div key={g.id} style={{
+                  ...styles.listItem,
+                  animationDelay: `${index * 0.1}s`
+                }}>
+                  <div style={{...styles.listItemAvatar, background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'}}>
+                    <Gamepad2 size={16} />
                   </div>
-                  <div style={styles.recentInfo}>
-                    <span style={styles.recentName}>{g.name}</span>
-                    <span style={styles.recentMeta}>{getGamePrice(g)}</span>
+                  <div style={styles.listItemInfo}>
+                    <span style={styles.listItemName}>{g.name}</span>
+                    <span style={styles.listItemPrice}>{getGamePrice(g)}</span>
                   </div>
-                  <span style={{
-                    padding: '4px 10px',
-                    borderRadius: '12px',
-                    fontSize: '11px',
-                    fontWeight: '600',
-                    background: g.active ? '#064e3b' : '#7f1d1d',
-                    color: g.active ? '#10b981' : '#ef4444'
-                  }}>
+                  <span style={getGameStatusBadge(g.active)}>
                     {g.active ? 'Actif' : 'Inactif'}
                   </span>
                 </div>
@@ -649,56 +696,96 @@ function DashboardView({ stats, dashboardStats, machines, users, games, onNaviga
   );
 }
 
-// ========== MINI STAT CARD ==========
-function MiniStatCard({ icon, label, value, color, onClick, isPrice }) {
+// ========== ENHANCED STAT CARD ==========
+function StatCardEnhanced({ icon, label, value, gradient, iconBg, onClick, clickable, isPrice }) {
   const [hovered, setHovered] = useState(false);
 
   return (
     <div
       style={{
-        ...styles.miniStatCard,
-        borderColor: hovered ? color : '#334155',
-        transform: hovered ? 'translateY(-4px)' : 'none',
-        cursor: onClick ? 'pointer' : 'default'
+        ...styles.statCardEnhanced,
+        transform: hovered ? 'translateY(-6px) scale(1.02)' : 'none',
+        boxShadow: hovered
+          ? '0 20px 40px rgba(0, 0, 0, 0.3)'
+          : '0 4px 12px rgba(0, 0, 0, 0.15)',
+        cursor: clickable ? 'pointer' : 'default'
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={onClick}
     >
-      <div style={{...styles.miniStatIcon, background: color}}>{icon}</div>
-      <div style={{
-        ...styles.miniStatValue,
-        fontSize: isPrice ? '22px' : '28px'
-      }}>{value}</div>
-      <div style={styles.miniStatLabel}>{label}</div>
+      <div style={{...styles.statIconEnhanced, background: iconBg}}>
+        <div style={{color: gradient.includes('#10b981') ? '#10b981' :
+                           gradient.includes('#6366f1') ? '#6366f1' :
+                           gradient.includes('#f59e0b') ? '#f59e0b' :
+                           gradient.includes('#8b5cf6') ? '#8b5cf6' :
+                           gradient.includes('#3b82f6') ? '#3b82f6' :
+                           gradient.includes('#ec4899') ? '#ec4899' :
+                           gradient.includes('#14b8a6') ? '#14b8a6' : '#64748b'}}>
+          {icon}
+        </div>
+      </div>
+      <div style={styles.statContentEnhanced}>
+        <div style={{
+          ...styles.statValueEnhanced,
+          fontSize: isPrice ? '24px' : '32px'
+        }}>{value}</div>
+        <div style={styles.statLabelEnhanced}>{label}</div>
+      </div>
+      {clickable && (
+        <div style={{
+          ...styles.clickIndicator,
+          opacity: hovered ? 1 : 0
+        }}>
+          <ChevronRight size={18} />
+        </div>
+      )}
     </div>
   );
 }
 
-// ========== MACHINE CARD ==========
-function MachineCard({ machine }) {
+// ========== ENHANCED MACHINE CARD ==========
+function MachineCardEnhanced({ machine }) {
   const isAvailable = machine.status === 'available';
   const [hovered, setHovered] = useState(false);
 
   return (
     <div
       style={{
-        ...styles.machineCardItem,
-        background: isAvailable ? '#064e3b' : '#7f1d1d',
+        ...styles.machineCardEnhanced,
+        background: isAvailable
+          ? 'linear-gradient(135deg, #064e3b 0%, #065f46 100%)'
+          : 'linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%)',
         borderColor: isAvailable ? '#10b981' : '#ef4444',
-        transform: hovered ? 'scale(1.05)' : 'scale(1)'
+        transform: hovered ? 'translateY(-4px) scale(1.05)' : 'scale(1)',
+        boxShadow: hovered
+          ? `0 12px 24px ${isAvailable ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
+          : '0 2px 8px rgba(0, 0, 0, 0.2)'
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <div style={styles.machineNumber}>#{machine.machine_number}</div>
-      <div style={styles.machineStatus}>
-        {isAvailable ? <Wifi size={16} /> : <WifiOff size={16} />}
+      <div style={styles.machineCardTop}>
+        <span style={styles.machineNumberEnhanced}>#{machine.machine_number}</span>
+        <div style={{
+          ...styles.machineStatusIcon,
+          background: isAvailable ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'
+        }}>
+          {isAvailable ? <Wifi size={14} /> : <WifiOff size={14} />}
+        </div>
       </div>
-      <div style={styles.machineType}>{machine.type || 'Standard'}</div>
+      <div style={styles.machineTypeEnhanced}>{machine.type || 'Standard'}</div>
+      <div style={{
+        ...styles.machineStatusText,
+        color: isAvailable ? '#6ee7b7' : '#fca5a5'
+      }}>
+        {isAvailable ? 'Disponible' : 'Occupée'}
+      </div>
     </div>
   );
 }
+
+// Les anciens composants MiniStatCard et MachineCard ont été remplacés par StatCardEnhanced et MachineCardEnhanced
 
 // ========== SKELETON LOADER ==========
 function SkeletonRow({ columns = 5 }) {
@@ -1203,6 +1290,37 @@ function getStatusBadgeStyle(status) {
   }
 }
 
+// Badge de rôle amélioré pour le dashboard
+function getRoleBadgeStyleEnhanced(role) {
+  const baseStyle = {
+    padding: '4px 10px',
+    borderRadius: '6px',
+    fontSize: '11px',
+    fontWeight: '600',
+    display: 'inline-block'
+  };
+
+  if (role === 'super_admin') {
+    return { ...baseStyle, background: 'rgba(139, 92, 246, 0.2)', color: '#a78bfa' };
+  } else if (role === 'admin') {
+    return { ...baseStyle, background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24' };
+  } else {
+    return { ...baseStyle, background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa' };
+  }
+}
+
+// Badge de statut de jeu
+function getGameStatusBadge(isActive) {
+  return {
+    padding: '4px 10px',
+    borderRadius: '6px',
+    fontSize: '11px',
+    fontWeight: '600',
+    background: isActive ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+    color: isActive ? '#6ee7b7' : '#fca5a5'
+  };
+}
+
 // ========== STYLES ==========
 const styles = {
   // App Layout
@@ -1213,33 +1331,35 @@ const styles = {
     width: '100%'
   },
 
-  // Sidebar
+  // Sidebar - Enhanced
   sidebar: {
-    background: '#1e293b',
+    background: 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)',
     borderRight: '1px solid #334155',
     display: 'flex',
     flexDirection: 'column',
-    transition: 'width 0.3s ease',
+    transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     position: 'fixed',
     height: '100vh',
-    zIndex: 100
+    zIndex: 100,
+    boxShadow: '4px 0 24px rgba(0, 0, 0, 0.2)'
   },
   sidebarHeader: {
-    padding: '20px',
+    padding: '24px 20px',
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
-    borderBottom: '1px solid #334155'
+    gap: '14px',
+    borderBottom: '1px solid rgba(51, 65, 85, 0.5)'
   },
   logoBox: {
-    width: '40px',
-    height: '40px',
-    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-    borderRadius: '10px',
+    width: '44px',
+    height: '44px',
+    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+    borderRadius: '12px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0
+    flexShrink: 0,
+    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)'
   },
   logoText: {
     display: 'flex',
@@ -1248,62 +1368,66 @@ const styles = {
   logoTitle: {
     color: '#f1f5f9',
     fontWeight: '800',
-    fontSize: '16px'
+    fontSize: '17px',
+    letterSpacing: '-0.5px'
   },
   logoSubtitle: {
-    color: '#64748b',
+    color: '#6366f1',
     fontSize: '11px',
-    fontWeight: '500'
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: '1px'
   },
   sidebarNav: {
     flex: 1,
-    padding: '12px',
+    padding: '16px 12px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '4px'
+    gap: '6px'
   },
   menuItem: {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    padding: '12px 14px',
-    borderRadius: '10px',
+    padding: '14px 16px',
+    borderRadius: '12px',
     border: 'none',
     background: 'transparent',
     color: '#94a3b8',
     cursor: 'pointer',
-    transition: 'all 0.2s',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
     width: '100%',
     textAlign: 'left',
     fontSize: '14px',
     fontWeight: '500'
   },
   menuItemActive: {
-    background: '#6366f1',
-    color: '#fff'
+    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+    color: '#fff',
+    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)'
   },
   menuLabel: {
     flex: 1
   },
   menuBadge: {
-    background: '#334155',
-    color: '#94a3b8',
-    padding: '2px 8px',
-    borderRadius: '10px',
+    background: 'rgba(99, 102, 241, 0.2)',
+    color: '#a5b4fc',
+    padding: '4px 10px',
+    borderRadius: '8px',
     fontSize: '12px',
-    fontWeight: '600'
+    fontWeight: '700'
   },
   sidebarFooter: {
-    padding: '12px',
-    borderTop: '1px solid #334155'
+    padding: '16px 12px',
+    borderTop: '1px solid rgba(51, 65, 85, 0.5)'
   },
   collapseBtn: {
     width: '100%',
-    padding: '10px',
-    background: '#334155',
-    border: 'none',
-    borderRadius: '8px',
-    color: '#94a3b8',
+    padding: '12px',
+    background: 'rgba(99, 102, 241, 0.1)',
+    border: '1px solid rgba(99, 102, 241, 0.2)',
+    borderRadius: '10px',
+    color: '#a5b4fc',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
@@ -1321,14 +1445,15 @@ const styles = {
     minHeight: '100vh'
   },
 
-  // Top Bar
+  // Top Bar - Enhanced
   topBar: {
-    background: '#1e293b',
-    padding: '16px 24px',
+    background: 'rgba(30, 41, 59, 0.8)',
+    backdropFilter: 'blur(12px)',
+    padding: '16px 28px',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottom: '1px solid #334155',
+    borderBottom: '1px solid rgba(51, 65, 85, 0.5)',
     position: 'sticky',
     top: 0,
     zIndex: 50
@@ -1340,9 +1465,10 @@ const styles = {
   },
   pageTitle: {
     margin: 0,
-    fontSize: '20px',
+    fontSize: '22px',
     fontWeight: '700',
-    color: '#f1f5f9'
+    color: '#f1f5f9',
+    letterSpacing: '-0.5px'
   },
   topBarRight: {
     display: 'flex',
@@ -1353,46 +1479,52 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    color: '#64748b',
+    color: '#94a3b8',
     fontSize: '14px',
-    fontWeight: '500'
+    fontWeight: '600',
+    padding: '8px 14px',
+    background: 'rgba(51, 65, 85, 0.5)',
+    borderRadius: '10px'
   },
   userPill: {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
-    background: '#334155',
-    padding: '6px 12px 6px 6px',
-    borderRadius: '20px'
+    gap: '10px',
+    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+    border: '1px solid rgba(99, 102, 241, 0.2)',
+    padding: '6px 14px 6px 6px',
+    borderRadius: '30px'
   },
   userAvatarSmall: {
-    width: '28px',
-    height: '28px',
+    width: '32px',
+    height: '32px',
     borderRadius: '50%',
-    background: '#6366f1',
+    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
     color: '#fff',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '12px',
-    fontWeight: '700'
+    fontSize: '13px',
+    fontWeight: '700',
+    boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)'
   },
   userNameSmall: {
     color: '#f1f5f9',
-    fontSize: '13px',
-    fontWeight: '500'
+    fontSize: '14px',
+    fontWeight: '600'
   },
   logoutBtnSmall: {
-    padding: '8px',
-    background: '#ef4444',
+    padding: '10px',
+    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: '10px',
     color: '#fff',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    transition: 'all 0.2s'
+    transition: 'all 0.2s',
+    boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)'
   },
 
   // Content
@@ -1413,127 +1545,331 @@ const styles = {
     gridTemplateColumns: 'repeat(4, 1fr)',
     gap: '16px'
   },
-  miniStatCard: {
+  // Enhanced Stat Card Styles
+  statCardEnhanced: {
     background: '#1e293b',
-    borderRadius: '12px',
-    padding: '20px',
+    borderRadius: '16px',
+    padding: '24px',
     border: '1px solid #334155',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    position: 'relative',
+    overflow: 'hidden'
+  },
+  statIconEnhanced: {
+    width: '56px',
+    height: '56px',
+    borderRadius: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0
+  },
+  statContentEnhanced: {
+    flex: 1,
+    minWidth: 0
+  },
+  statValueEnhanced: {
+    fontSize: '32px',
+    fontWeight: '800',
+    color: '#f1f5f9',
+    lineHeight: 1.1,
+    marginBottom: '4px'
+  },
+  statLabelEnhanced: {
+    fontSize: '13px',
+    color: '#94a3b8',
+    fontWeight: '500'
+  },
+  clickIndicator: {
+    position: 'absolute',
+    right: '16px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    color: '#64748b',
+    transition: 'opacity 0.2s'
+  },
+
+  // Machine Map Card - Enhanced
+  machineMapCard: {
+    background: '#1e293b',
+    borderRadius: '20px',
+    border: '1px solid #334155',
+    overflow: 'hidden'
+  },
+  machineMapHeader: {
+    padding: '20px 24px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottom: '1px solid #334155'
+  },
+  machineMapTitleSection: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px'
+  },
+  machineMapIcon: {
+    width: '44px',
+    height: '44px',
+    borderRadius: '12px',
+    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#fff'
+  },
+  machineMapTitle: {
+    margin: 0,
+    fontSize: '16px',
+    fontWeight: '700',
+    color: '#f1f5f9'
+  },
+  machineMapSubtitle: {
+    margin: '2px 0 0 0',
+    fontSize: '12px',
+    color: '#64748b'
+  },
+  machineStatusBadges: {
+    display: 'flex',
+    gap: '12px'
+  },
+  statusBadgeGreen: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '8px 14px',
+    background: 'rgba(16, 185, 129, 0.1)',
+    borderRadius: '10px',
+    border: '1px solid rgba(16, 185, 129, 0.2)',
+    color: '#10b981',
+    fontSize: '13px',
+    fontWeight: '600'
+  },
+  statusBadgeRed: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '8px 14px',
+    background: 'rgba(239, 68, 68, 0.1)',
+    borderRadius: '10px',
+    border: '1px solid rgba(239, 68, 68, 0.2)',
+    color: '#ef4444',
+    fontSize: '13px',
+    fontWeight: '600'
+  },
+  statusDot: {
+    width: '8px',
+    height: '8px',
+    borderRadius: '50%',
+    background: '#10b981'
+  },
+  progressBarContainer: {
+    padding: '0 24px 16px 24px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px'
+  },
+  progressBarBg: {
+    flex: 1,
+    height: '8px',
+    background: '#334155',
+    borderRadius: '4px',
+    overflow: 'hidden'
+  },
+  progressBarFill: {
+    height: '100%',
+    background: 'linear-gradient(90deg, #10b981 0%, #6ee7b7 100%)',
+    borderRadius: '4px',
+    transition: 'width 0.5s ease'
+  },
+  progressLabel: {
+    fontSize: '12px',
+    color: '#64748b',
+    fontWeight: '500',
+    minWidth: '90px',
+    textAlign: 'right'
+  },
+  machinesGridEnhanced: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))',
+    gap: '14px',
+    padding: '20px 24px 24px 24px'
+  },
+  emptyMachinesEnhanced: {
+    gridColumn: '1 / -1',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '8px',
-    transition: 'all 0.3s ease'
+    gap: '12px',
+    padding: '60px 40px'
   },
-  miniStatIcon: {
-    width: '44px',
-    height: '44px',
+  emptyIcon: {
+    width: '80px',
+    height: '80px',
+    borderRadius: '20px',
+    background: '#334155',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#64748b'
+  },
+  emptyText: {
+    margin: 0,
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#94a3b8'
+  },
+  emptySubtext: {
+    margin: 0,
+    fontSize: '13px',
+    color: '#64748b'
+  },
+  machineCardEnhanced: {
+    padding: '16px',
+    borderRadius: '14px',
+    border: '2px solid',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    cursor: 'default'
+  },
+  machineCardTop: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  machineNumberEnhanced: {
+    fontSize: '18px',
+    fontWeight: '800',
+    color: '#fff'
+  },
+  machineStatusIcon: {
+    width: '28px',
+    height: '28px',
+    borderRadius: '8px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#fff'
+  },
+  machineTypeEnhanced: {
+    fontSize: '11px',
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
+  },
+  machineStatusText: {
+    fontSize: '10px',
+    fontWeight: '500'
+  },
+
+  // List Cards - Enhanced
+  listCard: {
+    background: '#1e293b',
+    borderRadius: '20px',
+    border: '1px solid #334155',
+    overflow: 'hidden',
+    flex: 1
+  },
+  listCardHeader: {
+    padding: '18px 20px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottom: '1px solid #334155'
+  },
+  listCardTitleSection: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px'
+  },
+  listCardIcon: {
+    width: '36px',
+    height: '36px',
     borderRadius: '10px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     color: '#fff'
   },
-  miniStatValue: {
-    fontSize: '28px',
-    fontWeight: '800',
+  listCardTitle: {
+    margin: 0,
+    fontSize: '15px',
+    fontWeight: '600',
     color: '#f1f5f9'
   },
-  miniStatLabel: {
+  listCardCount: {
+    padding: '4px 12px',
+    background: '#334155',
+    borderRadius: '20px',
     fontSize: '12px',
-    color: '#64748b',
-    fontWeight: '500'
+    fontWeight: '700',
+    color: '#94a3b8'
   },
-
-  // Dashboard Cards
-  dashboardCard: {
-    background: '#1e293b',
-    borderRadius: '16px',
-    border: '1px solid #334155',
-    overflow: 'hidden'
+  listCardContent: {
+    padding: '8px'
   },
-  dashboardCardSmall: {
-    background: '#1e293b',
-    borderRadius: '16px',
-    border: '1px solid #334155',
-    overflow: 'hidden',
-    flex: 1
-  },
-  cardHeader: {
-    padding: '16px 20px',
-    borderBottom: '1px solid #334155',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  },
-  cardTitle: {
-    margin: 0,
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#f1f5f9',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px'
-  },
-  machineStats: {
-    display: 'flex',
-    gap: '12px'
-  },
-  availableTag: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-    color: '#10b981',
-    fontSize: '12px',
-    fontWeight: '600'
-  },
-  occupiedTag: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-    color: '#ef4444',
-    fontSize: '12px',
-    fontWeight: '600'
-  },
-
-  // Machines Grid
-  machinesGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-    gap: '12px',
-    padding: '20px'
-  },
-  emptyMachines: {
-    gridColumn: '1 / -1',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '40px',
-    color: '#64748b'
-  },
-  machineCardItem: {
-    padding: '16px',
-    borderRadius: '12px',
-    border: '2px solid',
+  emptyList: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     gap: '8px',
-    transition: 'all 0.2s ease',
+    padding: '40px 20px',
+    color: '#64748b',
+    fontSize: '13px'
+  },
+  listItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '12px',
+    borderRadius: '12px',
+    transition: 'background 0.2s',
     cursor: 'default'
   },
-  machineNumber: {
-    fontSize: '18px',
-    fontWeight: '800',
-    color: '#fff'
+  listItemAvatar: {
+    width: '40px',
+    height: '40px',
+    borderRadius: '10px',
+    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+    color: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '14px',
+    fontWeight: '700',
+    flexShrink: 0
   },
-  machineStatus: {
-    color: '#fff'
+  listItemInfo: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    minWidth: 0
   },
-  machineType: {
-    fontSize: '10px',
-    color: 'rgba(255,255,255,0.7)',
-    fontWeight: '500'
+  listItemName: {
+    color: '#f1f5f9',
+    fontSize: '14px',
+    fontWeight: '600',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis'
+  },
+  listItemMeta: {
+    color: '#64748b',
+    fontSize: '12px',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis'
+  },
+  listItemPrice: {
+    color: '#10b981',
+    fontSize: '12px',
+    fontWeight: '600'
   },
 
   // Bottom Row
@@ -1541,43 +1877,6 @@ const styles = {
     display: 'grid',
     gridTemplateColumns: 'repeat(2, 1fr)',
     gap: '24px'
-  },
-  recentList: {
-    padding: '12px'
-  },
-  recentItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '10px 12px',
-    borderRadius: '8px',
-    transition: 'background 0.2s'
-  },
-  recentAvatar: {
-    width: '32px',
-    height: '32px',
-    borderRadius: '8px',
-    background: '#6366f1',
-    color: '#fff',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '12px',
-    fontWeight: '700'
-  },
-  recentInfo: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column'
-  },
-  recentName: {
-    color: '#f1f5f9',
-    fontSize: '13px',
-    fontWeight: '600'
-  },
-  recentMeta: {
-    color: '#64748b',
-    fontSize: '11px'
   },
 
   // Export Button

@@ -21,6 +21,28 @@
   }
 }
 
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes spin {
   from {
     transform: rotate(0deg);
@@ -36,6 +58,15 @@
   }
   50% {
     opacity: 0.5;
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(99, 102, 241, 0);
   }
 }
 
@@ -56,6 +87,27 @@
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
   }
 }
 
@@ -89,10 +141,37 @@ table tbody tr:hover {
   animation: fadeInRow 0.3s ease forwards;
 }
 
+/* Stat card hover glow */
+:global(.stat-card-glow):hover {
+  animation: pulseGlow 2s ease infinite;
+}
+
+/* Float animation for cards */
+:global(.float-animation) {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* List item hover effect */
+:global(.list-item-hover):hover {
+  background: rgba(99, 102, 241, 0.1) !important;
+}
+
 /* ========== RESPONSIVE DESIGN ========== */
+@media (max-width: 1280px) {
+  /* Stats row adjustment */
+  :global(.stats-row) {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
 @media (max-width: 1024px) {
   .statsContainer {
     grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Bottom row stacking */
+  :global(.bottom-row) {
+    grid-template-columns: 1fr !important;
   }
 }
 
