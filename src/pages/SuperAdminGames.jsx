@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Gamepad2, Plus, Edit2, Trash2, Clock, Trophy, ArrowLeft, Save, X } from 'lucide-react';
+import { Gamepad2, Plus, Edit2, Trash2, Clock, Trophy, ArrowLeft, Save, X, AlertTriangle } from 'lucide-react';
 import api from '../services/api';
 import Toast from '../components/Toast';
 
@@ -11,6 +11,9 @@ function SuperAdminGames({ onBack }) {
   const [showGameModal, setShowGameModal] = useState(false);
   const [editingGame, setEditingGame] = useState(null);
   const [expandedGameId, setExpandedGameId] = useState(null);
+
+  // Delete confirmation state
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // { type: 'game' | 'pricing', gameId, pricingId?, gameName? }
 
   // Form states
   const [gameName, setGameName] = useState('');
@@ -88,15 +91,25 @@ function SuperAdminGames({ onBack }) {
   };
 
   const handleDeleteGame = async (gameId) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce jeu et tous ses tarifs ?')) return;
-
     try {
       await api.delete(`/super-admin/games/${gameId}`);
       showToast('Jeu supprimé avec succès');
+      setDeleteConfirm(null);
       loadGames();
     } catch (error) {
-      showToast('Erreur lors de la suppression du jeu', 'error');
+      console.error('Delete game error:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Erreur lors de la suppression du jeu';
+      showToast(errorMsg, 'error');
+      setDeleteConfirm(null);
     }
+  };
+
+  const confirmDeleteGame = (game) => {
+    setDeleteConfirm({ type: 'game', gameId: game.id, name: game.name });
+  };
+
+  const confirmDeletePricing = (gameId, pricingId, pricingLabel) => {
+    setDeleteConfirm({ type: 'pricing', gameId, pricingId, name: pricingLabel });
   };
 
   const handleUpdatePricing = async (gameId, pricingId, data) => {
@@ -116,16 +129,16 @@ function SuperAdminGames({ onBack }) {
   };
 
   const handleDeletePricing = async (gameId, pricingId) => {
-    if (!window.confirm('Supprimer ce tarif ?')) return;
-
     try {
       await api.delete(`/super-admin/games/${gameId}/pricings/${pricingId}`);
       showToast('Tarif supprimé');
+      setDeleteConfirm(null);
       loadGames();
     } catch (error) {
       console.error('Delete pricing error:', error);
       const errorMsg = error.response?.data?.message || error.message || 'Erreur lors de la suppression';
       showToast(errorMsg, 'error');
+      setDeleteConfirm(null);
     }
   };
 
@@ -236,9 +249,9 @@ function SuperAdminGames({ onBack }) {
               expanded={expandedGameId === game.id}
               onToggle={() => setExpandedGameId(expandedGameId === game.id ? null : game.id)}
               onEdit={() => openGameModal(game)}
-              onDelete={() => handleDeleteGame(game.id)}
+              onDelete={() => confirmDeleteGame(game)}
               onUpdatePricing={handleUpdatePricing}
-              onDeletePricing={handleDeletePricing}
+              onDeletePricing={(gameId, pricingId, label) => confirmDeletePricing(gameId, pricingId, label)}
               onAddPricing={handleAddPricing}
               pricingModes={pricingModes}
             />
@@ -299,6 +312,47 @@ function SuperAdminGames({ onBack }) {
                 }}
               >
                 Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div style={modalOverlay} onClick={() => setDeleteConfirm(null)}>
+          <div style={deleteModalContent} onClick={(e) => e.stopPropagation()}>
+            <div style={deleteIconContainer}>
+              <AlertTriangle size={48} color="#ef4444" />
+            </div>
+            <h3 style={deleteTitle}>Confirmer la suppression</h3>
+            <p style={deleteText}>
+              {deleteConfirm.type === 'game'
+                ? `Êtes-vous sûr de vouloir supprimer le jeu "${deleteConfirm.name}" et tous ses tarifs associés ?`
+                : `Êtes-vous sûr de vouloir supprimer le tarif "${deleteConfirm.name}" ?`
+              }
+            </p>
+            <p style={deleteWarning}>Cette action est irréversible.</p>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                style={cancelBtn}
+              >
+                <X size={18} />
+                Annuler
+              </button>
+              <button
+                onClick={() => {
+                  if (deleteConfirm.type === 'game') {
+                    handleDeleteGame(deleteConfirm.gameId);
+                  } else {
+                    handleDeletePricing(deleteConfirm.gameId, deleteConfirm.pricingId);
+                  }
+                }}
+                style={deleteBtn}
+              >
+                <Trash2 size={18} />
+                Supprimer
               </button>
             </div>
           </div>
@@ -419,22 +473,25 @@ function GameCard({ game, expanded, onToggle, onEdit, onDelete, onUpdatePricing,
               Tarifs par Temps
             </h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
-              {timePricings.map(pricing => (
-                <PricingItem
-                  key={pricing.id}
-                  pricing={pricing}
-                  isEditing={editingPricingId === pricing.id}
-                  editValue={editValue}
-                  editPrice={editPrice}
-                  onEditValueChange={setEditValue}
-                  onEditPriceChange={setEditPrice}
-                  onStartEdit={() => startEdit(pricing)}
-                  onSaveEdit={() => saveEdit(pricing)}
-                  onCancelEdit={() => setEditingPricingId(null)}
-                  onDelete={() => onDeletePricing(game.id, pricing.id)}
-                  color="#3b82f6"
-                />
-              ))}
+              {timePricings.map(pricing => {
+                const label = `${pricing.duration_minutes} min - ${pricing.price} DH`;
+                return (
+                  <PricingItem
+                    key={pricing.id}
+                    pricing={pricing}
+                    isEditing={editingPricingId === pricing.id}
+                    editValue={editValue}
+                    editPrice={editPrice}
+                    onEditValueChange={setEditValue}
+                    onEditPriceChange={setEditPrice}
+                    onStartEdit={() => startEdit(pricing)}
+                    onSaveEdit={() => saveEdit(pricing)}
+                    onCancelEdit={() => setEditingPricingId(null)}
+                    onDelete={() => onDeletePricing(game.id, pricing.id, label)}
+                    color="#3b82f6"
+                  />
+                );
+              })}
             </div>
           </div>
 
@@ -445,22 +502,25 @@ function GameCard({ game, expanded, onToggle, onEdit, onDelete, onUpdatePricing,
               Tarifs par Match
             </h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
-              {matchPricings.map(pricing => (
-                <PricingItem
-                  key={pricing.id}
-                  pricing={pricing}
-                  isEditing={editingPricingId === pricing.id}
-                  editValue={editValue}
-                  editPrice={editPrice}
-                  onEditValueChange={setEditValue}
-                  onEditPriceChange={setEditPrice}
-                  onStartEdit={() => startEdit(pricing)}
-                  onSaveEdit={() => saveEdit(pricing)}
-                  onCancelEdit={() => setEditingPricingId(null)}
-                  onDelete={() => onDeletePricing(game.id, pricing.id)}
-                  color="#10b981"
-                />
-              ))}
+              {matchPricings.map(pricing => {
+                const label = `${pricing.matches_count} match${pricing.matches_count > 1 ? 's' : ''} - ${pricing.price} DH`;
+                return (
+                  <PricingItem
+                    key={pricing.id}
+                    pricing={pricing}
+                    isEditing={editingPricingId === pricing.id}
+                    editValue={editValue}
+                    editPrice={editPrice}
+                    onEditValueChange={setEditValue}
+                    onEditPriceChange={setEditPrice}
+                    onStartEdit={() => startEdit(pricing)}
+                    onSaveEdit={() => saveEdit(pricing)}
+                    onCancelEdit={() => setEditingPricingId(null)}
+                    onDelete={() => onDeletePricing(game.id, pricing.id, label)}
+                    color="#10b981"
+                  />
+                );
+              })}
             </div>
           </div>
 
@@ -712,6 +772,83 @@ const modalContent = {
   width: '450px',
   maxWidth: '90%',
   boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+};
+
+const deleteModalContent = {
+  background: 'white',
+  borderRadius: '20px',
+  padding: '32px',
+  width: '420px',
+  maxWidth: '90%',
+  boxShadow: '0 25px 80px rgba(0,0,0,0.4)',
+  textAlign: 'center'
+};
+
+const deleteIconContainer = {
+  width: '80px',
+  height: '80px',
+  borderRadius: '50%',
+  background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  margin: '0 auto 20px auto',
+  border: '3px solid #fecaca'
+};
+
+const deleteTitle = {
+  margin: '0 0 12px 0',
+  fontSize: '22px',
+  fontWeight: '700',
+  color: '#1f2937'
+};
+
+const deleteText = {
+  margin: '0 0 8px 0',
+  fontSize: '15px',
+  color: '#4b5563',
+  lineHeight: '1.5'
+};
+
+const deleteWarning = {
+  margin: '0',
+  fontSize: '13px',
+  color: '#ef4444',
+  fontWeight: '600'
+};
+
+const cancelBtn = {
+  flex: 1,
+  padding: '14px 20px',
+  background: '#f3f4f6',
+  border: 'none',
+  borderRadius: '10px',
+  cursor: 'pointer',
+  fontSize: '15px',
+  fontWeight: '600',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '8px',
+  color: '#4b5563',
+  transition: 'all 0.2s'
+};
+
+const deleteBtn = {
+  flex: 1,
+  padding: '14px 20px',
+  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+  color: 'white',
+  border: 'none',
+  borderRadius: '10px',
+  cursor: 'pointer',
+  fontSize: '15px',
+  fontWeight: '600',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '8px',
+  transition: 'all 0.2s'
 };
 
 export default SuperAdminGames;
