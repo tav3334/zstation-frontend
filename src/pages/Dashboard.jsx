@@ -260,7 +260,11 @@ function Dashboard({ user, onLogout }) {
         {/* Logo */}
         <div style={styles.sidebarHeader}>
           <div style={styles.logoBox}>
-            <Zap size={24} color="#fff" />
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 8H26L14 24H26" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+              <circle cx="8" cy="8" r="2" fill="#6ee7b7"/>
+              <circle cx="24" cy="24" r="2" fill="#6ee7b7"/>
+            </svg>
           </div>
           {!sidebarCollapsed && (
             <div style={styles.logoText}>
@@ -515,7 +519,8 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0
+    flexShrink: 0,
+    boxShadow: '0 0 20px rgba(16, 185, 129, 0.4)'
   },
   logoText: {
     display: 'flex',
