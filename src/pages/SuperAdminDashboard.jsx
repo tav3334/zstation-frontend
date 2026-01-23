@@ -3,7 +3,8 @@ import {
   Users, Monitor, Gamepad2, LogOut, Search, Plus,
   Edit2, Trash2, X, AlertCircle, Activity,
   Download, RefreshCw, LayoutDashboard,
-  ChevronLeft, ChevronRight, Zap, Wifi, WifiOff, Clock
+  ChevronLeft, ChevronRight, Zap, Wifi, WifiOff, Clock,
+  TrendingUp, DollarSign, PlayCircle, Calendar
 } from 'lucide-react';
 import api from '../services/api';
 import Toast from '../components/Toast';
@@ -38,6 +39,17 @@ function SuperAdminDashboard({ user, onLogout }) {
     activeUsers: 0
   });
 
+  // États pour les statistiques avancées
+  const [dashboardStats, setDashboardStats] = useState({
+    sessions_today: 0,
+    active_sessions: 0,
+    revenue_today: 0,
+    revenue_month: 0,
+    total_completed_sessions: 0,
+    machines_available: 0,
+    machines_occupied: 0
+  });
+
   // États pour les modals
   const [showUserModal, setShowUserModal] = useState(false);
   const [showMachineModal, setShowMachineModal] = useState(false);
@@ -63,14 +75,18 @@ function SuperAdminDashboard({ user, onLogout }) {
   const loadAllData = async () => {
     setLoading(true);
     try {
-      const [usersRes, machinesRes, gamesRes] = await Promise.all([
+      const [usersRes, machinesRes, gamesRes, statsRes] = await Promise.all([
         api.get('/super-admin/users'),
         api.get('/super-admin/machines'),
-        api.get('/super-admin/games')
+        api.get('/super-admin/games'),
+        api.get('/super-admin/stats')
       ]);
       setUsers(usersRes.data.users || usersRes.data || []);
       setMachines(machinesRes.data.machines || machinesRes.data || []);
       setGames(gamesRes.data.games || gamesRes.data || []);
+      if (statsRes.data.stats) {
+        setDashboardStats(statsRes.data.stats);
+      }
     } catch (error) {
       showToast('Erreur lors du chargement des données', 'error');
     } finally {
@@ -335,10 +351,12 @@ function SuperAdminDashboard({ user, onLogout }) {
           {activeTab === 'dashboard' && (
             <DashboardView
               stats={stats}
+              dashboardStats={dashboardStats}
               machines={machines}
               users={users}
               games={games}
               onNavigate={setActiveTab}
+              onGamesClick={() => setShowGamesManagement(true)}
             />
           )}
 
@@ -452,40 +470,82 @@ function SuperAdminDashboard({ user, onLogout }) {
 }
 
 // ========== DASHBOARD VIEW ==========
-function DashboardView({ stats, machines, users, games, onNavigate }) {
-  const availableMachines = machines.filter(m => m.status === 'available').length;
-  const occupiedMachines = machines.filter(m => m.status !== 'available').length;
+function DashboardView({ stats, dashboardStats, machines, users, games, onNavigate, onGamesClick }) {
+  const availableMachines = dashboardStats.machines_available || machines.filter(m => m.status === 'available').length;
+  const occupiedMachines = dashboardStats.machines_occupied || machines.filter(m => m.status !== 'available').length;
+
+  // Helper pour formater les prix des jeux
+  const getGamePrice = (game) => {
+    if (game.pricings && game.pricings.length > 0) {
+      const pricing1h = game.pricings.find(p => p.duration_minutes === 60);
+      if (pricing1h) return `${pricing1h.price} DH/h`;
+      const pricing30min = game.pricings.find(p => p.duration_minutes === 30);
+      if (pricing30min) return `${pricing30min.price} DH/30min`;
+      return `${game.pricings[0].price} DH`;
+    }
+    return '-';
+  };
 
   return (
     <div style={styles.dashboardGrid}>
-      {/* Stats Row */}
+      {/* Stats Row - Statistiques principales */}
+      <div style={styles.statsRow}>
+        <MiniStatCard
+          icon={<PlayCircle size={20} />}
+          label="Sessions Actives"
+          value={dashboardStats.active_sessions}
+          color="#10b981"
+        />
+        <MiniStatCard
+          icon={<Calendar size={20} />}
+          label="Sessions Aujourd'hui"
+          value={dashboardStats.sessions_today}
+          color="#6366f1"
+        />
+        <MiniStatCard
+          icon={<DollarSign size={20} />}
+          label="Revenu Aujourd'hui"
+          value={`${dashboardStats.revenue_today} DH`}
+          color="#f59e0b"
+          isPrice
+        />
+        <MiniStatCard
+          icon={<TrendingUp size={20} />}
+          label="Revenu du Mois"
+          value={`${dashboardStats.revenue_month} DH`}
+          color="#8b5cf6"
+          isPrice
+        />
+      </div>
+
+      {/* Stats Row 2 - Ressources */}
       <div style={styles.statsRow}>
         <MiniStatCard
           icon={<Users size={20} />}
           label="Utilisateurs"
           value={stats.totalUsers}
-          color="#6366f1"
+          color="#3b82f6"
           onClick={() => onNavigate('users')}
         />
         <MiniStatCard
           icon={<Monitor size={20} />}
           label="Machines"
           value={stats.totalMachines}
-          color="#8b5cf6"
+          color="#ec4899"
           onClick={() => onNavigate('machines')}
         />
         <MiniStatCard
           icon={<Gamepad2 size={20} />}
           label="Jeux"
           value={stats.totalGames}
-          color="#10b981"
-          onClick={() => onNavigate('games')}
+          color="#14b8a6"
+          onClick={onGamesClick}
         />
         <MiniStatCard
           icon={<Activity size={20} />}
-          label="Actifs"
-          value={stats.activeUsers}
-          color="#f59e0b"
+          label="Sessions Terminées"
+          value={dashboardStats.total_completed_sessions}
+          color="#64748b"
         />
       </div>
 
@@ -528,16 +588,22 @@ function DashboardView({ stats, machines, users, games, onNavigate }) {
             </h3>
           </div>
           <div style={styles.recentList}>
-            {users.slice(0, 5).map(u => (
-              <div key={u.id} style={styles.recentItem}>
-                <div style={styles.recentAvatar}>{u.name?.charAt(0)}</div>
-                <div style={styles.recentInfo}>
-                  <span style={styles.recentName}>{u.name}</span>
-                  <span style={styles.recentMeta}>{u.email}</span>
-                </div>
-                <span style={getRoleBadgeStyle(u.role)}>{getRoleLabel(u.role)}</span>
+            {users.length === 0 ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>
+                Aucun utilisateur
               </div>
-            ))}
+            ) : (
+              users.slice(0, 5).map(u => (
+                <div key={u.id} style={styles.recentItem}>
+                  <div style={styles.recentAvatar}>{u.name?.charAt(0)}</div>
+                  <div style={styles.recentInfo}>
+                    <span style={styles.recentName}>{u.name}</span>
+                    <span style={styles.recentMeta}>{u.email}</span>
+                  </div>
+                  <span style={getRoleBadgeStyle(u.role)}>{getRoleLabel(u.role)}</span>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -549,17 +615,33 @@ function DashboardView({ stats, machines, users, games, onNavigate }) {
             </h3>
           </div>
           <div style={styles.recentList}>
-            {games.slice(0, 5).map(g => (
-              <div key={g.id} style={styles.recentItem}>
-                <div style={{...styles.recentAvatar, background: '#10b981'}}>
-                  <Gamepad2 size={14} />
-                </div>
-                <div style={styles.recentInfo}>
-                  <span style={styles.recentName}>{g.name}</span>
-                  <span style={styles.recentMeta}>{g.price_1h || g.price_30min || g.price_6min} DH</span>
-                </div>
+            {games.length === 0 ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>
+                Aucun jeu configuré
               </div>
-            ))}
+            ) : (
+              games.slice(0, 5).map(g => (
+                <div key={g.id} style={styles.recentItem}>
+                  <div style={{...styles.recentAvatar, background: '#10b981'}}>
+                    <Gamepad2 size={14} />
+                  </div>
+                  <div style={styles.recentInfo}>
+                    <span style={styles.recentName}>{g.name}</span>
+                    <span style={styles.recentMeta}>{getGamePrice(g)}</span>
+                  </div>
+                  <span style={{
+                    padding: '4px 10px',
+                    borderRadius: '12px',
+                    fontSize: '11px',
+                    fontWeight: '600',
+                    background: g.active ? '#064e3b' : '#7f1d1d',
+                    color: g.active ? '#10b981' : '#ef4444'
+                  }}>
+                    {g.active ? 'Actif' : 'Inactif'}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -568,7 +650,7 @@ function DashboardView({ stats, machines, users, games, onNavigate }) {
 }
 
 // ========== MINI STAT CARD ==========
-function MiniStatCard({ icon, label, value, color, onClick }) {
+function MiniStatCard({ icon, label, value, color, onClick, isPrice }) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -584,7 +666,10 @@ function MiniStatCard({ icon, label, value, color, onClick }) {
       onClick={onClick}
     >
       <div style={{...styles.miniStatIcon, background: color}}>{icon}</div>
-      <div style={styles.miniStatValue}>{value}</div>
+      <div style={{
+        ...styles.miniStatValue,
+        fontSize: isPrice ? '22px' : '28px'
+      }}>{value}</div>
       <div style={styles.miniStatLabel}>{label}</div>
     </div>
   );
