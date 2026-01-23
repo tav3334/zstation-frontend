@@ -490,41 +490,7 @@ function DashboardView({ stats, dashboardStats, machines, users, games, onNaviga
 
   return (
     <div style={styles.dashboardGrid}>
-      {/* Stats Row - Statistiques principales avec gradients */}
-      <div style={styles.statsRow}>
-        <StatCardEnhanced
-          icon={<PlayCircle size={24} />}
-          label="Sessions Actives"
-          value={dashboardStats.active_sessions}
-          gradient="linear-gradient(135deg, #10b981 0%, #059669 100%)"
-          iconBg="rgba(16, 185, 129, 0.2)"
-        />
-        <StatCardEnhanced
-          icon={<Calendar size={24} />}
-          label="Sessions Aujourd'hui"
-          value={dashboardStats.sessions_today}
-          gradient="linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)"
-          iconBg="rgba(99, 102, 241, 0.2)"
-        />
-        <StatCardEnhanced
-          icon={<DollarSign size={24} />}
-          label="Revenu Aujourd'hui"
-          value={`${dashboardStats.revenue_today} DH`}
-          gradient="linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
-          iconBg="rgba(245, 158, 11, 0.2)"
-          isPrice
-        />
-        <StatCardEnhanced
-          icon={<TrendingUp size={24} />}
-          label="Revenu du Mois"
-          value={`${dashboardStats.revenue_month} DH`}
-          gradient="linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)"
-          iconBg="rgba(139, 92, 246, 0.2)"
-          isPrice
-        />
-      </div>
-
-      {/* Stats Row 2 - Ressources cliquables */}
+      {/* Stats Row - Ressources principales pour Super Admin */}
       <div style={styles.statsRow}>
         <StatCardEnhanced
           icon={<Users size={24} />}
@@ -554,11 +520,11 @@ function DashboardView({ stats, dashboardStats, machines, users, games, onNaviga
           clickable
         />
         <StatCardEnhanced
-          icon={<Activity size={24} />}
-          label="Sessions Terminées"
-          value={dashboardStats.total_completed_sessions}
-          gradient="linear-gradient(135deg, #64748b 0%, #475569 100%)"
-          iconBg="rgba(100, 116, 139, 0.2)"
+          icon={<Wifi size={24} />}
+          label="Machines Libres"
+          value={availableMachines}
+          gradient="linear-gradient(135deg, #10b981 0%, #059669 100%)"
+          iconBg="rgba(16, 185, 129, 0.2)"
         />
       </div>
 
