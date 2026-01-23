@@ -266,7 +266,12 @@ function SuperAdminDashboard({ user, onLogout }) {
         {/* Logo */}
         <div style={styles.sidebarHeader}>
           <div style={styles.logoBox}>
-            <Zap size={24} color="#fff" />
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Z moderne stylisé avec effet gaming */}
+              <path d="M6 8H26L14 24H26" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+              <circle cx="8" cy="8" r="2" fill="#a5b4fc"/>
+              <circle cx="24" cy="24" r="2" fill="#a5b4fc"/>
+            </svg>
           </div>
           {!sidebarCollapsed && (
             <div style={styles.logoText}>
@@ -1317,15 +1322,19 @@ const styles = {
     borderBottom: '1px solid rgba(51, 65, 85, 0.5)'
   },
   logoBox: {
-    width: '44px',
-    height: '44px',
-    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-    borderRadius: '12px',
+    width: '46px',
+    height: '46px',
+    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #6366f1 100%)',
+    backgroundSize: '200% 200%',
+    borderRadius: '14px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
-    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)'
+    boxShadow: '0 4px 16px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255,255,255,0.2)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    position: 'relative',
+    overflow: 'hidden'
   },
   logoText: {
     display: 'flex',
