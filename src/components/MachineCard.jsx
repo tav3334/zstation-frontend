@@ -16,6 +16,12 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
 
     const startTime = new Date(machine.active_session.start_time).getTime();
     const pricingMode = machine.active_session.pricing_mode || 'fixed';
+    const durationMinutes = machine.active_session.duration_minutes;
+    const sessionId = machine.active_session.id;
+
+    // Calculate initial elapsed time immediately
+    const initialElapsed = Math.floor((Date.now() - startTime) / 1000);
+    setElapsed(initialElapsed);
 
     const interval = setInterval(() => {
       const now = Date.now();
@@ -23,8 +29,7 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
       setElapsed(elapsedSeconds);
 
       // AUTO-STOP seulement pour le mode "fixed" (par temps)
-      if (pricingMode === 'fixed' && machine.active_session.duration_minutes) {
-        const durationMinutes = machine.active_session.duration_minutes;
+      if (pricingMode === 'fixed' && durationMinutes) {
         const totalSeconds = durationMinutes * 60;
         const remainingSeconds = totalSeconds - elapsedSeconds;
 
@@ -33,7 +38,7 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
           setAutoStopTriggered(true);
 
           setTimeout(() => {
-            onStop(machine.active_session.id);
+            onStop(sessionId);
           }, 5000);
         }
       }
@@ -41,7 +46,7 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [machine.status, machine.active_session?.start_time, machine.active_session?.pricing_mode, autoStopTriggered, machine.name, onStop]);
+  }, [machine.status, machine.active_session?.id, machine.active_session?.start_time, machine.active_session?.duration_minutes, machine.active_session?.pricing_mode, autoStopTriggered, onStop]);
 
   const formatTime = (sec) => {
     const h = Math.floor(sec / 3600);
