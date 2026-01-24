@@ -8,7 +8,6 @@ import Toast from '../components/Toast';
 
 function SuperAdminOrganizations({ onBack }) {
   const [organizations, setOrganizations] = useState([]);
-  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [toast, setToast] = useState(null);
@@ -28,12 +27,8 @@ function SuperAdminOrganizations({ onBack }) {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [orgsRes, usersRes] = await Promise.all([
-        api.get('/super-admin/organizations'),
-        api.get('/super-admin/users')
-      ]);
+      const orgsRes = await api.get('/super-admin/organizations');
       setOrganizations(orgsRes.data.organizations || []);
-      setUsers(usersRes.data.users || usersRes.data || []);
     } catch (error) {
       showToast('Erreur lors du chargement', 'error');
     } finally {
@@ -149,7 +144,6 @@ function SuperAdminOrganizations({ onBack }) {
       {showAssignModal && (
         <AssignUsersModal
           organization={assigningOrg}
-          allUsers={users}
           onClose={() => { setShowAssignModal(false); setAssigningOrg(null); }}
           onSuccess={() => {
             loadData();
@@ -323,19 +317,42 @@ function OrganizationModal({ organization, onClose, onSuccess }) {
 }
 
 // ========== ASSIGN USERS MODAL ==========
-function AssignUsersModal({ organization, allUsers, onClose, onSuccess }) {
+function AssignUsersModal({ organization, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+
+  // Charger les utilisateurs au montage et après chaque action
+  const loadUsers = async () => {
+    try {
+      setLoadingUsers(true);
+      const response = await api.get('/super-admin/users');
+      setUsers(response.data.users || response.data || []);
+    } catch (err) {
+      setError('Erreur lors du chargement des utilisateurs');
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
 
   // Filtrer les utilisateurs non-superadmin
-  const availableUsers = allUsers.filter(u => u.role !== 'super_admin');
+  const availableUsers = users.filter(u => u.role !== 'super_admin');
+  // Utilisateurs assignés à CETTE organisation
   const orgUsers = availableUsers.filter(u => u.organization_id === organization.id);
-  const unassignedUsers = availableUsers.filter(u => !u.organization_id || u.organization_id !== organization.id);
+  // Utilisateurs NON assignés à aucune organisation (disponibles)
+  const unassignedUsers = availableUsers.filter(u => !u.organization_id);
 
   const handleAssign = async (userId) => {
     try {
       setLoading(true);
+      setError('');
       await api.post(`/super-admin/organizations/${organization.id}/assign-user`, { user_id: userId });
+      await loadUsers(); // Recharger la liste des utilisateurs
       onSuccess();
     } catch (err) {
       setError(err.response?.data?.message || 'Erreur');
@@ -347,7 +364,9 @@ function AssignUsersModal({ organization, allUsers, onClose, onSuccess }) {
   const handleRemove = async (userId) => {
     try {
       setLoading(true);
+      setError('');
       await api.post(`/super-admin/organizations/${organization.id}/remove-user`, { user_id: userId });
+      await loadUsers(); // Recharger la liste des utilisateurs
       onSuccess();
     } catch (err) {
       setError(err.response?.data?.message || 'Erreur');
@@ -369,69 +388,75 @@ function AssignUsersModal({ organization, allUsers, onClose, onSuccess }) {
         </div>
 
         <div style={styles.assignContent}>
-          {/* Utilisateurs actuels */}
-          <div style={styles.userSection}>
-            <h4 style={styles.sectionTitle}>
-              <Users size={16} />
-              Utilisateurs assignés ({orgUsers.length})
-            </h4>
-            {orgUsers.length === 0 ? (
-              <p style={styles.emptyText}>Aucun utilisateur assigné</p>
-            ) : (
-              <div style={styles.userList}>
-                {orgUsers.map(user => (
-                  <div key={user.id} style={styles.userItem}>
-                    <div style={styles.userAvatar}>{user.name?.charAt(0).toUpperCase()}</div>
-                    <div style={styles.userInfo}>
-                      <span style={styles.userName}>{user.name}</span>
-                      <span style={styles.userEmail}>{user.email}</span>
-                    </div>
-                    <span style={getRoleBadge(user.role)}>{user.role}</span>
-                    <button
-                      style={styles.removeUserBtn}
-                      onClick={() => handleRemove(user.id)}
-                      disabled={loading}
-                      title="Retirer"
-                    >
-                      <UserMinus size={14} />
-                    </button>
+          {loadingUsers ? (
+            <p style={styles.emptyText}>Chargement des utilisateurs...</p>
+          ) : (
+            <>
+              {/* Utilisateurs actuels */}
+              <div style={styles.userSection}>
+                <h4 style={styles.sectionTitle}>
+                  <Users size={16} />
+                  Utilisateurs assignés ({orgUsers.length})
+                </h4>
+                {orgUsers.length === 0 ? (
+                  <p style={styles.emptyText}>Aucun utilisateur assigné</p>
+                ) : (
+                  <div style={styles.userList}>
+                    {orgUsers.map(user => (
+                      <div key={user.id} style={styles.userItem}>
+                        <div style={styles.userAvatar}>{user.name?.charAt(0).toUpperCase()}</div>
+                        <div style={styles.userInfo}>
+                          <span style={styles.userName}>{user.name}</span>
+                          <span style={styles.userEmail}>{user.email}</span>
+                        </div>
+                        <span style={getRoleBadge(user.role)}>{user.role}</span>
+                        <button
+                          style={styles.removeUserBtn}
+                          onClick={() => handleRemove(user.id)}
+                          disabled={loading}
+                          title="Retirer"
+                        >
+                          <UserMinus size={14} />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Utilisateurs disponibles */}
-          <div style={styles.userSection}>
-            <h4 style={styles.sectionTitle}>
-              <UserPlus size={16} />
-              Utilisateurs disponibles ({unassignedUsers.length})
-            </h4>
-            {unassignedUsers.length === 0 ? (
-              <p style={styles.emptyText}>Tous les utilisateurs sont assignés</p>
-            ) : (
-              <div style={styles.userList}>
-                {unassignedUsers.map(user => (
-                  <div key={user.id} style={styles.userItem}>
-                    <div style={styles.userAvatar}>{user.name?.charAt(0).toUpperCase()}</div>
-                    <div style={styles.userInfo}>
-                      <span style={styles.userName}>{user.name}</span>
-                      <span style={styles.userEmail}>{user.email}</span>
-                    </div>
-                    <span style={getRoleBadge(user.role)}>{user.role}</span>
-                    <button
-                      style={styles.addUserBtn}
-                      onClick={() => handleAssign(user.id)}
-                      disabled={loading}
-                      title="Ajouter"
-                    >
-                      <UserPlus size={14} />
-                    </button>
+              {/* Utilisateurs disponibles (non assignés à aucune organisation) */}
+              <div style={styles.userSection}>
+                <h4 style={styles.sectionTitle}>
+                  <UserPlus size={16} />
+                  Utilisateurs disponibles ({unassignedUsers.length})
+                </h4>
+                {unassignedUsers.length === 0 ? (
+                  <p style={styles.emptyText}>Tous les utilisateurs sont déjà assignés à une organisation</p>
+                ) : (
+                  <div style={styles.userList}>
+                    {unassignedUsers.map(user => (
+                      <div key={user.id} style={styles.userItem}>
+                        <div style={styles.userAvatar}>{user.name?.charAt(0).toUpperCase()}</div>
+                        <div style={styles.userInfo}>
+                          <span style={styles.userName}>{user.name}</span>
+                          <span style={styles.userEmail}>{user.email}</span>
+                        </div>
+                        <span style={getRoleBadge(user.role)}>{user.role}</span>
+                        <button
+                          style={styles.addUserBtn}
+                          onClick={() => handleAssign(user.id)}
+                          disabled={loading}
+                          title="Ajouter"
+                        >
+                          <UserPlus size={14} />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
 
           {error && <div style={styles.error}>{error}</div>}
         </div>
