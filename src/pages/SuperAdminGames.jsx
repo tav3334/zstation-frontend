@@ -6,6 +6,7 @@ import Toast from '../components/Toast';
 function SuperAdminGames({ onBack }) {
   const [games, setGames] = useState([]);
   const [pricingModes, setPricingModes] = useState([]);
+  const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [showGameModal, setShowGameModal] = useState(false);
@@ -17,10 +18,12 @@ function SuperAdminGames({ onBack }) {
 
   // Form states
   const [gameName, setGameName] = useState('');
+  const [gameOrganizationId, setGameOrganizationId] = useState('');
 
   useEffect(() => {
     loadGames();
     loadPricingModes();
+    loadOrganizations();
   }, []);
 
   const loadGames = async () => {
@@ -44,6 +47,15 @@ function SuperAdminGames({ onBack }) {
     }
   };
 
+  const loadOrganizations = async () => {
+    try {
+      const response = await api.get('/super-admin/organizations');
+      setOrganizations(response.data.organizations || []);
+    } catch (error) {
+      console.error('Error loading organizations:', error);
+    }
+  };
+
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
@@ -54,10 +66,15 @@ function SuperAdminGames({ onBack }) {
       showToast('Le nom du jeu est requis', 'error');
       return;
     }
+    if (!gameOrganizationId) {
+      showToast('L\'organisation est requise', 'error');
+      return;
+    }
 
     try {
       await api.post('/super-admin/games', {
         name: gameName,
+        organization_id: gameOrganizationId,
         price_6min: 6,
         price_30min: 10,
         price_1h: 20,
@@ -67,6 +84,7 @@ function SuperAdminGames({ onBack }) {
       showToast('Jeu créé avec succès');
       setShowGameModal(false);
       setGameName('');
+      setGameOrganizationId('');
       loadGames();
     } catch (error) {
       console.error('Create game error:', error);
@@ -169,9 +187,11 @@ function SuperAdminGames({ onBack }) {
     if (game) {
       setEditingGame(game);
       setGameName(game.name);
+      setGameOrganizationId(game.organization_id || '');
     } else {
       setEditingGame(null);
       setGameName('');
+      setGameOrganizationId('');
     }
     setShowGameModal(true);
   };
@@ -266,21 +286,52 @@ function SuperAdminGames({ onBack }) {
             <h3 style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: '700' }}>
               {editingGame ? 'Modifier le jeu' : 'Nouveau jeu'}
             </h3>
-            <input
-              type="text"
-              value={gameName}
-              onChange={(e) => setGameName(e.target.value)}
-              placeholder="Nom du jeu (ex: FIFA 24)"
-              style={{
-                width: '100%',
-                padding: '12px',
-                fontSize: '15px',
-                border: '2px solid #e5e7eb',
-                borderRadius: '8px',
-                marginBottom: '20px'
-              }}
-              autoFocus
-            />
+
+            {!editingGame && (
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>
+                  Organisation *
+                </label>
+                <select
+                  value={gameOrganizationId}
+                  onChange={(e) => setGameOrganizationId(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    fontSize: '15px',
+                    border: '2px solid #e5e7eb',
+                    borderRadius: '8px',
+                    background: 'white'
+                  }}
+                >
+                  <option value="">-- Sélectionner une organisation --</option>
+                  {organizations.map(org => (
+                    <option key={org.id} value={org.id}>{org.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>
+                Nom du jeu *
+              </label>
+              <input
+                type="text"
+                value={gameName}
+                onChange={(e) => setGameName(e.target.value)}
+                placeholder="Ex: FIFA 24"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  fontSize: '15px',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '8px'
+                }}
+                autoFocus
+              />
+            </div>
+
             <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 onClick={editingGame ? handleUpdateGame : handleCreateGame}
@@ -426,7 +477,19 @@ function GameCard({ game, expanded, onToggle, onEdit, onDelete, onUpdatePricing,
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Gamepad2 size={24} color="#667eea" />
           <div>
-            <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>{game.name}</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>{game.name}</h3>
+              <span style={{
+                padding: '3px 8px',
+                borderRadius: '4px',
+                fontSize: '11px',
+                fontWeight: '600',
+                background: 'rgba(99, 102, 241, 0.15)',
+                color: '#6366f1'
+              }}>
+                {game.organization_name || 'Non assigné'}
+              </span>
+            </div>
             <p style={{ fontSize: '13px', color: '#6b7280', margin: '2px 0 0 0' }}>
               {game.pricings.length} tarif(s) • {timePricings.length} par temps • {matchPricings.length} par match
             </p>

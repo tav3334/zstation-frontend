@@ -904,7 +904,7 @@ function ActionButton({ type, onClick, title }) {
 // ========== MACHINES TABLE ==========
 function MachinesTable({ machines, loading, onEdit, onDelete }) {
   if (loading) {
-    return <SkeletonTable rows={5} columns={5} />;
+    return <SkeletonTable rows={5} columns={6} />;
   }
 
   if (machines.length === 0) {
@@ -923,6 +923,7 @@ function MachinesTable({ machines, loading, onEdit, onDelete }) {
           <tr>
             <th style={styles.th}>Machine</th>
             <th style={styles.th}>Type</th>
+            <th style={styles.th}>Organisation</th>
             <th style={styles.th}>Statut</th>
             <th style={styles.th}>Date de création</th>
             <th style={styles.th}>Actions</th>
@@ -941,8 +942,20 @@ function MachinesTable({ machines, loading, onEdit, onDelete }) {
               </td>
               <td style={styles.td}>{machine.type || 'Standard'}</td>
               <td style={styles.td}>
+                <span style={{
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  background: 'rgba(99, 102, 241, 0.2)',
+                  color: '#a5b4fc'
+                }}>
+                  {machine.organization_name || 'Non assignée'}
+                </span>
+              </td>
+              <td style={styles.td}>
                 <span style={getStatusBadgeStyle(machine.status)}>
-                  {machine.status === 'available' ? 'Disponible' : 'Occupée'}
+                  {machine.status === 'available' ? 'Disponible' : machine.status === 'maintenance' ? 'Maintenance' : 'Occupée'}
                 </span>
               </td>
               <td style={styles.td}>{new Date(machine.created_at).toLocaleDateString('fr-FR')}</td>
@@ -1158,14 +1171,27 @@ function MachineModal({ machine, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     machine_number: machine?.machine_number || '',
     type: machine?.type || 'Standard',
-    status: machine?.status || 'available'
+    status: machine?.status || 'available',
+    organization_id: machine?.organization_id || ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [organizations, setOrganizations] = useState([]);
+
+  useEffect(() => {
+    api.get('/super-admin/organizations').then(res => {
+      setOrganizations(res.data.organizations || []);
+    }).catch(() => {});
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!machine && !formData.organization_id) {
+      setError('L\'organisation est requise');
+      return;
+    }
 
     try {
       setLoading(true);
@@ -1196,14 +1222,29 @@ function MachineModal({ machine, onClose, onSuccess }) {
 
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.formGroup}>
+            <label style={styles.label}>Organisation *</label>
+            <select
+              style={styles.input}
+              value={formData.organization_id}
+              onChange={(e) => setFormData({ ...formData, organization_id: e.target.value })}
+              required
+            >
+              <option value="">-- Sélectionner une organisation --</option>
+              {organizations.map(org => (
+                <option key={org.id} value={org.id}>{org.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={styles.formGroup}>
             <label style={styles.label}>Numéro de Machine</label>
             <input
               type="number"
               style={styles.input}
               value={formData.machine_number}
               onChange={(e) => setFormData({ ...formData, machine_number: e.target.value })}
-              required
               min="1"
+              placeholder="Auto-généré si vide"
             />
           </div>
 
@@ -1227,6 +1268,7 @@ function MachineModal({ machine, onClose, onSuccess }) {
             >
               <option value="available">Disponible</option>
               <option value="in_session">En session</option>
+              <option value="maintenance">Maintenance</option>
             </select>
           </div>
 
