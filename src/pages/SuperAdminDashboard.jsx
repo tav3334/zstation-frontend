@@ -4,16 +4,18 @@ import {
   Edit2, Trash2, X, AlertCircle, Activity,
   Download, RefreshCw, LayoutDashboard,
   ChevronLeft, ChevronRight, Zap, Wifi, WifiOff, Clock,
-  TrendingUp, DollarSign, PlayCircle, Calendar
+  TrendingUp, DollarSign, PlayCircle, Calendar, Building2
 } from 'lucide-react';
 import api from '../services/api';
 import Toast from '../components/Toast';
 import SuperAdminGames from './SuperAdminGames';
+import SuperAdminOrganizations from './SuperAdminOrganizations';
 import '../styles/superadmin.module.css';
 
 function SuperAdminDashboard({ user, onLogout }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showGamesManagement, setShowGamesManagement] = useState(false);
+  const [showOrganizationsManagement, setShowOrganizationsManagement] = useState(false);
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -246,6 +248,7 @@ function SuperAdminDashboard({ user, onLogout }) {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'organizations', label: 'Organisations', icon: Building2 },
     { id: 'users', label: 'Utilisateurs', icon: Users, count: stats.totalUsers },
     { id: 'machines', label: 'Machines', icon: Monitor, count: stats.totalMachines },
     { id: 'games', label: 'Jeux', icon: Gamepad2, count: stats.totalGames },
@@ -254,6 +257,11 @@ function SuperAdminDashboard({ user, onLogout }) {
   // Si on est en mode gestion des jeux, afficher uniquement cette page
   if (showGamesManagement) {
     return <SuperAdminGames onBack={() => setShowGamesManagement(false)} />;
+  }
+
+  // Si on est en mode gestion des organisations
+  if (showOrganizationsManagement) {
+    return <SuperAdminOrganizations onBack={() => setShowOrganizationsManagement(false)} />;
   }
 
   return (
@@ -293,6 +301,8 @@ function SuperAdminDashboard({ user, onLogout }) {
               onClick={() => {
                 if (item.id === 'games') {
                   setShowGamesManagement(true);
+                } else if (item.id === 'organizations') {
+                  setShowOrganizationsManagement(true);
                 } else {
                   setActiveTab(item.id);
                 }
@@ -991,10 +1001,18 @@ function UserModal({ user, onClose, onSuccess }) {
     email: user?.email || '',
     password: '',
     password_confirmation: '',
-    role: user?.role || 'agent'
+    role: user?.role || 'agent',
+    organization_id: user?.organization_id || ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [organizations, setOrganizations] = useState([]);
+
+  useEffect(() => {
+    api.get('/super-admin/organizations').then(res => {
+      setOrganizations(res.data.organizations || []);
+    }).catch(() => {});
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1080,6 +1098,20 @@ function UserModal({ user, onClose, onSuccess }) {
               required
               placeholder="email@exemple.com"
             />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.labelSmall}>Organisation</label>
+            <select
+              style={styles.inputSmall}
+              value={formData.organization_id}
+              onChange={(e) => setFormData({ ...formData, organization_id: e.target.value })}
+            >
+              <option value="">-- Aucune --</option>
+              {organizations.map(org => (
+                <option key={org.id} value={org.id}>{org.name}</option>
+              ))}
+            </select>
           </div>
 
           <div style={styles.formRow}>
