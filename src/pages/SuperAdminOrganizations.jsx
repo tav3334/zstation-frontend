@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Building2, ArrowLeft, Search, Plus, Edit2, Trash2, X,
   AlertCircle, Users, Monitor, Gamepad2, RefreshCw, UserPlus, UserMinus,
-  TrendingUp, DollarSign, Activity, Calendar, MapPin, Phone,
+  TrendingUp, DollarSign, Activity, Calendar,
   ChevronRight, Eye, Settings, BarChart3, Filter
 } from 'lucide-react';
 import api from '../services/api';
@@ -234,9 +234,15 @@ function SuperAdminOrganizations({ onBack }) {
         <OrganizationModal
           organization={editingOrg}
           onClose={() => setShowModal(false)}
-          onSuccess={() => {
+          onSuccess={async () => {
             setShowModal(false);
-            loadData();
+            await loadData();
+            // Mettre à jour viewingOrg si on était en mode détail
+            if (viewingOrg && editingOrg && viewingOrg.id === editingOrg.id) {
+              const orgsRes = await api.get('/super-admin/organizations');
+              const updatedOrg = orgsRes.data.organizations?.find(o => o.id === viewingOrg.id);
+              if (updatedOrg) setViewingOrg(updatedOrg);
+            }
             showToast(editingOrg ? 'Organisation modifiée' : 'Organisation créée');
           }}
         />
@@ -502,24 +508,6 @@ function OrganizationDetailModal({ organization, onClose, onEdit, onAssign }) {
                   </span>
                 </div>
               </div>
-              {organization.address && (
-                <div style={styles.detailInfoItem}>
-                  <MapPin size={16} color="#64748b" />
-                  <div>
-                    <span style={styles.detailInfoLabel}>Adresse</span>
-                    <span style={styles.detailInfoValue}>{organization.address}</span>
-                  </div>
-                </div>
-              )}
-              {organization.phone && (
-                <div style={styles.detailInfoItem}>
-                  <Phone size={16} color="#64748b" />
-                  <div>
-                    <span style={styles.detailInfoLabel}>Téléphone</span>
-                    <span style={styles.detailInfoValue}>{organization.phone}</span>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -545,9 +533,7 @@ function OrganizationModal({ organization, onClose, onSuccess }) {
     name: organization?.name || '',
     code: organization?.code || '',
     is_active: organization?.is_active ?? true,
-    address: organization?.address || '',
-    phone: organization?.phone || '',
-      });
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -558,7 +544,11 @@ function OrganizationModal({ organization, onClose, onSuccess }) {
     try {
       setLoading(true);
       if (organization) {
-        await api.put(`/super-admin/organizations/${organization.id}`, formData);
+        // Utiliser POST avec _method pour compatibilité serveur
+        await api.post(`/super-admin/organizations/${organization.id}`, {
+          ...formData,
+          _method: 'PUT'
+        });
       } else {
         await api.post('/super-admin/organizations', formData);
       }
@@ -611,31 +601,6 @@ function OrganizationModal({ organization, onClose, onSuccess }) {
               />
               <small style={styles.hint}>Généré automatiquement si vide</small>
             </div>
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Adresse</label>
-            <input
-              type="text"
-              style={styles.input}
-              value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              placeholder="Ex: 123 Rue Example, Kenitra"
-            />
-          </div>
-
-          <div style={styles.formRow}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Téléphone</label>
-              <input
-                type="tel"
-                style={styles.input}
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="Ex: 0612345678"
-              />
-            </div>
-
           </div>
 
           <div style={styles.formGroup}>
