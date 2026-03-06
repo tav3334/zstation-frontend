@@ -135,7 +135,8 @@ function SuperAdminGames({ onBack }) {
       await api.put(`/super-admin/games/${gameId}/pricings/${pricingId}`, {
         price: data.price,
         duration_minutes: data.isPerMatch ? null : data.value,
-        matches_count: data.isPerMatch ? data.value : null
+        matches_count: data.isPerMatch ? data.value : null,
+        description: data.description || null
       });
       showToast('Tarif modifié avec succès');
       loadGames();
@@ -160,7 +161,7 @@ function SuperAdminGames({ onBack }) {
     }
   };
 
-  const handleAddPricing = async (gameId, mode, value, price) => {
+  const handleAddPricing = async (gameId, mode, value, price, description) => {
     const pricingMode = pricingModes.find(pm => pm.code === mode);
     if (!pricingMode || !value || !price) {
       showToast('Veuillez remplir tous les champs', 'error');
@@ -172,7 +173,8 @@ function SuperAdminGames({ onBack }) {
         pricing_mode_id: pricingMode.id,
         duration_minutes: mode === 'fixed' ? parseInt(value) : null,
         matches_count: mode === 'per_match' ? parseInt(value) : null,
-        price: parseFloat(price)
+        price: parseFloat(price),
+        description: description || null
       });
       showToast('Tarif ajouté avec succès');
       loadGames();
@@ -418,18 +420,21 @@ function GameCard({ game, expanded, onToggle, onEdit, onDelete, onUpdatePricing,
   const [newPricingMode, setNewPricingMode] = useState('fixed');
   const [newPricingValue, setNewPricingValue] = useState('');
   const [newPricingPrice, setNewPricingPrice] = useState('');
+  const [newPricingDescription, setNewPricingDescription] = useState('');
   const [editingPricingId, setEditingPricingId] = useState(null);
   const [editValue, setEditValue] = useState('');
   const [editPrice, setEditPrice] = useState('');
+  const [editDescription, setEditDescription] = useState('');
 
   const timePricings = game.pricings.filter(p => p.pricing_mode.code === 'fixed').sort((a, b) => a.duration_minutes - b.duration_minutes);
   const matchPricings = game.pricings.filter(p => p.pricing_mode.code === 'per_match').sort((a, b) => a.matches_count - b.matches_count);
 
   const handleAddNewPricing = () => {
     if (!newPricingValue || !newPricingPrice) return;
-    onAddPricing(game.id, newPricingMode, newPricingValue, newPricingPrice);
+    onAddPricing(game.id, newPricingMode, newPricingValue, newPricingPrice, newPricingDescription);
     setNewPricingValue('');
     setNewPricingPrice('');
+    setNewPricingDescription('');
   };
 
   const startEdit = (pricing) => {
@@ -437,6 +442,7 @@ function GameCard({ game, expanded, onToggle, onEdit, onDelete, onUpdatePricing,
     const isPerMatch = pricing.pricing_mode.code === 'per_match';
     setEditValue(isPerMatch ? pricing.matches_count : pricing.duration_minutes);
     setEditPrice(pricing.price);
+    setEditDescription(pricing.description || '');
   };
 
   const saveEdit = (pricing) => {
@@ -445,12 +451,14 @@ function GameCard({ game, expanded, onToggle, onEdit, onDelete, onUpdatePricing,
       onUpdatePricing(game.id, pricing.id, {
         value: parseInt(editValue),
         price: parseFloat(editPrice),
+        description: editDescription,
         isPerMatch
       });
     }
     setEditingPricingId(null);
     setEditValue('');
     setEditPrice('');
+    setEditDescription('');
   };
 
   return (
@@ -545,8 +553,10 @@ function GameCard({ game, expanded, onToggle, onEdit, onDelete, onUpdatePricing,
                     isEditing={editingPricingId === pricing.id}
                     editValue={editValue}
                     editPrice={editPrice}
+                    editDescription={editDescription}
                     onEditValueChange={setEditValue}
                     onEditPriceChange={setEditPrice}
+                    onEditDescriptionChange={setEditDescription}
                     onStartEdit={() => startEdit(pricing)}
                     onSaveEdit={() => saveEdit(pricing)}
                     onCancelEdit={() => setEditingPricingId(null)}
@@ -574,8 +584,10 @@ function GameCard({ game, expanded, onToggle, onEdit, onDelete, onUpdatePricing,
                     isEditing={editingPricingId === pricing.id}
                     editValue={editValue}
                     editPrice={editPrice}
+                    editDescription={editDescription}
                     onEditValueChange={setEditValue}
                     onEditPriceChange={setEditPrice}
+                    onEditDescriptionChange={setEditDescription}
                     onStartEdit={() => startEdit(pricing)}
                     onSaveEdit={() => saveEdit(pricing)}
                     onCancelEdit={() => setEditingPricingId(null)}
@@ -595,7 +607,7 @@ function GameCard({ game, expanded, onToggle, onEdit, onDelete, onUpdatePricing,
             border: '2px dashed #e5e7eb'
           }}>
             <h4 style={{ fontSize: '14px', fontWeight: '600', margin: '0 0 12px 0' }}>Ajouter un tarif</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr 1fr auto', gap: '8px', alignItems: 'end' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr 1fr 1fr auto', gap: '8px', alignItems: 'end' }}>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '4px' }}>Mode</label>
                 <select
@@ -648,6 +660,22 @@ function GameCard({ game, expanded, onToggle, onEdit, onDelete, onUpdatePricing,
                   }}
                 />
               </div>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '4px' }}>Description (optionnel)</label>
+                <input
+                  type="text"
+                  value={newPricingDescription}
+                  onChange={(e) => setNewPricingDescription(e.target.value)}
+                  placeholder="ex: Idéal pour une partie rapide"
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    fontSize: '14px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '6px'
+                  }}
+                />
+              </div>
               <button
                 onClick={handleAddNewPricing}
                 style={{
@@ -676,7 +704,7 @@ function GameCard({ game, expanded, onToggle, onEdit, onDelete, onUpdatePricing,
 }
 
 // ========== PRICING ITEM COMPONENT ==========
-function PricingItem({ pricing, isEditing, editValue, editPrice, onEditValueChange, onEditPriceChange, onStartEdit, onSaveEdit, onCancelEdit, onDelete, color }) {
+function PricingItem({ pricing, isEditing, editValue, editPrice, editDescription, onEditValueChange, onEditPriceChange, onEditDescriptionChange, onStartEdit, onSaveEdit, onCancelEdit, onDelete, color }) {
   const isPerMatch = pricing.pricing_mode.code === 'per_match';
   const label = isPerMatch ? `${pricing.matches_count} match` : `${pricing.duration_minutes} min`;
 
@@ -729,6 +757,25 @@ function PricingItem({ pricing, isEditing, editValue, editPrice, onEditValueChan
               autoFocus
             />
           </div>
+          <div>
+            <label style={{ fontSize: '11px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '4px' }}>
+              Description
+            </label>
+            <input
+              type="text"
+              value={editDescription}
+              onChange={(e) => onEditDescriptionChange(e.target.value)}
+              placeholder="ex: Idéal pour une partie rapide"
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                fontSize: '13px',
+                border: '1px solid #e5e7eb',
+                borderRadius: '4px',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
           <div style={{ display: 'flex', gap: '4px' }}>
             <button
               onClick={onSaveEdit}
@@ -776,9 +823,15 @@ function PricingItem({ pricing, isEditing, editValue, editPrice, onEditValueChan
           <div style={{ fontSize: '13px', fontWeight: '600', color: '#6b7280', marginBottom: '4px' }}>
             {label}
           </div>
-          <div style={{ fontSize: '18px', fontWeight: '700', color, marginBottom: '8px' }}>
+          <div style={{ fontSize: '18px', fontWeight: '700', color, marginBottom: '4px' }}>
             {pricing.price} DH
           </div>
+          {pricing.description && (
+            <div style={{ fontSize: '11px', color: '#6b7280', fontStyle: 'italic', marginBottom: '8px', lineHeight: '1.4' }}>
+              {pricing.description}
+            </div>
+          )}
+          {!pricing.description && <div style={{ marginBottom: '8px' }} />}
           <div style={{ display: 'flex', gap: '4px' }}>
             <button
               onClick={onStartEdit}

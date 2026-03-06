@@ -130,6 +130,11 @@ function StartSessionModal({
                             : `${pricing.duration_minutes} min = ${pricing.price} DH`
                           }
                         </div>
+                        {pricing.description && (
+                          <div style={{ fontSize: "11px", color: "#9ca3af", fontStyle: "italic", marginTop: "3px" }}>
+                            {pricing.description}
+                          </div>
+                        )}
                       </div>
                       {isSelected && (
                         <div style={{
