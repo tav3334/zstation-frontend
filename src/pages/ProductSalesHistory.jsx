@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api from "../services/api";
 import Toast from "../components/Toast";
 
@@ -24,19 +24,38 @@ function ProductSalesHistory({ onBack }) {
     topProduct: null
   });
 
-  const showToast = (message, type = "info", duration = 3000) => {
+  const showToast = useCallback((message, type = "info", duration = 3000) => {
     setToast({ message, type, duration });
-  };
-
-  useEffect(() => {
-    loadSales();
   }, []);
 
-  useEffect(() => {
-    applyFilters();
-  }, [sales, filters]);
+  const calculateStats = useCallback((salesData) => {
+    const totalSales = salesData.length;
+    const totalRevenue = salesData.reduce((sum, sale) => sum + sale.total_price, 0);
+    const averageSale = totalSales > 0 ? totalRevenue / totalSales : 0;
 
-  const loadSales = async () => {
+    // Top produit
+    const productSales = {};
+    salesData.forEach(sale => {
+      if (!productSales[sale.product_name]) {
+        productSales[sale.product_name] = { quantity: 0, revenue: 0 };
+      }
+      productSales[sale.product_name].quantity += sale.quantity;
+      productSales[sale.product_name].revenue += sale.total_price;
+    });
+
+    let topProduct = null;
+    let maxRevenue = 0;
+    Object.entries(productSales).forEach(([name, data]) => {
+      if (data.revenue > maxRevenue) {
+        maxRevenue = data.revenue;
+        topProduct = { name, ...data };
+      }
+    });
+
+    setStats({ totalSales, totalRevenue, averageSale, topProduct });
+  }, []);
+
+  const loadSales = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get("/products/sales", { params: { limit: 1000 } });
@@ -46,9 +65,9 @@ function ProductSalesHistory({ onBack }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     let filtered = [...sales];
 
     // Filtre par date
@@ -82,34 +101,15 @@ function ProductSalesHistory({ onBack }) {
 
     setFilteredSales(filtered);
     calculateStats(filtered);
-  };
+  }, [calculateStats, filters, sales]);
 
-  const calculateStats = (salesData) => {
-    const totalSales = salesData.length;
-    const totalRevenue = salesData.reduce((sum, sale) => sum + sale.total_price, 0);
-    const averageSale = totalSales > 0 ? totalRevenue / totalSales : 0;
+  useEffect(() => {
+    loadSales();
+  }, [loadSales]);
 
-    // Top produit
-    const productSales = {};
-    salesData.forEach(sale => {
-      if (!productSales[sale.product_name]) {
-        productSales[sale.product_name] = { quantity: 0, revenue: 0 };
-      }
-      productSales[sale.product_name].quantity += sale.quantity;
-      productSales[sale.product_name].revenue += sale.total_price;
-    });
-
-    let topProduct = null;
-    let maxRevenue = 0;
-    Object.entries(productSales).forEach(([name, data]) => {
-      if (data.revenue > maxRevenue) {
-        maxRevenue = data.revenue;
-        topProduct = { name, ...data };
-      }
-    });
-
-    setStats({ totalSales, totalRevenue, averageSale, topProduct });
-  };
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
 
   const resetFilters = () => {
     setFilters({

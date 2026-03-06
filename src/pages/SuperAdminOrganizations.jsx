@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Building2, ArrowLeft, Search, Plus, Edit2, Trash2, X,
   AlertCircle, Users, Monitor, Gamepad2, RefreshCw, UserPlus, UserMinus,
@@ -26,26 +26,26 @@ function SuperAdminOrganizations({ onBack }) {
   const [assigningOrg, setAssigningOrg] = useState(null);
   const [viewingOrg, setViewingOrg] = useState(null);
 
-  useEffect(() => {
-    loadData();
+  const showToast = useCallback((message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
   }, []);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const orgsRes = await api.get('/super-admin/organizations');
       setOrganizations(orgsRes.data.organizations || []);
-    } catch (error) {
+    } catch {
       showToast('Erreur lors du chargement', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
-  };
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleDelete = async () => {
     if (!deletingOrg) return;
@@ -291,10 +291,12 @@ function SuperAdminOrganizations({ onBack }) {
 
 // ========== STAT CARD ==========
 function StatCard({ icon: Icon, label, value, subValue, color }) {
+  const IconComponent = Icon;
+
   return (
     <div style={styles.statCard}>
       <div style={{ ...styles.statIcon, background: `${color}20` }}>
-        <Icon size={22} color={color} />
+        <IconComponent size={22} color={color} />
       </div>
       <div style={styles.statInfo}>
         <span style={styles.statValue}>{value}</span>
@@ -655,7 +657,7 @@ function AssignUsersModal({ organization, onClose, onSuccess }) {
       setLoadingUsers(true);
       const response = await api.get('/super-admin/users');
       setUsers(response.data.users || response.data || []);
-    } catch (err) {
+    } catch {
       setError('Erreur lors du chargement des utilisateurs');
     } finally {
       setLoadingUsers(false);

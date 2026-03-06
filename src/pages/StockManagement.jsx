@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api from "../services/api";
 import Toast from "../components/Toast";
 
@@ -19,16 +19,11 @@ function StockManagement({ onBack }) {
     image: "📦"
   });
 
-  const showToast = (message, type = "info", duration = 3000) => {
+  const showToast = useCallback((message, type = "info", duration = 3000) => {
     setToast({ message, type, duration });
-  };
-
-  useEffect(() => {
-    loadProducts();
-    loadLowStock();
   }, []);
 
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get("/products/all");
@@ -38,15 +33,21 @@ function StockManagement({ onBack }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
-  const loadLowStock = async () => {
+  const loadLowStock = useCallback(async () => {
     try {
       const res = await api.get("/products/low-stock");
       setLowStockProducts(res.data.products);
-    } catch (e) {
+    } catch {
+      setLowStockProducts([]);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadProducts();
+    loadLowStock();
+  }, [loadLowStock, loadProducts]);
 
   const openAddModal = () => {
     setEditingProduct(null);

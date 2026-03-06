@@ -49,15 +49,16 @@ function App() {
     if (token && savedUser) {
       try {
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
+        const parsedUser = JSON.parse(savedUser);
+        queueMicrotask(() => setUser(parsedUser));
+      } catch {
         // Données corrompues - nettoyer et forcer la reconnexion
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
     }
     
-    setLoading(false);
+    queueMicrotask(() => setLoading(false));
   }, []);
 
   const handleLogin = (userData) => {
@@ -67,7 +68,9 @@ function App() {
   const handleLogout = async () => {
     try {
       await api.post('/logout');
-    } catch (e) {
+    } catch {
+      // Ignore logout API errors and continue local cleanup.
+      void 0;
     }
     
     localStorage.removeItem('token');

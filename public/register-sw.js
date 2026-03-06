@@ -39,11 +39,9 @@ if ('serviceWorker' in navigator) {
 }
 
 // Gestion de l'installation PWA
-let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
   console.log('💡 PWA peut être installée');
   e.preventDefault();
-  deferredPrompt = e;
 
   // Afficher un bouton d'installation personnalisé (optionnel)
   // showInstallButton();
@@ -51,5 +49,4 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 window.addEventListener('appinstalled', () => {
   console.log('🎉 PWA installée avec succès!');
-  deferredPrompt = null;
 });

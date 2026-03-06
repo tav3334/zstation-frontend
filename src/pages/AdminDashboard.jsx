@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Crown,
   Package,
@@ -49,9 +49,9 @@ function AdminDashboard({ user, onLogout }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [cashRegister, setCashRegister] = useState(null);
 
-  const showToast = (message, type = "info", duration = 3000) => {
+  const showToast = useCallback((message, type = "info", duration = 3000) => {
     setToast({ message, type, duration });
-  };
+  }, []);
 
   // Horloge temps réel
   useEffect(() => {
@@ -59,13 +59,7 @@ function AdminDashboard({ user, onLogout }) {
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 30000);
-    return () => clearInterval(interval);
-  }, [filter, customDateStart, customDateEnd]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const params = {};
@@ -92,7 +86,13 @@ function AdminDashboard({ user, onLogout }) {
       showToast("Erreur de chargement: " + (e.response?.data?.message || e.message), "error");
       setLoading(false);
     }
-  };
+  }, [customDateEnd, customDateStart, filter, showToast]);
+
+  useEffect(() => {
+    loadData();
+    const interval = setInterval(loadData, 30000);
+    return () => clearInterval(interval);
+  }, [loadData]);
 
   const applyCustomFilter = () => {
     if (!customDateStart || !customDateEnd) {
@@ -165,7 +165,7 @@ function AdminDashboard({ user, onLogout }) {
       const fileName = `ZStation_Stats_${periodText.replace(/\s/g, '_')}_${dateStr}.xlsx`;
       XLSX.writeFile(wb, fileName);
       showToast("Export Excel réussi!", "success");
-    } catch (error) {
+    } catch {
       showToast("Erreur lors de l'export Excel", "error");
     }
   };

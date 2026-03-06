@@ -1,5 +1,3 @@
-import { useState, useEffect } from "react";
-
 function StartSessionModal({
   machine,
   games,
@@ -10,22 +8,8 @@ function StartSessionModal({
   onConfirm,
   onClose,
 }) {
-  const [availablePricings, setAvailablePricings] = useState([]);
-
-  // Trouver le jeu sélectionné pour afficher ses pricings
-  useEffect(() => {
-    if (selectedGame) {
-      const game = games.find(g => g.id === Number(selectedGame));
-      if (game && game.pricings) {
-        setAvailablePricings(game.pricings);
-      } else {
-        setAvailablePricings([]);
-      }
-    } else {
-      setAvailablePricings([]);
-      setSelectedPricing("");
-    }
-  }, [selectedGame, games, setSelectedPricing]);
+  const selectedGameData = games.find((game) => game.id === Number(selectedGame));
+  const availablePricings = selectedGameData?.pricings || [];
 
 
   return (
@@ -44,7 +28,10 @@ function StartSessionModal({
             </label>
             <select
               value={selectedGame}
-              onChange={(e) => setSelectedGame(e.target.value)}
+              onChange={(e) => {
+                setSelectedGame(e.target.value);
+                setSelectedPricing("");
+              }}
               style={{
                 width: "100%",
                 padding: "10px 12px",

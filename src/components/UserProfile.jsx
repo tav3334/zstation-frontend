@@ -26,8 +26,9 @@ function UserProfile({ user, onClose, showToast }) {
         const res = await api.get("/machines");
         const activeCount = res.data.filter(m => m.status === 'in_session').length;
         setActiveSessions(activeCount);
-      } catch (e) {
+      } catch {
         // Silent fail - not critical
+        return;
       }
     };
 

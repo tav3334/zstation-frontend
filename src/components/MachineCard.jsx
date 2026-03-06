@@ -9,8 +9,10 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
 
   useEffect(() => {
     if (machine.status !== "in_session" || !machine.active_session) {
-      setElapsed(0);
-      setAutoStopTriggered(false);
+      queueMicrotask(() => {
+        setElapsed(0);
+        setAutoStopTriggered(false);
+      });
       return;
     }
 
@@ -21,7 +23,7 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
 
     // Calculate initial elapsed time immediately
     const initialElapsed = Math.floor((Date.now() - startTime) / 1000);
-    setElapsed(initialElapsed);
+    queueMicrotask(() => setElapsed(initialElapsed));
 
     const interval = setInterval(() => {
       const now = Date.now();
@@ -46,7 +48,7 @@ function MachineCard({ machine, onStart, onStop, onExtend, games }) {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [machine.status, machine.active_session?.id, machine.active_session?.start_time, machine.active_session?.duration_minutes, machine.active_session?.pricing_mode, autoStopTriggered, onStop]);
+  }, [machine.status, machine.active_session, machine.active_session?.id, machine.active_session?.start_time, machine.active_session?.duration_minutes, machine.active_session?.pricing_mode, autoStopTriggered, onStop]);
 
   const formatTime = (sec) => {
     const h = Math.floor(sec / 3600);

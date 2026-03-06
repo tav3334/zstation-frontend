@@ -26,7 +26,7 @@ function StatsCard() {
       const res = await api.get("/payments/today");
       setStats(res.data);
       setLoading(false);
-    } catch (e) {
+    } catch {
       setLoading(false);
     } finally {
       setRefreshing(false);

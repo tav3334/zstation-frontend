@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Users, Monitor, Gamepad2, LogOut, Search, Plus,
   Edit2, Trash2, X, AlertCircle, Activity,
@@ -59,22 +59,12 @@ function SuperAdminDashboard({ user, onLogout }) {
   const [editingItem, setEditingItem] = useState(null);
   const [deletingItem, setDeletingItem] = useState(null);
 
-  // Charger TOUTES les données au démarrage pour les statistiques
-  useEffect(() => {
-    loadAllData();
+  const showToast = useCallback((message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
   }, []);
 
-  // Calculer les statistiques
-  useEffect(() => {
-    setStats({
-      totalUsers: users.length,
-      totalMachines: machines.length,
-      totalGames: games.length,
-      activeUsers: users.filter(u => u.role === 'agent' || u.role === 'admin').length
-    });
-  }, [users, machines, games]);
-
-  const loadAllData = async () => {
+  const loadAllData = useCallback(async () => {
     setLoading(true);
     try {
       const [usersRes, machinesRes, gamesRes, statsRes] = await Promise.all([
@@ -89,17 +79,27 @@ function SuperAdminDashboard({ user, onLogout }) {
       if (statsRes.data.stats) {
         setDashboardStats(statsRes.data.stats);
       }
-    } catch (error) {
+    } catch {
       showToast('Erreur lors du chargement des données', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
-  };
+  // Charger TOUTES les données au démarrage pour les statistiques
+  useEffect(() => {
+    loadAllData();
+  }, [loadAllData]);
+
+  // Calculer les statistiques
+  useEffect(() => {
+    setStats({
+      totalUsers: users.length,
+      totalMachines: machines.length,
+      totalGames: games.length,
+      activeUsers: users.filter(u => u.role === 'agent' || u.role === 'admin').length
+    });
+  }, [users, machines, games]);
 
   // ========== GESTION DES UTILISATEURS ==========
   const fetchUsers = async () => {
@@ -107,7 +107,7 @@ function SuperAdminDashboard({ user, onLogout }) {
       setLoading(true);
       const response = await api.get('/super-admin/users');
       setUsers(response.data.users || response.data);
-    } catch (error) {
+    } catch {
       showToast('Erreur lors du chargement des utilisateurs', 'error');
     } finally {
       setLoading(false);
@@ -150,7 +150,7 @@ function SuperAdminDashboard({ user, onLogout }) {
       setLoading(true);
       const response = await api.get('/super-admin/machines');
       setMachines(response.data.machines || response.data);
-    } catch (error) {
+    } catch {
       showToast('Erreur lors du chargement des machines', 'error');
     } finally {
       setLoading(false);
@@ -163,7 +163,7 @@ function SuperAdminDashboard({ user, onLogout }) {
       setLoading(true);
       const response = await api.get('/super-admin/games');
       setGames(response.data.games || response.data);
-    } catch (error) {
+    } catch {
       showToast('Erreur lors du chargement des jeux', 'error');
     } finally {
       setLoading(false);

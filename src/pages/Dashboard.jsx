@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Gamepad2,
   Crown,
@@ -42,9 +42,9 @@ function Dashboard({ user, onLogout }) {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Helper pour afficher un toast
-  const showToast = (message, type = "info", duration = 3000) => {
+  const showToast = useCallback((message, type = "info", duration = 3000) => {
     setToast({ message, type, duration });
-  };
+  }, []);
 
   // Horloge temps réel
   useEffect(() => {
@@ -61,16 +61,16 @@ function Dashboard({ user, onLogout }) {
   }, []);
 
   // ================= LOAD DATA =================
-  const loadMachines = async () => {
+  const loadMachines = useCallback(async () => {
     try {
       const res = await api.get("/machines");
       setMachines(res.data);
     } catch (e) {
       showToast("Erreur chargement machines: " + (e.response?.data?.message || e.message), "error");
     }
-  };
+  }, [showToast]);
 
-  const loadGames = async () => {
+  const loadGames = useCallback(async () => {
     try {
       const res = await api.get("/games");
 
@@ -82,7 +82,7 @@ function Dashboard({ user, onLogout }) {
     } catch (e) {
       showToast("Erreur chargement jeux: " + (e.response?.data?.message || e.message), "error");
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -107,7 +107,7 @@ function Dashboard({ user, onLogout }) {
       clearInterval(machineInterval);
       clearInterval(autoStopInterval);
     };
-  }, []);
+  }, [loadGames, loadMachines]);
 
   // ================= START SESSION =================
   const startSession = async () => {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Gamepad2, Plus, Edit2, Trash2, Clock, Trophy, ArrowLeft, Save, X, AlertTriangle } from 'lucide-react';
 import api from '../services/api';
 import Toast from '../components/Toast';
@@ -20,46 +20,46 @@ function SuperAdminGames({ onBack }) {
   const [gameName, setGameName] = useState('');
   const [gameOrganizationId, setGameOrganizationId] = useState('');
 
-  useEffect(() => {
-    loadGames();
-    loadPricingModes();
-    loadOrganizations();
+  const showToast = useCallback((message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
   }, []);
 
-  const loadGames = async () => {
+  const loadGames = useCallback(async () => {
     setLoading(true);
     try {
       const response = await api.get('/super-admin/games');
       setGames(response.data.games);
-    } catch (error) {
+    } catch {
       showToast('Erreur lors du chargement des jeux', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
-  const loadPricingModes = async () => {
+  const loadPricingModes = useCallback(async () => {
     try {
       const response = await api.get('/super-admin/pricing-modes');
       setPricingModes(response.data.pricing_modes);
     } catch (error) {
       console.error('Error loading pricing modes:', error);
     }
-  };
+  }, []);
 
-  const loadOrganizations = async () => {
+  const loadOrganizations = useCallback(async () => {
     try {
       const response = await api.get('/super-admin/organizations');
       setOrganizations(response.data.organizations || []);
     } catch (error) {
       console.error('Error loading organizations:', error);
     }
-  };
+  }, []);
 
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
+  useEffect(() => {
+    loadGames();
+    loadPricingModes();
+    loadOrganizations();
+  }, [loadGames, loadOrganizations, loadPricingModes]);
 
   const handleCreateGame = async () => {
     if (!gameName.trim()) {
@@ -103,7 +103,7 @@ function SuperAdminGames({ onBack }) {
       setEditingGame(null);
       setGameName('');
       loadGames();
-    } catch (error) {
+    } catch {
       showToast('Erreur lors de la modification du jeu', 'error');
     }
   };
@@ -275,7 +275,6 @@ function SuperAdminGames({ onBack }) {
               onUpdatePricing={handleUpdatePricing}
               onDeletePricing={(gameId, pricingId, label) => confirmDeletePricing(gameId, pricingId, label)}
               onAddPricing={handleAddPricing}
-              pricingModes={pricingModes}
             />
           ))}
         </div>
@@ -416,7 +415,7 @@ function SuperAdminGames({ onBack }) {
 }
 
 // ========== GAME CARD COMPONENT ==========
-function GameCard({ game, expanded, onToggle, onEdit, onDelete, onUpdatePricing, onDeletePricing, onAddPricing, pricingModes }) {
+function GameCard({ game, expanded, onToggle, onEdit, onDelete, onUpdatePricing, onDeletePricing, onAddPricing }) {
   const [newPricingMode, setNewPricingMode] = useState('fixed');
   const [newPricingValue, setNewPricingValue] = useState('');
   const [newPricingPrice, setNewPricingPrice] = useState('');

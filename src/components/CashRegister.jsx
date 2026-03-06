@@ -38,7 +38,7 @@ function CashRegister({ isAdmin = false, accentColor = "#f59e0b" }) {
       const res = await api.get("/cash-register/today");
       setRegister(res.data.register);
       setError(null);
-    } catch (e) {
+    } catch {
       setError("Erreur de chargement");
     } finally {
       setLoading(false);
@@ -50,7 +50,7 @@ function CashRegister({ isAdmin = false, accentColor = "#f59e0b" }) {
       const res = await api.get("/cash-register/history?limit=14");
       setHistory(res.data.registers || []);
       setShowHistoryModal(true);
-    } catch (e) {
+    } catch {
       setError("Erreur de chargement historique");
     }
   };
