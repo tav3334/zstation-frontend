@@ -131,7 +131,7 @@ function StartSessionModal({
                           }
                         </div>
                         {pricing.description && (
-                          <div style={{ fontSize: "11px", color: "#9ca3af", fontStyle: "italic", marginTop: "3px" }}>
+                          <div style={{ fontSize: "12px", color: "#6366f1", fontWeight: "600", marginTop: "4px" }}>
                             {pricing.description}
                           </div>
                         )}
