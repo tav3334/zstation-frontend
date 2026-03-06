@@ -6,16 +6,29 @@ function ProductsModal({ onClose, onSale }) {
   const [cart, setCart] = useState({});
   const paymentMethod = "cash"; // Seule méthode de paiement disponible pour les produits
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     loadProducts();
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape" && !loading) {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [loading, onClose]);
+
   const loadProducts = async () => {
     try {
       const res = await api.get("/products");
       setProducts(res.data);
-    } catch (e) {
+    } catch (error) {
+      setError("Erreur chargement produits: " + (error.response?.data?.message || error.message));
     }
   };
 
@@ -47,10 +60,11 @@ function ProductsModal({ onClose, onSale }) {
 
   const handleSell = async () => {
     if (Object.keys(cart).length === 0) {
-      alert("Panier vide");
+      setError("Panier vide.");
       return;
     }
 
+    setError("");
     setLoading(true);
 
     try {
@@ -72,10 +86,12 @@ function ProductsModal({ onClose, onSale }) {
       // Générer le reçu
       generateReceipt(salesData, getTotalPrice());
 
-      onSale("Vente réussie: " + getTotalPrice().toFixed(2) + " DH");
+      onSale("Vente réussie: " + getTotalPrice().toFixed(2) + " DH", "success");
       onClose();
-    } catch (e) {
-      alert("Erreur: " + (e.response?.data?.message || e.message));
+    } catch (error) {
+      const errorMessage = "Erreur: " + (error.response?.data?.message || error.message);
+      setError(errorMessage);
+      onSale(errorMessage, "error");
     } finally {
       setLoading(false);
     }
@@ -140,8 +156,8 @@ Total: ${totalPrice.toFixed(2)} DH
   const drinks = products.filter(p => p.category === "drink");
 
   return (
-    <div style={styles.overlay}>
-      <div style={styles.modal}>
+    <div style={styles.overlay} onClick={() => !loading && onClose()} role="presentation">
+      <div style={styles.modal} onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label="Vente de produits">
         <div style={styles.header}>
           <h2 style={styles.title}>Vente de Produits</h2>
           <button onClick={onClose} style={styles.closeBtn}>X</button>
@@ -190,6 +206,7 @@ Total: ${totalPrice.toFixed(2)} DH
             {loading ? "Vente..." : "Vendre (" + getTotalPrice().toFixed(2) + " DH)"}
           </button>
         </div>
+        {error && <div style={styles.errorBox}>{error}</div>}
       </div>
     </div>
   );
@@ -250,6 +267,7 @@ const styles = {
   paymentIcon: { fontSize: "24px" },
   paymentText: { fontSize: "16px", fontWeight: "700", color: "#10b981" },
   actions: { display: "flex", gap: "12px", padding: "20px 24px", borderTop: "1px solid rgba(255, 255, 255, 0.1)" },
+  errorBox: { margin: "0 24px 20px", padding: "10px 12px", border: "1px solid #fca5a5", borderRadius: "10px", background: "#fef2f2", color: "#b91c1c", fontSize: "13px", fontWeight: "600" },
   cancelBtn: { flex: 1, padding: "14px", background: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "10px", color: "#d1d5db", fontSize: "15px", fontWeight: "600", cursor: "pointer" },
   confirmBtn: { flex: 2, padding: "14px", background: "linear-gradient(135deg, #10b981 0%, #059669 100%)", border: "none", borderRadius: "10px", color: "#ffffff", fontSize: "15px", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)" }
 };

@@ -1,113 +1,156 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function PaymentModal({ session, onConfirm, onClose, zIndex = 2000 }) {
   const [amountGiven, setAmountGiven] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [formError, setFormError] = useState("");
 
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape" && !isProcessing) {
+        onClose();
+      }
+    };
 
-  // Vérifier que session existe
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isProcessing, onClose]);
+
   if (!session) {
     return null;
   }
 
-  // Le backend retourne { session: {...}, price: X, duration_used: "Y min" }
   const sessionData = session.session || {};
   const price = parseFloat(session.price) || 0;
-  const change = amountGiven ? (parseFloat(amountGiven) - price).toFixed(2) : "0.00";
-  const isValid = parseFloat(amountGiven) >= price;
-
+  const amount = parseFloat(amountGiven);
+  const hasValidAmount = Number.isFinite(amount);
+  const isValid = hasValidAmount && amount >= price;
+  const change = hasValidAmount ? (amount - price).toFixed(2) : "0.00";
   const quickAmounts = [10, 20, 50, 100, 200];
 
   const handleConfirm = async () => {
     if (!isValid) {
-      alert("Montant insuffisant !");
+      setFormError("Montant insuffisant.");
       return;
     }
 
-    if (!sessionData || !sessionData.id) {
-      alert("Erreur: ID de session manquant");
+    if (!sessionData?.id) {
+      setFormError("Erreur: identifiant de session manquant.");
       return;
     }
 
+    setFormError("");
     setIsProcessing(true);
-    await onConfirm(sessionData.id, parseFloat(amountGiven));
-    setIsProcessing(false);
+    try {
+      await onConfirm(sessionData.id, amount);
+    } catch (error) {
+      setFormError(error?.message || "Erreur lors du paiement.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  // Calculer la durée consommée en minutes
+  const handleOverlayClick = (event) => {
+    if (event.target === event.currentTarget && !isProcessing) {
+      onClose();
+    }
+  };
+
   const getDurationConsumed = () => {
     if (!session.duration_used) return "N/A";
-    // duration_used est au format "X.XX min"
     return session.duration_used;
   };
 
   return (
-    <div className="payment-modal-overlay" style={{...overlay, zIndex}}>
-      <div className="payment-modal-content" style={modal}>
-        <h2 style={modalTitle}>💰 Paiement</h2>
+    <div
+      className="payment-modal-overlay"
+      style={{ ...overlay, zIndex }}
+      onClick={handleOverlayClick}
+      role="presentation"
+    >
+      <div
+        className="payment-modal-content"
+        style={modal}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Paiement de session"
+      >
+        <h2 style={modalTitle}>Paiement</h2>
 
         <div style={infoBox}>
           <div style={infoRow}>
-            <span style={infoLabel}>🖥️ Machine:</span>
+            <span style={infoLabel}>Machine:</span>
             <strong style={infoValue}>{sessionData?.machine?.name || "N/A"}</strong>
           </div>
           <div style={infoRow}>
-            <span style={infoLabel}>🎮 Jeu:</span>
+            <span style={infoLabel}>Jeu:</span>
             <strong style={infoValue}>{sessionData?.game?.name || "N/A"}</strong>
           </div>
           <div style={infoRow}>
-            <span style={infoLabel}>⏱️ Durée:</span>
+            <span style={infoLabel}>Duree:</span>
             <strong style={infoValue}>{getDurationConsumed()}</strong>
           </div>
         </div>
 
         <div style={priceBox}>
-          <span style={{ fontSize: "13px", color: "#2e7d32" }}>Montant à payer</span>
+          <span style={{ fontSize: "13px", color: "#2e7d32" }}>Montant a payer</span>
           <div style={{ fontSize: "28px", fontWeight: "bold", color: "#4CAF50" }}>
             {price.toFixed(2)} DH
           </div>
         </div>
 
         <div style={{ marginBottom: "12px" }}>
-          <label style={labelStyle}>
-            Montant donné par le client:
-          </label>
+          <label style={labelStyle}>Montant donne par le client:</label>
           <input
             type="number"
+            min="0"
+            step="0.01"
             value={amountGiven}
-            onChange={(e) => setAmountGiven(e.target.value)}
+            onChange={(event) => {
+              setAmountGiven(event.target.value);
+              if (formError) setFormError("");
+            }}
             placeholder="Entrez le montant"
             style={inputStyle}
             autoFocus
+            aria-invalid={!!formError}
           />
         </div>
 
         <div style={{ marginBottom: "12px" }}>
           <label style={labelSmall}>Montants rapides:</label>
           <div style={quickAmountsGrid}>
-            {quickAmounts.map((amount) => (
+            {quickAmounts.map((quickAmount) => (
               <button
-                key={amount}
-                onClick={() => setAmountGiven(amount.toString())}
+                key={quickAmount}
+                onClick={() => {
+                  setAmountGiven(quickAmount.toString());
+                  if (formError) setFormError("");
+                }}
                 style={quickButton}
+                type="button"
               >
-                {amount} DH
+                {quickAmount} DH
               </button>
             ))}
           </div>
         </div>
 
         {amountGiven && (
-          <div style={{
-            ...changeBox,
-            backgroundColor: isValid ? "#e8f5e9" : "#ffebee"
-          }}>
-            <span style={{ fontSize: 13 }}>Monnaie à rendre:</span>
-            <div style={{
-              fontSize: 24,
-              fontWeight: "bold",
-              color: isValid ? "#2e7d32" : "#c62828"
-            }}>
+          <div
+            style={{
+              ...changeBox,
+              backgroundColor: isValid ? "#e8f5e9" : "#ffebee",
+            }}
+          >
+            <span style={{ fontSize: 13 }}>Monnaie a rendre:</span>
+            <div
+              style={{
+                fontSize: 24,
+                fontWeight: "bold",
+                color: isValid ? "#2e7d32" : "#c62828",
+              }}
+            >
               {parseFloat(change) >= 0 ? change : "0.00"} DH
             </div>
             {!isValid && (
@@ -118,18 +161,36 @@ function PaymentModal({ session, onConfirm, onClose, zIndex = 2000 }) {
           </div>
         )}
 
-        <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+        {formError && (
+          <div style={errorBox} role="alert">
+            {formError}
+          </div>
+        )}
+
+        <div style={actions}>
+          <button
+            onClick={onClose}
+            disabled={isProcessing}
+            style={{
+              ...button,
+              backgroundColor: "#e5e7eb",
+              color: "#111827",
+            }}
+            type="button"
+          >
+            Fermer
+          </button>
           <button
             onClick={handleConfirm}
             disabled={!isValid || isProcessing}
             style={{
               ...button,
-              width: '100%',
               backgroundColor: isValid ? "#4CAF50" : "#ccc",
-              cursor: isValid ? "pointer" : "not-allowed"
+              cursor: isValid && !isProcessing ? "pointer" : "not-allowed",
             }}
+            type="button"
           >
-            {isProcessing ? "⏳ Traitement..." : "✅ Confirmer"}
+            {isProcessing ? "Traitement..." : "Confirmer"}
           </button>
         </div>
       </div>
@@ -137,7 +198,6 @@ function PaymentModal({ session, onConfirm, onClose, zIndex = 2000 }) {
   );
 }
 
-// Styles
 const overlay = {
   position: "fixed",
   top: 0,
@@ -149,7 +209,7 @@ const overlay = {
   alignItems: "center",
   justifyContent: "center",
   zIndex: 2000,
-  padding: "16px"
+  padding: "16px",
 };
 
 const modal = {
@@ -160,7 +220,7 @@ const modal = {
   maxWidth: "380px",
   boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
   maxHeight: "85vh",
-  overflowY: "auto"
+  overflowY: "auto",
 };
 
 const modalTitle = {
@@ -168,7 +228,7 @@ const modalTitle = {
   marginBottom: "16px",
   color: "#1a1a1a",
   fontSize: "20px",
-  fontWeight: "700"
+  fontWeight: "700",
 };
 
 const infoBox = {
@@ -176,7 +236,7 @@ const infoBox = {
   padding: "10px",
   borderRadius: "8px",
   marginBottom: "12px",
-  border: "1px solid #e5e7eb"
+  border: "1px solid #e5e7eb",
 };
 
 const infoRow = {
@@ -184,17 +244,17 @@ const infoRow = {
   justifyContent: "space-between",
   alignItems: "center",
   padding: "6px 0",
-  fontSize: "13px"
+  fontSize: "13px",
 };
 
 const infoLabel = {
   color: "#6b7280",
-  fontWeight: "500"
+  fontWeight: "500",
 };
 
 const infoValue = {
   color: "#111827",
-  fontSize: "13px"
+  fontSize: "13px",
 };
 
 const priceBox = {
@@ -203,7 +263,7 @@ const priceBox = {
   padding: "12px",
   borderRadius: "8px",
   marginBottom: "12px",
-  border: "2px solid #4CAF50"
+  border: "2px solid #4CAF50",
 };
 
 const labelStyle = {
@@ -211,7 +271,7 @@ const labelStyle = {
   marginBottom: "8px",
   fontWeight: "600",
   fontSize: "13px",
-  color: "#374151"
+  color: "#374151",
 };
 
 const labelSmall = {
@@ -219,7 +279,7 @@ const labelSmall = {
   marginBottom: "8px",
   fontSize: "12px",
   color: "#6b7280",
-  fontWeight: "500"
+  fontWeight: "500",
 };
 
 const inputStyle = {
@@ -230,13 +290,13 @@ const inputStyle = {
   border: "2px solid #4CAF50",
   borderRadius: "8px",
   fontWeight: "bold",
-  boxSizing: "border-box"
+  boxSizing: "border-box",
 };
 
 const quickAmountsGrid = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(80px, 1fr))",
-  gap: "8px"
+  gap: "8px",
 };
 
 const quickButton = {
@@ -249,17 +309,35 @@ const quickButton = {
   fontSize: "12px",
   fontWeight: "600",
   transition: "all 0.2s ease",
-  whiteSpace: "nowrap"
+  whiteSpace: "nowrap",
 };
 
 const changeBox = {
   textAlign: "center",
   padding: "10px",
   borderRadius: "8px",
-  marginTop: "10px"
+  marginTop: "10px",
+};
+
+const errorBox = {
+  marginTop: "12px",
+  padding: "10px 12px",
+  borderRadius: "8px",
+  border: "1px solid #fca5a5",
+  backgroundColor: "#fef2f2",
+  color: "#b91c1c",
+  fontSize: "13px",
+  fontWeight: "600",
+};
+
+const actions = {
+  display: "flex",
+  gap: 10,
+  marginTop: 16,
 };
 
 const button = {
+  width: "100%",
   padding: "10px 16px",
   color: "white",
   border: "none",
@@ -267,10 +345,9 @@ const button = {
   cursor: "pointer",
   fontSize: "14px",
   fontWeight: "600",
-  transition: "all 0.2s ease"
+  transition: "all 0.2s ease",
 };
 
-// Add responsive styles
 const paymentModalStyles = document.createElement("style");
 paymentModalStyles.textContent = `
   @media (max-width: 768px) {
@@ -316,7 +393,6 @@ paymentModalStyles.textContent = `
       padding: 10px 14px !important;
     }
 
-    /* Quick amounts grid for small screens */
     div[style*="gridTemplateColumns: repeat(auto-fit, minmax(80px, 1fr))"] {
       grid-template-columns: repeat(3, 1fr) !important;
       gap: 6px !important;
@@ -329,8 +405,8 @@ paymentModalStyles.textContent = `
   }
 `;
 
-if (!document.getElementById('payment-modal-responsive-styles')) {
-  paymentModalStyles.id = 'payment-modal-responsive-styles';
+if (!document.getElementById("payment-modal-responsive-styles")) {
+  paymentModalStyles.id = "payment-modal-responsive-styles";
   document.head.appendChild(paymentModalStyles);
 }
 

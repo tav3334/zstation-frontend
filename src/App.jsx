@@ -47,8 +47,14 @@ function App() {
     const savedUser = localStorage.getItem('user');
 
     if (token && savedUser) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setUser(JSON.parse(savedUser));
+      try {
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        // Données corrompues - nettoyer et forcer la reconnexion
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     }
     
     setLoading(false);

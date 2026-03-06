@@ -85,8 +85,10 @@ function Dashboard({ user, onLogout }) {
   };
 
   useEffect(() => {
-    loadMachines();
-    loadGames();
+    queueMicrotask(() => {
+      loadMachines();
+      loadGames();
+    });
 
     // Recharger les machines toutes les 10 secondes
     const machineInterval = setInterval(loadMachines, 10000);
@@ -96,7 +98,8 @@ function Dashboard({ user, onLogout }) {
       try {
         await api.get('/sessions/check-auto-stop');
         await loadMachines(); // Recharger après auto-stop
-      } catch (e) {
+      } catch {
+        // Ignore polling errors; next interval will retry.
       }
     }, 30000);
 
@@ -145,7 +148,6 @@ function Dashboard({ user, onLogout }) {
       // Vérifier si c'est une session par match
       if (sessionStatus.pricing_mode === 'per_match') {
         // Demander le nombre de matchs via le modal
-        const machine = machines.find(m => m.active_session?.id === sessionId);
         setMatchCountSession({
           id: sessionId,
           game: { name: sessionStatus.machine || 'FIFA/PES' },
@@ -220,10 +222,10 @@ function Dashboard({ user, onLogout }) {
         game_pricing_id: pricingId
       });
 
-      alert(`✅ Session prolongée ! Total payé : ${res.data.total_paid} DH`);
+      showToast(`Session prolongée avec succès. Total payé: ${res.data.total_paid} DH`, "success");
       await loadMachines();
     } catch (e) {
-      alert("Erreur prolongation: " + (e.response?.data?.message || e.message));
+      showToast("Erreur prolongation: " + (e.response?.data?.message || e.message), "error");
     }
   };
 
@@ -465,8 +467,8 @@ function Dashboard({ user, onLogout }) {
       {showProducts && (
         <ProductsModal
           onClose={() => setShowProducts(false)}
-          onSale={(message) => {
-            showToast(message, "success");
+          onSale={(message, type = "success") => {
+            showToast(message, type);
             loadMachines();
           }}
         />
