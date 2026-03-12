@@ -173,15 +173,67 @@ function Login({ onLogin }) {
             <div className="lp-division-badge">ESPACE GAMING</div>
           </div>
 
-          {/* Pharmacy cross + logo */}
-          <div className="lp-cross-wrap">
-            <div className="lp-cross">
-              <div className="lp-cross-h" />
-              <div className="lp-cross-v" />
-              <div className="lp-cross-logo">
-                <img src={logo} alt="Emblème" className="lp-cross-img" />
+          {/* Gaming features grid */}
+          <div className="lp-features">
+            <div className="lp-feat">
+              <div className="lp-feat-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="6" width="20" height="12" rx="3"/>
+                  <circle cx="8" cy="12" r="1.5" fill="currentColor"/>
+                  <line x1="16" y1="10" x2="16" y2="14"/><line x1="14" y1="12" x2="18" y2="12"/>
+                </svg>
+              </div>
+              <div>
+                <div className="lp-feat-title">Sessions en temps réel</div>
+                <div className="lp-feat-desc">Suivi PS5, Xbox & PC</div>
               </div>
             </div>
+            <div className="lp-feat">
+              <div className="lp-feat-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="1" y="4" width="22" height="16" rx="2"/>
+                  <line x1="1" y1="10" x2="23" y2="10"/>
+                </svg>
+              </div>
+              <div>
+                <div className="lp-feat-title">Paiements intégrés</div>
+                <div className="lp-feat-desc">Cash, carte & abonnement</div>
+              </div>
+            </div>
+            <div className="lp-feat">
+              <div className="lp-feat-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </div>
+              <div>
+                <div className="lp-feat-title">Gestion membres</div>
+                <div className="lp-feat-desc">Profils & historique</div>
+              </div>
+            </div>
+            <div className="lp-feat">
+              <div className="lp-feat-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="20" x2="18" y2="10"/>
+                  <line x1="12" y1="20" x2="12" y2="4"/>
+                  <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+              </div>
+              <div>
+                <div className="lp-feat-title">Statistiques</div>
+                <div className="lp-feat-desc">Revenus & fréquentation</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Animated consoles row */}
+          <div className="lp-consoles">
+            <div className="lp-console-tag">PS5</div>
+            <div className="lp-console-tag">XBOX</div>
+            <div className="lp-console-tag">PC</div>
+            <div className="lp-console-tag">VR</div>
           </div>
 
           <div className="lp-right-footer">
@@ -373,112 +425,161 @@ function Login({ onLogin }) {
         /* ===== RIGHT ===== */
         .lp-right{
           flex:1;
-          background:linear-gradient(135deg,#0d9e8a 0%,#0b7a6b 40%,#0a5e56 100%);
+          background:linear-gradient(160deg,#0f2027 0%,#0b4d3e 50%,#0d6b55 100%);
           display:flex;
           align-items:center;
           justify-content:center;
           position:relative;
           overflow:hidden;
-          padding:40px;
+          padding:48px 40px;
         }
 
         /* decorative blurred circles */
-        .lp-deco{position:absolute;border-radius:50%;opacity:.18}
+        .lp-deco{position:absolute;border-radius:50%}
         .lp-deco-1{
-          width:220px;height:220px;
-          background:#ffffff;
-          top:-60px;right:-60px;
+          width:380px;height:380px;
+          background:radial-gradient(circle,rgba(0,230,180,0.12),transparent 70%);
+          top:-120px;right:-120px;
         }
         .lp-deco-2{
-          width:160px;height:160px;
-          background:#ffffff;
-          top:30px;left:-50px;
-          opacity:.08;
+          width:260px;height:260px;
+          background:radial-gradient(circle,rgba(100,220,200,0.08),transparent 70%);
+          bottom:60px;left:-80px;
         }
         .lp-deco-3{
-          width:300px;height:300px;
-          background:#0a4040;
-          bottom:-100px;right:-80px;
-          opacity:.3;
+          width:500px;height:500px;
+          background:radial-gradient(circle,rgba(0,80,60,0.35),transparent 70%);
+          bottom:-200px;right:-150px;
+        }
+
+        /* animated grid lines */
+        .lp-right::before{
+          content:'';position:absolute;inset:0;
+          background-image:
+            linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),
+            linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);
+          background-size:40px 40px;
+          pointer-events:none;
         }
 
         .lp-right-inner{
           position:relative;z-index:1;
           display:flex;flex-direction:column;align-items:center;
-          text-align:center;gap:20px;
-          width:100%;max-width:420px;
+          text-align:center;gap:22px;
+          width:100%;max-width:440px;
         }
 
         .lp-plus-icon{
-          width:52px;height:52px;
-          background:rgba(255,255,255,0.15);
-          border-radius:14px;
-          backdrop-filter:blur(8px);
+          width:54px;height:54px;
+          background:linear-gradient(135deg,rgba(0,230,160,0.2),rgba(0,180,120,0.1));
+          border-radius:16px;
+          backdrop-filter:blur(10px);
           display:flex;align-items:center;justify-content:center;
-          font-size:28px;font-weight:300;color:#fff;
-          border:1px solid rgba(255,255,255,0.2);
+          font-size:28px;font-weight:300;color:#7efcd8;
+          border:1px solid rgba(0,230,160,0.25);
+          box-shadow:0 0 30px rgba(0,230,160,0.1);
+          animation:lpPulseGlow 3s ease-in-out infinite;
         }
 
-        .lp-institution{display:flex;flex-direction:column;align-items:center;gap:8px}
+        .lp-institution{display:flex;flex-direction:column;align-items:center;gap:10px}
         .lp-kingdom{
-          font-size:12px;font-weight:600;letter-spacing:3px;
-          color:rgba(255,255,255,0.7);text-transform:uppercase;
+          font-size:11px;font-weight:700;letter-spacing:4px;
+          color:rgba(255,255,255,0.5);text-transform:uppercase;
         }
-        .lp-sep{width:40px;height:1px;background:rgba(255,255,255,0.3)}
+        .lp-sep{
+          width:50px;height:2px;
+          background:linear-gradient(90deg,transparent,rgba(0,230,160,0.6),transparent);
+          border-radius:2px;
+        }
         .lp-inst-title{
-          font-size:18px;font-weight:800;color:#ffffff;letter-spacing:.5px;line-height:1.4;
+          font-size:20px;font-weight:800;color:#ffffff;letter-spacing:.5px;line-height:1.35;
+          text-shadow:0 2px 20px rgba(0,0,0,0.3);
         }
         .lp-zone{
-          font-size:13px;font-weight:700;color:#7efcd8;letter-spacing:1.5px;
+          font-size:12px;font-weight:700;color:#7efcd8;letter-spacing:2.5px;
+          text-transform:uppercase;
         }
         .lp-direction{
-          font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6;margin-top:4px;
+          font-size:13px;color:rgba(255,255,255,0.65);line-height:1.7;margin-top:2px;
         }
         .lp-division-badge{
           display:inline-block;
-          border:1.5px solid #7efcd8;
-          border-radius:20px;
-          padding:5px 18px;
+          background:rgba(0,230,160,0.1);
+          border:1.5px solid rgba(0,230,160,0.4);
+          border-radius:24px;
+          padding:6px 20px;
           color:#7efcd8;
-          font-size:12.5px;font-weight:700;letter-spacing:1.5px;
+          font-size:12px;font-weight:700;letter-spacing:2px;
+          text-transform:uppercase;
           margin-top:4px;
-        }
-
-        /* pharmacy cross */
-        .lp-cross-wrap{
-          position:relative;
-          width:160px;height:160px;
-          display:flex;align-items:center;justify-content:center;
-        }
-        .lp-cross{
-          position:relative;
-          width:140px;height:140px;
-          display:flex;align-items:center;justify-content:center;
-        }
-        .lp-cross-h,.lp-cross-v{
-          position:absolute;
-          background:rgba(255,255,255,0.18);
-          border-radius:8px;
           backdrop-filter:blur(6px);
         }
-        .lp-cross-h{width:140px;height:48px}
-        .lp-cross-v{width:48px;height:140px}
-        .lp-cross-logo{
-          position:absolute;z-index:2;
-          width:80px;height:80px;
-          display:flex;align-items:center;justify-content:center;
+
+        /* features grid */
+        .lp-features{
+          display:grid;grid-template-columns:1fr 1fr;
+          gap:12px;width:100%;
         }
-        .lp-cross-img{width:72px;height:72px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.3))}
+        .lp-feat{
+          display:flex;align-items:flex-start;gap:12px;
+          background:rgba(255,255,255,0.05);
+          border:1px solid rgba(255,255,255,0.08);
+          border-radius:14px;
+          padding:14px;
+          text-align:left;
+          backdrop-filter:blur(8px);
+          transition:background .2s,transform .2s;
+        }
+        .lp-feat:hover{
+          background:rgba(0,230,160,0.08);
+          border-color:rgba(0,230,160,0.2);
+          transform:translateY(-2px);
+        }
+        .lp-feat-icon{
+          width:36px;height:36px;min-width:36px;
+          background:rgba(0,230,160,0.12);
+          border-radius:10px;
+          display:flex;align-items:center;justify-content:center;
+          color:#7efcd8;
+        }
+        .lp-feat-title{font-size:13px;font-weight:700;color:#fff;margin-bottom:2px}
+        .lp-feat-desc{font-size:11.5px;color:rgba(255,255,255,0.5)}
+
+        /* consoles row */
+        .lp-consoles{
+          display:flex;gap:10px;flex-wrap:wrap;justify-content:center;
+        }
+        .lp-console-tag{
+          padding:6px 16px;
+          border-radius:20px;
+          background:rgba(255,255,255,0.06);
+          border:1px solid rgba(255,255,255,0.12);
+          color:rgba(255,255,255,0.7);
+          font-size:12px;font-weight:700;letter-spacing:1.5px;
+          transition:all .2s;
+        }
+        .lp-console-tag:hover{
+          background:rgba(0,230,160,0.12);
+          border-color:rgba(0,230,160,0.3);
+          color:#7efcd8;
+        }
 
         .lp-right-footer{
-          color:rgba(255,255,255,0.55);
-          font-size:12px;line-height:1.7;
+          color:rgba(255,255,255,0.4);
+          font-size:12px;line-height:1.8;
           display:flex;flex-direction:column;align-items:center;gap:2px;
+          padding-top:6px;
+          border-top:1px solid rgba(255,255,255,0.07);
+          width:100%;
         }
-        .lp-rf-icon{display:flex;align-items:center;margin-bottom:4px}
+        .lp-rf-icon{display:flex;align-items:center;margin-bottom:4px;color:rgba(0,230,160,0.5)}
 
         /* animations */
         @keyframes lpSpin{to{transform:rotate(360deg)}}
+        @keyframes lpPulseGlow{
+          0%,100%{box-shadow:0 0 30px rgba(0,230,160,0.1)}
+          50%{box-shadow:0 0 50px rgba(0,230,160,0.25),0 0 0 1px rgba(0,230,160,0.15)}
+        }
         @keyframes lpShake{
           0%,100%{transform:translateX(0)}
           20%,60%{transform:translateX(-5px)}
