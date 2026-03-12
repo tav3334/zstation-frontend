@@ -43,12 +43,12 @@ function Login({ onLogin }) {
               <img src={logo} alt="Logo" className="lp-logo-img" />
             </div>
             <h1 className="lp-title">
-              Gestion des Produits <br />
-              <span className="lp-title-accent">Pharmaceutiques</span>
+              Plateforme de gestion <br />
+              <span className="lp-title-accent">de salle de jeux</span>
             </h1>
             <div className="lp-badge">
               <span className="lp-badge-dot" />
-              Division Santé · Forces Auxiliaires
+              Gaming Station
             </div>
             <p className="lp-connect-hint">Connectez-vous pour accéder au système</p>
           </div>
@@ -144,7 +144,7 @@ function Login({ onLogin }) {
             </span>
             Accès réservé au personnel autorisé
           </div>
-          <div className="lp-copyright">© 2025 Forces Auxiliaires — Système Pharmaceutique</div>
+          <div className="lp-copyright">© 2025 Zstation Corner — Système Gaming</div>
         </div>
       </div>
 
@@ -159,18 +159,18 @@ function Login({ onLogin }) {
           <div className="lp-plus-icon">+</div>
 
           <div className="lp-institution">
-            <p className="lp-kingdom">ROYAUME DU MAROC</p>
+            <p className="lp-kingdom">ZSTATION CORNER</p>
             <div className="lp-sep" />
             <h2 className="lp-inst-title">
-              INSPECTION GÉNÉRALE<br />DES FORCES AUXILIAIRES
+              GESTION INTELLIGENTE<br />DE SALLE DE JEUX
             </h2>
-            <p className="lp-zone">ZONE NORD</p>
+            <p className="lp-zone">PS5 · XBOX · PC GAMING</p>
 
             <p className="lp-direction">
-              Direction des Ressources Humaines<br />et Action Sociale
+              Suivi des sessions, paiements et abonnements<br />en temps réel
             </p>
 
-            <div className="lp-division-badge">DIVISION SANTÉ</div>
+            <div className="lp-division-badge">ESPACE GAMING</div>
           </div>
 
           {/* Pharmacy cross + logo */}
@@ -190,8 +190,8 @@ function Login({ onLogin }) {
                 <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
               </svg>
             </span>
-            Système de Gestion des Produits Pharmaceutiques<br />
-            <span>© 2025 — Forces Auxiliaires</span>
+            Plateforme de Gestion de Salle de Jeux<br />
+            <span>© 2025 — Zstation Corner</span>
           </div>
         </div>
       </div>
