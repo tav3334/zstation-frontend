@@ -197,7 +197,7 @@ const overlay = {
   alignItems: "center",
   justifyContent: "center",
   zIndex: 1001,
-  animation: "fadeIn 0.3s ease",
+  animation: "matchModalFadeIn 0.3s ease",
 };
 
 const modal = {
@@ -208,7 +208,7 @@ const modal = {
   borderRadius: "16px",
   boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
   color: "#000",
-  animation: "slideUp 0.3s ease",
+  animation: "matchModalSlideUp 0.3s ease",
 };
 
 const errorBox = {
@@ -221,73 +221,5 @@ const errorBox = {
   fontSize: "13px",
   fontWeight: "600",
 };
-
-const matchModalStyles = document.createElement("style");
-matchModalStyles.textContent = `
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  @keyframes slideUp {
-    from {
-      transform: translateY(30px);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-
-  .match-modal-overlay {
-    padding: 20px !important;
-  }
-
-  @media (max-width: 768px) {
-    .match-modal-content {
-      padding: 24px !important;
-      width: 100% !important;
-      max-width: 100% !important;
-    }
-
-    .match-modal-content h3 {
-      font-size: 20px !important;
-    }
-
-    .match-modal-content input {
-      font-size: 16px !important;
-      padding: 12px 14px !important;
-    }
-
-    .match-modal-content button {
-      font-size: 14px !important;
-      padding: 12px 16px !important;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .match-modal-overlay {
-      padding: 16px !important;
-    }
-
-    .match-modal-content {
-      padding: 20px !important;
-    }
-
-    .match-modal-content h3 {
-      font-size: 18px !important;
-    }
-  }
-`;
-
-if (!document.getElementById("match-modal-responsive-styles")) {
-  matchModalStyles.id = "match-modal-responsive-styles";
-  document.head.appendChild(matchModalStyles);
-}
 
 export default MatchCountModal;
