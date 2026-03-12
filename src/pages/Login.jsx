@@ -586,11 +586,10 @@ function Login({ onLogin }) {
           40%,80%{transform:translateX(5px)}
         }
 
-        /* responsive */
+        /* responsive — mobile : panneau droit masqué */
         @media(max-width:820px){
-          .lp-root{flex-direction:column}
           .lp-left{width:100%;min-width:0;padding:40px 24px}
-          .lp-right{padding:48px 24px;min-height:50vh}
+          .lp-right{display:none}
         }
       `}</style>
     </div>
