@@ -243,7 +243,7 @@ function Dashboard({ user, onLogout }) {
 
   // ================= RENDER =================
   return (
-    <div style={styles.appContainer}>
+    <div className="z-app-container" style={styles.appContainer}>
       {/* Toast Notification */}
       {toast && (
         <Toast
@@ -320,9 +320,9 @@ function Dashboard({ user, onLogout }) {
       </aside>
 
       {/* Main Area */}
-      <div style={{...styles.mainArea, marginLeft: sidebarCollapsed ? '70px' : '240px'}}>
+      <div className="z-main-area" style={{...styles.mainArea, marginLeft: sidebarCollapsed ? '70px' : '240px'}}>
         {/* Top Bar */}
-        <header style={styles.topBar}>
+        <header className="z-top-bar" style={styles.topBar}>
           <div style={styles.topBarLeft}>
             <h1 style={styles.pageTitle}>
               {activeTab === 'machines' ? 'Gestion des Machines' : 'Statistiques de Vente'}
@@ -347,7 +347,7 @@ function Dashboard({ user, onLogout }) {
         </header>
 
         {/* Quick Stats Bar */}
-        <div style={styles.statsRow}>
+        <div className="z-stats-row" style={styles.statsRow}>
           <div style={{...styles.miniStatCard, borderLeft: '4px solid #10b981'}}>
             <div style={{...styles.miniStatIcon, background: 'rgba(16, 185, 129, 0.15)'}}>
               <Check size={20} color="#10b981" />
@@ -390,7 +390,7 @@ function Dashboard({ user, onLogout }) {
         </div>
 
         {/* Content */}
-        <main style={styles.content}>
+        <main className="z-content" style={styles.content}>
           {activeTab === 'stats' ? (
             <div style={styles.dashboardCard}>
               <div style={styles.cardHeader}>
@@ -410,7 +410,7 @@ function Dashboard({ user, onLogout }) {
                   <p>Chargement des machines...</p>
                 </div>
               ) : (
-                <div className="agent-machines-grid" style={styles.machinesGrid}>
+                <div className="agent-machines-grid z-machines-grid" style={styles.machinesGrid}>
                   {machines.map((machine) => (
                     <MachineCard
                       key={machine.id}
@@ -481,6 +481,36 @@ function Dashboard({ user, onLogout }) {
           showToast={showToast}
         />
       )}
+
+      {/* Bottom Navigation - Mobile only */}
+      <nav className="z-bottom-nav">
+        {menuItems.map(item => (
+          <button
+            key={item.id}
+            className={`z-bottom-nav-item${activeTab === item.id ? ' active' : ''}`}
+            onClick={() => {
+              if (item.id === 'products') {
+                setShowProducts(true);
+              } else if (item.id === 'profile') {
+                setShowProfile(true);
+              } else {
+                setActiveTab(item.id);
+              }
+            }}
+          >
+            <item.icon size={22} />
+            <span>{item.label}</span>
+          </button>
+        ))}
+        <button
+          className="z-bottom-nav-item"
+          onClick={onLogout}
+          style={{ color: '#ef4444' }}
+        >
+          <LogOut size={22} />
+          <span>Déconnexion</span>
+        </button>
+      </nav>
     </div>
   );
 }

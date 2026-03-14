@@ -298,7 +298,7 @@ function AdminDashboard({ user, onLogout }) {
   }
 
   return (
-    <div style={styles.appContainer}>
+    <div className="z-app-container" style={styles.appContainer}>
       {/* Toast */}
       {toast && (
         <Toast
@@ -372,9 +372,9 @@ function AdminDashboard({ user, onLogout }) {
       </aside>
 
       {/* Main Area */}
-      <div style={{...styles.mainArea, marginLeft: sidebarCollapsed ? '70px' : '240px'}}>
+      <div className="z-main-area" style={{...styles.mainArea, marginLeft: sidebarCollapsed ? '70px' : '240px'}}>
         {/* Top Bar */}
-        <header style={styles.topBar}>
+        <header className="z-top-bar" style={styles.topBar}>
           <div style={styles.topBarLeft}>
             <h1 style={styles.pageTitle}>Dashboard Admin</h1>
           </div>
@@ -474,9 +474,9 @@ function AdminDashboard({ user, onLogout }) {
         )}
 
         {/* Content */}
-        <main style={styles.content}>
+        <main className="z-content" style={styles.content}>
           {/* Stats Grid */}
-          <div style={styles.statsGrid}>
+          <div className="z-stats-grid" style={styles.statsGrid}>
             <StatCard
               icon={<DollarSign size={22} />}
               label="Recettes Sessions"
@@ -530,7 +530,7 @@ function AdminDashboard({ user, onLogout }) {
           </div>
 
           {/* Details Grid */}
-          <div style={styles.detailsGrid}>
+          <div className="z-details-grid" style={styles.detailsGrid}>
             {/* Top Games */}
             <div style={styles.card}>
               <div style={styles.cardHeader}>
@@ -736,6 +736,39 @@ function AdminDashboard({ user, onLogout }) {
           showToast={showToast}
         />
       )}
+
+      {/* Bottom Navigation - Mobile only */}
+      <nav className="z-bottom-nav">
+        {menuItems.map(item => (
+          <button
+            key={item.id}
+            className={`z-bottom-nav-item${activeTab === item.id ? ' active' : ''}`}
+            style={activeTab === item.id ? { color: '#f59e0b' } : {}}
+            onClick={() => {
+              if (item.id === 'stock') {
+                setShowStockManagement(true);
+              } else if (item.id === 'sales') {
+                setShowSalesHistory(true);
+              } else if (item.id === 'profile') {
+                setShowProfile(true);
+              } else {
+                setActiveTab(item.id);
+              }
+            }}
+          >
+            <item.icon size={22} />
+            <span>{item.label}</span>
+          </button>
+        ))}
+        <button
+          className="z-bottom-nav-item"
+          onClick={onLogout}
+          style={{ color: '#ef4444' }}
+        >
+          <LogOut size={22} />
+          <span>Déco.</span>
+        </button>
+      </nav>
     </div>
   );
 }

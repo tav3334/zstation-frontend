@@ -265,7 +265,7 @@ function SuperAdminDashboard({ user, onLogout }) {
   }
 
   return (
-    <div style={styles.appContainer}>
+    <div className="z-app-container" style={styles.appContainer}>
       {/* Sidebar */}
       <aside style={{
         ...styles.sidebar,
@@ -333,9 +333,9 @@ function SuperAdminDashboard({ user, onLogout }) {
       </aside>
 
       {/* Main Area */}
-      <div style={{...styles.mainArea, marginLeft: sidebarCollapsed ? '70px' : '260px'}}>
+      <div className="z-main-area" style={{...styles.mainArea, marginLeft: sidebarCollapsed ? '70px' : '260px'}}>
         {/* Top Bar */}
-        <header style={styles.topBar}>
+        <header className="z-top-bar" style={styles.topBar}>
           <div style={styles.topBarLeft}>
             <h1 style={styles.pageTitle}>
               {activeTab === 'dashboard' ? 'Dashboard' :
@@ -361,7 +361,7 @@ function SuperAdminDashboard({ user, onLogout }) {
         </header>
 
         {/* Content */}
-        <main style={styles.content}>
+        <main className="z-content" style={styles.content}>
           {/* Dashboard View */}
           {activeTab === 'dashboard' && (
             <DashboardView
@@ -673,6 +673,37 @@ function DashboardView({ stats, dashboardStats, machines, users, games, onNaviga
           </div>
         </div>
       </div>
+
+      {/* Bottom Navigation - Mobile only */}
+      <nav className="z-bottom-nav">
+        {menuItems.map(item => (
+          <button
+            key={item.id}
+            className={`z-bottom-nav-item${activeTab === item.id ? ' active' : ''}`}
+            style={activeTab === item.id ? { color: '#6366f1' } : {}}
+            onClick={() => {
+              if (item.id === 'games') {
+                setShowGamesManagement(true);
+              } else if (item.id === 'organizations') {
+                setShowOrganizationsManagement(true);
+              } else {
+                setActiveTab(item.id);
+              }
+            }}
+          >
+            <item.icon size={20} />
+            <span style={{ fontSize: '9px' }}>{item.label}</span>
+          </button>
+        ))}
+        <button
+          className="z-bottom-nav-item"
+          onClick={onLogout}
+          style={{ color: '#ef4444' }}
+        >
+          <LogOut size={20} />
+          <span style={{ fontSize: '9px' }}>Déco.</span>
+        </button>
+      </nav>
     </div>
   );
 }
