@@ -258,33 +258,25 @@ body {
   overflow-x: hidden;
 }
 
-/* Main area - desktop: scrollable column */
+/* Main area - desktop: normal flow, sidebar is fixed */
 .z-main-area {
-  display: flex;
-  flex-direction: column;
   flex: 1;
   min-height: 100vh;
-  overflow-y: auto;
   overflow-x: hidden;
+  /* NO overflow-y here on desktop - let the page scroll naturally */
 }
 
 @media (max-width: 768px) {
   .z-app-container {
-    flex-direction: column;
-    min-height: 100vh;
-    min-height: 100dvh; /* dynamic viewport on mobile */
-    overflow-y: auto;
     overflow-x: hidden;
   }
 
-  /* Main area takes full width */
+  /* Main area full width, sidebar hidden */
   .z-main-area {
     width: 100% !important;
     margin-left: 0 !important;
     min-height: 100vh;
-    overflow-y: auto;
     overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
   }
 }
 
@@ -462,39 +454,14 @@ body {
   }
 
   /* Smaller buttons */
-  button {
-    font-size: 13px !important;
+  .z-bottom-nav-item {
+    font-size: 10px !important;
   }
 }
 
-/* Fix scroll on mobile - CRITICAL */
+/* Fix horizontal overflow on mobile */
 @media (max-width: 768px) {
-  html {
-    height: 100%;
+  html, body {
     overflow-x: hidden;
-    overflow-y: auto;
-  }
-
-  body {
-    height: auto;
-    min-height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  #root {
-    min-height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* Override any overflow:hidden on containers */
-  .z-app-container,
-  .z-main-area {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
   }
 }
