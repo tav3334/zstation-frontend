@@ -397,8 +397,55 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
-table {
-  min-width: 500px;
+/* ============================================================
+   STOCK MANAGEMENT & PRODUCT SALES HISTORY (Admin mobile)
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Container padding */
+  .stock-page,
+  .sales-page {
+    padding: 16px !important;
+  }
+
+  /* Header: stack vertically */
+  .stock-header,
+  .sales-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    margin-bottom: 20px !important;
+  }
+
+  /* Title smaller */
+  .stock-title,
+  .sales-title {
+    font-size: 22px !important;
+  }
+
+  /* Add / Export button full width */
+  .stock-add-btn,
+  .sales-export-btn {
+    width: 100% !important;
+    text-align: center !important;
+    justify-content: center !important;
+  }
+
+  /* Form rows: 1 column on mobile */
+  .stock-form-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .stock-page,
+  .sales-page {
+    padding: 12px !important;
+  }
+
+  .stock-title,
+  .sales-title {
+    font-size: 18px !important;
+  }
 }
 
 /* ============================================================

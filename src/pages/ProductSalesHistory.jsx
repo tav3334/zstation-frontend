@@ -226,18 +226,18 @@ function ProductSalesHistory({ onBack }) {
   }
 
   return (
-    <div style={styles.container}>
+    <div style={styles.container} className="sales-page">
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
 
       {/* Header */}
-      <div style={styles.header}>
+      <div style={styles.header} className="sales-header">
         <div>
           <button onClick={onBack} style={styles.backBtn}>
             ← Retour
           </button>
-          <h1 style={styles.title}>Historique des Ventes de Produits</h1>
+          <h1 style={styles.title} className="sales-title">Historique des Ventes de Produits</h1>
         </div>
-        <button onClick={exportToPDF} style={styles.exportBtn}>
+        <button onClick={exportToPDF} style={styles.exportBtn} className="sales-export-btn">
           📄 Exporter PDF
         </button>
       </div>

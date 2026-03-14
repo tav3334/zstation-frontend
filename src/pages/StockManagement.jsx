@@ -142,18 +142,18 @@ function StockManagement({ onBack }) {
   }
 
   return (
-    <div style={styles.container}>
+    <div style={styles.container} className="stock-page">
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
 
       {/* Header */}
-      <div style={styles.header}>
+      <div style={styles.header} className="stock-header">
         <div>
           <button onClick={onBack} style={styles.backBtn}>
             ← Retour
           </button>
-          <h1 style={styles.title}>Gestion des Stocks</h1>
+          <h1 style={styles.title} className="stock-title">Gestion des Stocks</h1>
         </div>
-        <button onClick={openAddModal} style={styles.addBtn}>
+        <button onClick={openAddModal} style={styles.addBtn} className="stock-add-btn">
           + Ajouter un produit
         </button>
       </div>
@@ -173,6 +173,7 @@ function StockManagement({ onBack }) {
 
       {/* Products Table */}
       <div style={styles.tableCard}>
+        <div style={{overflowX: 'auto', WebkitOverflowScrolling: 'touch'}}>
         <table style={styles.table}>
           <thead>
             <tr style={styles.tableHeaderRow}>
@@ -259,6 +260,7 @@ function StockManagement({ onBack }) {
             ))}
           </tbody>
         </table>
+        </div>
 
         {products.length === 0 && (
           <div style={styles.emptyState}>
@@ -282,7 +284,7 @@ function StockManagement({ onBack }) {
             </div>
 
             <form onSubmit={handleSubmit} style={styles.form}>
-              <div style={styles.formRow}>
+              <div style={styles.formRow} className="stock-form-row">
                 <div style={styles.formGroup}>
                   <label style={styles.label}>Nom du produit</label>
                   <input
@@ -308,7 +310,7 @@ function StockManagement({ onBack }) {
                 </div>
               </div>
 
-              <div style={styles.formRow}>
+              <div style={styles.formRow} className="stock-form-row">
                 <div style={styles.formGroup}>
                   <label style={styles.label}>Taille (optionnel)</label>
                   <input
@@ -333,7 +335,7 @@ function StockManagement({ onBack }) {
                 </div>
               </div>
 
-              <div style={styles.formRow}>
+              <div style={styles.formRow} className="stock-form-row">
                 <div style={styles.formGroup}>
                   <label style={styles.label}>Stock initial</label>
                   <input
