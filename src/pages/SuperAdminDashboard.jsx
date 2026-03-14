@@ -480,6 +480,37 @@ function SuperAdminDashboard({ user, onLogout }) {
 
       {/* Toast Notifications */}
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
+      {/* Bottom Navigation - Mobile only */}
+      <nav className="z-bottom-nav">
+        {menuItems.map(item => (
+          <button
+            key={item.id}
+            className={`z-bottom-nav-item${activeTab === item.id ? ' active' : ''}`}
+            style={activeTab === item.id ? { color: '#6366f1' } : {}}
+            onClick={() => {
+              if (item.id === 'games') {
+                setShowGamesManagement(true);
+              } else if (item.id === 'organizations') {
+                setShowOrganizationsManagement(true);
+              } else {
+                setActiveTab(item.id);
+              }
+            }}
+          >
+            <item.icon size={20} />
+            <span style={{ fontSize: '9px' }}>{item.label}</span>
+          </button>
+        ))}
+        <button
+          className="z-bottom-nav-item"
+          onClick={onLogout}
+          style={{ color: '#ef4444' }}
+        >
+          <LogOut size={20} />
+          <span style={{ fontSize: '9px' }}>Déco.</span>
+        </button>
+      </nav>
     </div>
   );
 }
@@ -673,37 +704,6 @@ function DashboardView({ stats, dashboardStats, machines, users, games, onNaviga
           </div>
         </div>
       </div>
-
-      {/* Bottom Navigation - Mobile only */}
-      <nav className="z-bottom-nav">
-        {menuItems.map(item => (
-          <button
-            key={item.id}
-            className={`z-bottom-nav-item${activeTab === item.id ? ' active' : ''}`}
-            style={activeTab === item.id ? { color: '#6366f1' } : {}}
-            onClick={() => {
-              if (item.id === 'games') {
-                setShowGamesManagement(true);
-              } else if (item.id === 'organizations') {
-                setShowOrganizationsManagement(true);
-              } else {
-                setActiveTab(item.id);
-              }
-            }}
-          >
-            <item.icon size={20} />
-            <span style={{ fontSize: '9px' }}>{item.label}</span>
-          </button>
-        ))}
-        <button
-          className="z-bottom-nav-item"
-          onClick={onLogout}
-          style={{ color: '#ef4444' }}
-        >
-          <LogOut size={20} />
-          <span style={{ fontSize: '9px' }}>Déco.</span>
-        </button>
-      </nav>
     </div>
   );
 }
