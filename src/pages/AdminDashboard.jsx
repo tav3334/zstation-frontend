@@ -30,6 +30,7 @@ import Toast from "../components/Toast";
 import StockManagement from "./StockManagement";
 import ProductSalesHistory from "./ProductSalesHistory";
 import UserProfile from "../components/UserProfile";
+import SubscriptionBanner from "../components/SubscriptionBanner";
 
 function AdminDashboard({ user, onLogout }) {
   const [stats, setStats] = useState(null);
@@ -395,6 +396,11 @@ function AdminDashboard({ user, onLogout }) {
             </button>
           </div>
         </header>
+
+        {/* Subscription Banner */}
+        <div style={{ padding: '16px 24px 0 24px' }}>
+          <SubscriptionBanner organizationId={user?.organization_id} />
+        </div>
 
         {/* Filter Bar */}
         <div style={styles.filterBar}>

@@ -4,18 +4,20 @@ import {
   Edit2, Trash2, X, AlertCircle, Activity,
   Download, RefreshCw, LayoutDashboard,
   ChevronLeft, ChevronRight, Zap, Wifi, WifiOff, Clock,
-  TrendingUp, DollarSign, PlayCircle, Calendar, Building2
+  TrendingUp, DollarSign, PlayCircle, Calendar, Building2, Crown
 } from 'lucide-react';
 import api from '../services/api';
 import Toast from '../components/Toast';
 import SuperAdminGames from './SuperAdminGames';
 import SuperAdminOrganizations from './SuperAdminOrganizations';
+import SuperAdminSubscriptions from './SuperAdminSubscriptions';
 import '../styles/superadmin.module.css';
 
 function SuperAdminDashboard({ user, onLogout }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showGamesManagement, setShowGamesManagement] = useState(false);
   const [showOrganizationsManagement, setShowOrganizationsManagement] = useState(false);
+  const [showSubscriptionsManagement, setShowSubscriptionsManagement] = useState(false);
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -252,6 +254,7 @@ function SuperAdminDashboard({ user, onLogout }) {
     { id: 'users', label: 'Utilisateurs', icon: Users, count: stats.totalUsers },
     { id: 'machines', label: 'Machines', icon: Monitor, count: stats.totalMachines },
     { id: 'games', label: 'Jeux', icon: Gamepad2, count: stats.totalGames },
+    { id: 'subscriptions', label: 'Abonnements', icon: Crown },
   ];
 
   // Si on est en mode gestion des jeux, afficher uniquement cette page
@@ -262,6 +265,11 @@ function SuperAdminDashboard({ user, onLogout }) {
   // Si on est en mode gestion des organisations
   if (showOrganizationsManagement) {
     return <SuperAdminOrganizations onBack={() => setShowOrganizationsManagement(false)} />;
+  }
+
+  // Si on est en mode gestion des abonnements
+  if (showSubscriptionsManagement) {
+    return <SuperAdminSubscriptions onBack={() => setShowSubscriptionsManagement(false)} />;
   }
 
   return (
@@ -303,6 +311,8 @@ function SuperAdminDashboard({ user, onLogout }) {
                   setShowGamesManagement(true);
                 } else if (item.id === 'organizations') {
                   setShowOrganizationsManagement(true);
+                } else if (item.id === 'subscriptions') {
+                  setShowSubscriptionsManagement(true);
                 } else {
                   setActiveTab(item.id);
                 }
